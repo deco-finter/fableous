@@ -7,9 +7,9 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/daystram/go-gin-gorm-boilerplate/config"
-	"github.com/daystram/go-gin-gorm-boilerplate/datatransfers"
-	"github.com/daystram/go-gin-gorm-boilerplate/models"
+	"github.com/deco-finter/fableous/fableous-be/config"
+	"github.com/deco-finter/fableous/fableous-be/datatransfers"
+	"github.com/deco-finter/fableous/fableous-be/models"
 )
 
 var Handler HandlerFunc

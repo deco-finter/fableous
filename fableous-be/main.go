@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/daystram/go-gin-gorm-boilerplate/config"
-	"github.com/daystram/go-gin-gorm-boilerplate/handlers"
-	"github.com/daystram/go-gin-gorm-boilerplate/router"
+	"github.com/deco-finter/fableous/fableous-be/config"
+	"github.com/deco-finter/fableous/fableous-be/handlers"
+	"github.com/deco-finter/fableous/fableous-be/router"
 )
 
 func init() {

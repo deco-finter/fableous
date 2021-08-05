@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/daystram/go-gin-gorm-boilerplate/constants"
-	"github.com/daystram/go-gin-gorm-boilerplate/datatransfers"
+	"github.com/deco-finter/fableous/fableous-be/constants"
+	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 )
 
 func AuthOnly(c *gin.Context) {
