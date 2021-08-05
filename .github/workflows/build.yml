@@ -19,7 +19,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: eslint
-        run: npm lint
+        run: npm run lint
   build-fe:
     name: Build fableous-fe
     runs-on: Ubuntu-20.04
@@ -36,7 +36,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Build
-        run: npm build
+        run: npm run build
       - name: Archive Artifacts
         uses: actions/upload-artifact@v2
         with:
