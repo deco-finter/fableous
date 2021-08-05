@@ -31,9 +31,7 @@ type dbEntity struct {
 	userOrmer models.UserOrmer
 }
 
-func InitializeHandler() {
-	var err error
-
+func InitializeHandler() (err error) {
 	// Initialize DB
 	var db *gorm.DB
 	db, err = gorm.Open(postgres.Open(
@@ -53,4 +51,5 @@ func InitializeHandler() {
 			userOrmer: models.NewUserOrmer(db),
 		},
 	}
+	return
 }
