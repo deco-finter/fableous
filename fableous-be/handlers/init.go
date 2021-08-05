@@ -38,14 +38,13 @@ func InitializeHandler() {
 	var db *gorm.DB
 	db, err = gorm.Open(postgres.Open(
 		fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable",
-			config.AppConfig.DBHostname, config.AppConfig.DBPort, config.AppConfig.DBDatabase,
+			config.AppConfig.DBHost, config.AppConfig.DBPort, config.AppConfig.DBDatabase,
 			config.AppConfig.DBUsername, config.AppConfig.DBPassword),
 	), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("[INIT] Failed connecting to PostgreSQL Database at %s:%d. %+v\n",
-			config.AppConfig.DBHostname, config.AppConfig.DBPort, err)
+		log.Fatalln("[INIT] failed connecting to PostgreSQL")
 	}
-	log.Printf("[INIT] Successfully connected to PostgreSQL Database\n")
+	log.Println("[INIT] successfully connected to PostgreSQL")
 
 	// Compose handler modules
 	Handler = &module{
