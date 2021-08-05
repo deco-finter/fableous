@@ -25,6 +25,7 @@ func AuthMiddleware(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, datatransfers.Response{Error: err.Error()})
 		return
 	}
+	// TODO: check user in DB
 	c.Set(constants.IsAuthenticatedKey, true)
 	c.Set(constants.UserIDKey, claims.ID)
 	c.Next()
