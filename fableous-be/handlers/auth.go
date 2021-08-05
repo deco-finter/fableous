@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -49,8 +48,7 @@ func (m *module) RegisterUser(credentials datatransfers.UserSignup) (err error) 
 		Password: string(hashedPassword),
 		Bio:      credentials.Bio,
 	}); err != nil {
-		log.Print(err)
-		return errors.New(fmt.Sprintf("error inserting user. %v", err))
+		return fmt.Errorf("error inserting user. %v", err)
 	}
 	return
 }
