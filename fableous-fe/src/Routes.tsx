@@ -5,8 +5,8 @@ import HomePage from "./containers/HomePage";
 export default function Routes() {
   return (
     <Switch>
-      <Route path={"/"} exact component={HomePage}/>
-      <Route path={"/canvas"} exact component={CanvasPage}/>
+      <Route path="/" exact component={HomePage} />
+      <Route path="/canvas" exact component={CanvasPage} />
     </Switch>
   );
 }

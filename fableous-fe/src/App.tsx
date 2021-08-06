@@ -1,22 +1,20 @@
-import React from 'react';
-import { Container, Grid } from '@material-ui/core';
-import Navbar from './components/Navbar';
-import { BrowserRouter as Router} from "react-router-dom";
-import Routes from './Routes';
+import { Container, Grid } from "@material-ui/core";
+import { BrowserRouter as Router } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Routes from "./Routes";
 
-function App() {
+export default function App() {
   return (
     <div id="app">
+      {/* id 'app' for tailwind css utilities to have more specificity than other css framework */}
       <Router>
-          <Navbar />
-          <Container className="pt-5">
-            <Grid container>
-              <Routes />
-            </Grid>
-          </Container>
+        <Navbar />
+        <Container className="pt-5">
+          <Grid container>
+            <Routes />
+          </Grid>
+        </Container>
       </Router>
     </div>
   );
 }
-
-export default App;
