@@ -42,7 +42,7 @@ module.exports = {
         endOfLine: "auto",
       },
     ],
-    // make react import not marked as unnecessary
+    // make react import optional
     // src https://github.com/microsoft/TypeScript/issues/41882#issuecomment-849849503
     "react/jsx-uses-react": "off",
     "react/react-in-jsx-scope": "off",
