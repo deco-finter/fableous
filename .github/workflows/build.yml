@@ -17,9 +17,9 @@ jobs:
         with:
           node-version: 12.x
       - name: Install Dependencies
-        run: npm install
+        run: yarn
       - name: eslint
-        run: npm run lint
+        run: yarn lint
   build-fe:
     name: Build fableous-fe
     runs-on: Ubuntu-20.04
@@ -34,15 +34,15 @@ jobs:
         with:
           node-version: 12.x
       - name: Install Dependencies
-        run: npm install
+        run: yarn
       - name: Build
-        run: npm run build
+        run: yarn build
       - name: Archive Artifacts
         uses: actions/upload-artifact@v2
         with:
           name: build-fe
           path: |
-            fableous-fe/dist/
+            fableous-fe/build/
   lint-be:
     name: Lint fableous-be
     runs-on: ubuntu-latest
