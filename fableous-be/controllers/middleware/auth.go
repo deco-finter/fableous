@@ -17,7 +17,7 @@ import (
 func AuthMiddleware(c *gin.Context) {
 	token := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
 	if token == "" {
-		c.Set(constants.IsAuthenticatedKey, false)
+		c.Set(constants.RouterKeyIsAuthenticated, false)
 		c.Next()
 		return
 	}
@@ -31,8 +31,8 @@ func AuthMiddleware(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, datatransfers.Response{Error: err.Error()})
 		return
 	}
-	c.Set(constants.IsAuthenticatedKey, true)
-	c.Set(constants.UserIDKey, claims.ID)
+	c.Set(constants.RouterKeyIsAuthenticated, true)
+	c.Set(constants.RouterKeyUserID, claims.ID)
 	c.Next()
 }
 

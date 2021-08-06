@@ -32,7 +32,7 @@ func PUTUser(c *gin.Context) {
 		return
 	}
 	if err = handlers.Handler.UserUpdate(datatransfers.UserInfo{
-		ID:    c.GetString(constants.IsAuthenticatedKey),
+		ID:    c.GetString(constants.RouterKeyUserID),
 		Name:  user.Name,
 		Email: user.Email,
 	}); err != nil {
