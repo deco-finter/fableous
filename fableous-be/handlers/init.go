@@ -15,11 +15,11 @@ import (
 var Handler HandlerFunc
 
 type HandlerFunc interface {
-	AuthenticateUser(credentials datatransfers.UserLogin) (token string, err error)
-	RegisterUser(credentials datatransfers.UserSignup) (err error)
+	Authenticate(userInfo datatransfers.UserLogin) (token string, err error)
 
-	RetrieveUser(username string) (user models.User, err error)
-	UpdateUser(id uint, user datatransfers.UserUpdate) (err error)
+	UserRegister(userInfo datatransfers.UserSignup) (err error)
+	UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error)
+	UserUpdate(userInfo datatransfers.UserInfo) (err error)
 }
 
 type module struct {
@@ -31,21 +31,18 @@ type dbEntity struct {
 	userOrmer models.UserOrmer
 }
 
-func InitializeHandler() {
-	var err error
-
+func InitializeHandler() (err error) {
 	// Initialize DB
 	var db *gorm.DB
 	db, err = gorm.Open(postgres.Open(
-		fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable",
-			config.AppConfig.DBHostname, config.AppConfig.DBPort, config.AppConfig.DBDatabase,
+		fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable TimeZone=Etc/UTC",
+			config.AppConfig.DBHost, config.AppConfig.DBPort, config.AppConfig.DBDatabase,
 			config.AppConfig.DBUsername, config.AppConfig.DBPassword),
 	), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("[INIT] Failed connecting to PostgreSQL Database at %s:%d. %+v\n",
-			config.AppConfig.DBHostname, config.AppConfig.DBPort, err)
+		log.Fatalln("[INIT] failed connecting to PostgreSQL")
 	}
-	log.Printf("[INIT] Successfully connected to PostgreSQL Database\n")
+	log.Println("[INIT] successfully connected to PostgreSQL")
 
 	// Compose handler modules
 	Handler = &module{
@@ -54,4 +51,5 @@ func InitializeHandler() {
 			userOrmer: models.NewUserOrmer(db),
 		},
 	}
+	return
 }

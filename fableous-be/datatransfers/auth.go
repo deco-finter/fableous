@@ -6,9 +6,9 @@ import (
 )
 
 type JWTClaims struct {
-	ID        uint  `json:"sub,omitempty"`
-	ExpiresAt int64 `json:"exp,omitempty"`
-	IssuedAt  int64 `json:"iat,omitempty"`
+	ID        string `json:"sub,omitempty"`
+	ExpiresAt int64  `json:"exp,omitempty"`
+	IssuedAt  int64  `json:"iat,omitempty"`
 }
 
 func (c JWTClaims) Valid() (err error) {
