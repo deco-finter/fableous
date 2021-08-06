@@ -17,7 +17,7 @@ func GETUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
 		return
 	}
-	if userInfo, err = handlers.Handler.UserGetOne(userInfo.Email); err != nil {
+	if userInfo, err = handlers.Handler.UserGetOneByID(userInfo.ID); err != nil {
 		c.JSON(http.StatusNotFound, datatransfers.Response{Error: "cannot find user"})
 		return
 	}

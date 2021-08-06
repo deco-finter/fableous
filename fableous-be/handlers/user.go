@@ -25,9 +25,9 @@ func (m *module) UserRegister(credentials datatransfers.UserSignup) (err error) 
 	return
 }
 
-func (m *module) UserGetOne(email string) (userInfo datatransfers.UserInfo, err error) {
+func (m *module) UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error) {
 	var user models.User
-	if user, err = m.db.userOrmer.GetOneByEmail(email); err != nil {
+	if user, err = m.db.userOrmer.GetOneByID(id); err != nil {
 		return datatransfers.UserInfo{}, err
 	}
 	userInfo = datatransfers.UserInfo{

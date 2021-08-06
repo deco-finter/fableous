@@ -27,7 +27,7 @@ func AuthMiddleware(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, datatransfers.Response{Error: err.Error()})
 		return
 	}
-	if _, err = handlers.Handler.UserGetOne(claims.ID); err != nil {
+	if _, err = handlers.Handler.UserGetOneByID(claims.ID); err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, datatransfers.Response{Error: err.Error()})
 		return
 	}

@@ -18,7 +18,7 @@ type HandlerFunc interface {
 	Authenticate(userInfo datatransfers.UserLogin) (token string, err error)
 
 	UserRegister(userInfo datatransfers.UserSignup) (err error)
-	UserGetOne(id string) (userInfo datatransfers.UserInfo, err error)
+	UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error)
 	UserUpdate(userInfo datatransfers.UserInfo) (err error)
 }
 
