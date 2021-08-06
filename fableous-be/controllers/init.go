@@ -18,11 +18,11 @@ func InitializeRouter() (router *gin.Engine) {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", POSTLogin)
-			auth.POST("/signup", POSTRegister)
+			auth.POST("/register", POSTRegister)
 		}
 		user := api.Group("/user")
 		{
-			user.GET("/:username", utils.AuthOnly, GETUser)
+			user.GET("/:id", utils.AuthOnly, GETUser)
 			user.PUT("/", utils.AuthOnly, PUTUser)
 		}
 	}

@@ -18,7 +18,7 @@ func POSTLogin(c *gin.Context) {
 		return
 	}
 	var token string
-	if token, err = handlers.Handler.AuthenticateUser(user); err != nil {
+	if token, err = handlers.Handler.Authenticate(user); err != nil {
 		c.JSON(http.StatusUnauthorized, datatransfers.Response{Error: "incorrect username or password"})
 		return
 	}
@@ -32,7 +32,7 @@ func POSTRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
 		return
 	}
-	if err = handlers.Handler.RegisterUser(user); err != nil {
+	if err = handlers.Handler.UserRegister(user); err != nil {
 		c.JSON(http.StatusUnauthorized, datatransfers.Response{Error: "failed registering user"})
 		return
 	}
