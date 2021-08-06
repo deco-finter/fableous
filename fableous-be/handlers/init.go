@@ -15,11 +15,11 @@ import (
 var Handler HandlerFunc
 
 type HandlerFunc interface {
-	AuthenticateUser(credentials datatransfers.UserLogin) (token string, err error)
-	RegisterUser(credentials datatransfers.UserSignup) (err error)
+	Authenticate(userInfo datatransfers.UserLogin) (token string, err error)
 
-	RetrieveUser(username string) (user models.User, err error)
-	UpdateUser(id uint, user datatransfers.UserUpdate) (err error)
+	UserRegister(userInfo datatransfers.UserSignup) (err error)
+	UserGetOne(id string) (userInfo datatransfers.UserInfo, err error)
+	UserUpdate(userInfo datatransfers.UserInfo) (err error)
 }
 
 type module struct {
@@ -35,7 +35,7 @@ func InitializeHandler() (err error) {
 	// Initialize DB
 	var db *gorm.DB
 	db, err = gorm.Open(postgres.Open(
-		fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable",
+		fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable TimeZone=Etc/UTC",
 			config.AppConfig.DBHost, config.AppConfig.DBPort, config.AppConfig.DBDatabase,
 			config.AppConfig.DBUsername, config.AppConfig.DBPassword),
 	), &gorm.Config{})
