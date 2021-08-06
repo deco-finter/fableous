@@ -31,8 +31,8 @@ To begin developing, simply enter the sub-directory and run the development serv
 
 ```shell
 $ cd fableous-fe
-$ npm install
-$ npm start
+$ yarn
+$ yarn start
 ```
 
 ## Deploy
