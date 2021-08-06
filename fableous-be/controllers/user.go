@@ -1,4 +1,4 @@
-package v1
+package controllers
 
 import (
 	"net/http"
@@ -8,7 +8,6 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/constants"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/handlers"
-	"github.com/deco-finter/fableous/fableous-be/models"
 )
 
 func GETUser(c *gin.Context) {
@@ -18,18 +17,11 @@ func GETUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
 		return
 	}
-	var user models.User
-	if user, err = handlers.Handler.RetrieveUser(userInfo.Username); err != nil {
+	if userInfo, err = handlers.Handler.UserGetOneByID(userInfo.ID); err != nil {
 		c.JSON(http.StatusNotFound, datatransfers.Response{Error: "cannot find user"})
 		return
 	}
-	c.JSON(http.StatusOK, datatransfers.Response{Data: datatransfers.UserInfo{
-		Username:  user.Username,
-		Email:     user.Email,
-		Bio:       user.Bio,
-		CreatedAt: user.CreatedAt,
-	}})
-	return
+	c.JSON(http.StatusOK, datatransfers.Response{Data: userInfo})
 }
 
 func PUTUser(c *gin.Context) {
@@ -39,10 +31,13 @@ func PUTUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
 		return
 	}
-	if err = handlers.Handler.UpdateUser(uint(c.GetInt(constants.IsAuthenticatedKey)), user); err != nil {
+	if err = handlers.Handler.UserUpdate(datatransfers.UserInfo{
+		ID:    c.GetString(constants.RouterKeyUserID),
+		Name:  user.Name,
+		Email: user.Email,
+	}); err != nil {
 		c.JSON(http.StatusNotModified, datatransfers.Response{Error: "failed updating user"})
 		return
 	}
-	c.JSON(http.StatusOK, datatransfers.Response{Data: user})
-	return
+	c.JSON(http.StatusOK, datatransfers.Response{})
 }

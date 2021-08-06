@@ -10,7 +10,7 @@ import (
 )
 
 func AuthOnly(c *gin.Context) {
-	if !c.GetBool(constants.IsAuthenticatedKey) {
+	if !c.GetBool(constants.RouterKeyIsAuthenticated) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, datatransfers.Response{Error: "user not authenticated"})
 	}
 }
