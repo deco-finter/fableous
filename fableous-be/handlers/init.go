@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -15,11 +17,17 @@ import (
 var Handler HandlerFunc
 
 type HandlerFunc interface {
+	// Auth
 	Authenticate(userInfo datatransfers.UserLogin) (token string, err error)
 
+	// User
 	UserRegister(userInfo datatransfers.UserSignup) (err error)
 	UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error)
 	UserUpdate(userInfo datatransfers.UserInfo) (err error)
+
+	// WebSocket
+	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
+	HubCommandWorker(conn *websocket.Conn, classroomID string) (err error)
 }
 
 type module struct {
