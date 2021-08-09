@@ -30,7 +30,7 @@ func GETConnectControllerWS(c *gin.Context) {
 	if role = c.Request.URL.Query().Get("role"); role == "" {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "role required"})
 		return
-	} else if role != constants.WSControllerRoleBackground && role != constants.WSControllerRoleCharacter && role != constants.WSControllerRoleStory {
+	} else if role != constants.ControllerRoleBackground && role != constants.ControllerRoleCharacter && role != constants.ControllerRoleStory {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "role invalid"})
 		return
 	}

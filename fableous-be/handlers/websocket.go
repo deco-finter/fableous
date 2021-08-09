@@ -27,21 +27,21 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role stri
 	m.sessions.mutex.RLock()
 	if session, ok := m.sessions.keys[classroomToken]; ok {
 		switch role {
-		case constants.WSControllerRoleBackground:
+		case constants.ControllerRoleBackground:
 			if session.backgroundConnected {
 				log.Printf("background role already connected")
 				m.sessions.mutex.RUnlock()
 				return
 			}
 			session.backgroundConnected = true
-		case constants.WSControllerRoleCharacter:
+		case constants.ControllerRoleCharacter:
 			if session.characterConnected {
 				log.Printf("character role already connected")
 				m.sessions.mutex.RUnlock()
 				return
 			}
 			session.characterConnected = true
-		case constants.WSControllerRoleStory:
+		case constants.ControllerRoleStory:
 			if session.storyConnected {
 				log.Printf("story role already connected")
 				m.sessions.mutex.RUnlock()

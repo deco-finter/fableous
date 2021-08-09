@@ -9,8 +9,8 @@ const (
 	WSMessageTypePing    = "PING"
 	WSMessageTypeError   = "ERROR"
 
-	WSControllerRoleCharacter  = "CHARACTER"
-	WSControllerRoleBackground = "BACKGROUND"
-	WSControllerRoleStory      = "STORY"
-	WSControllerRoleHub        = "HUB"
+	ControllerRoleCharacter  = "CHARACTER"
+	ControllerRoleBackground = "BACKGROUND"
+	ControllerRoleStory      = "STORY"
+	ControllerRoleHub        = "HUB"
 )
