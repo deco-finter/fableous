@@ -26,5 +26,9 @@ func InitializeRouter() (router *gin.Engine) {
 			user.PUT("/", utils.AuthOnly, PUTUser)
 		}
 	}
+	ws := router.Group("/ws")
+	{
+		ws.GET("/hub", utils.AuthOnly, GETConnectHubWS)
+	}
 	return
 }
