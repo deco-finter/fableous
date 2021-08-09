@@ -28,9 +28,9 @@ type HandlerFunc interface {
 
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
-	ConnectControllerWS(ctx *gin.Context, classroomToken string) (err error)
+	ConnectControllerWS(ctx *gin.Context, classroomToken, role string) (err error)
 	HubCommandWorker(conn *websocket.Conn, classroomID string) (err error)
-	ControllerCommandWorker(conn *websocket.Conn, classroomToken string) (err error)
+	ControllerCommandWorker(conn *websocket.Conn, classroomToken, role string) (err error)
 }
 
 type module struct {
@@ -38,14 +38,21 @@ type module struct {
 	sessions sessionsEntity
 }
 
-type sessionsEntity struct {
-	keys  map[string]string
-	mutex sync.RWMutex
-}
-
 type dbEntity struct {
 	conn      *gorm.DB
 	userOrmer models.UserOrmer
+}
+
+type sessionsEntity struct {
+	keys  map[string]*session
+	mutex sync.RWMutex
+}
+
+type session struct {
+	classroomID         string
+	characterConnected  bool
+	backgroundConnected bool
+	storyConnected      bool
 }
 
 func InitializeHandler() (err error) {
@@ -68,7 +75,7 @@ func InitializeHandler() (err error) {
 			userOrmer: models.NewUserOrmer(db),
 		},
 		sessions: sessionsEntity{
-			keys: make(map[string]string),
+			keys: make(map[string]*session),
 		},
 	}
 	return

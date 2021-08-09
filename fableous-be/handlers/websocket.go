@@ -23,9 +23,33 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 	return m.HubCommandWorker(conn, classroomID)
 }
 
-func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken string) (err error) {
+func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role string) (err error) {
 	m.sessions.mutex.RLock()
-	if _, ok := m.sessions.keys[classroomToken]; !ok {
+	if session, ok := m.sessions.keys[classroomToken]; ok {
+		switch role {
+		case constants.WSControllerRoleBackground:
+			if session.backgroundConnected {
+				log.Printf("background role already connected")
+				m.sessions.mutex.RUnlock()
+				return
+			}
+			session.backgroundConnected = true
+		case constants.WSControllerRoleCharacter:
+			if session.characterConnected {
+				log.Printf("character role already connected")
+				m.sessions.mutex.RUnlock()
+				return
+			}
+			session.characterConnected = true
+		case constants.WSControllerRoleStory:
+			if session.storyConnected {
+				log.Printf("story role already connected")
+				m.sessions.mutex.RUnlock()
+				return
+			}
+			session.storyConnected = true
+		}
+	} else {
 		log.Printf("session not initialised")
 		m.sessions.mutex.RUnlock()
 		return
@@ -39,13 +63,18 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken string) (e
 		return
 	}
 	defer conn.Close()
-	return m.ControllerCommandWorker(conn, classroomToken)
+	return m.ControllerCommandWorker(conn, classroomToken, role)
 }
 
 func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err error) {
 	classroomToken := utils.GenerateRandomString(constants.ClassroomTokenLength)
 	m.sessions.mutex.Lock()
-	m.sessions.keys[classroomToken] = classroomID
+	m.sessions.keys[classroomToken] = &session{
+		classroomID:         classroomID,
+		characterConnected:  false,
+		backgroundConnected: false,
+		storyConnected:      false,
+	}
 	m.sessions.mutex.Unlock()
 	_ = conn.WriteJSON(datatransfers.WSMessage{
 		Type: constants.WSMessageTypeControl,
@@ -84,7 +113,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err
 	return
 }
 
-func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken string) (err error) {
+func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, role string) (err error) {
 	for {
 		var message datatransfers.WSMessage
 		if err = conn.ReadJSON(&message); err != nil {
