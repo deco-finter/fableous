@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -27,11 +28,19 @@ type HandlerFunc interface {
 
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
+	ConnectControllerWS(ctx *gin.Context, classroomToken string) (err error)
 	HubCommandWorker(conn *websocket.Conn, classroomID string) (err error)
+	ControllerCommandWorker(conn *websocket.Conn, classroomToken string) (err error)
 }
 
 type module struct {
-	db *dbEntity
+	db       *dbEntity
+	sessions sessionsEntity
+}
+
+type sessionsEntity struct {
+	keys  map[string]string
+	mutex sync.RWMutex
 }
 
 type dbEntity struct {
@@ -57,6 +66,9 @@ func InitializeHandler() (err error) {
 		db: &dbEntity{
 			conn:      db,
 			userOrmer: models.NewUserOrmer(db),
+		},
+		sessions: sessionsEntity{
+			keys: make(map[string]string),
 		},
 	}
 	return
