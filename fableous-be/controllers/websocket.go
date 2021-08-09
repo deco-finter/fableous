@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/deco-finter/fableous/fableous-be/constants"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
@@ -25,5 +26,13 @@ func GETConnectControllerWS(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "classroom_token required"})
 		return
 	}
-	_ = handlers.Handler.ConnectControllerWS(c, classroomToken)
+	var role string
+	if role = c.Request.URL.Query().Get("role"); role == "" {
+		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "role required"})
+		return
+	} else if role != constants.WSControllerRoleBackground && role != constants.WSControllerRoleCharacter && role != constants.WSControllerRoleStory {
+		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "role invalid"})
+		return
+	}
+	_ = handlers.Handler.ConnectControllerWS(c, classroomToken, role)
 }
