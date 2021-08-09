@@ -18,3 +18,12 @@ func GETConnectHubWS(c *gin.Context) {
 	// TODO: check if user owns classroom
 	_ = handlers.Handler.ConnectHubWS(c, classroomID)
 }
+
+func GETConnectControllerWS(c *gin.Context) {
+	var classroomToken string
+	if classroomToken = c.Request.URL.Query().Get("classroom_token"); classroomToken == "" {
+		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "classroom_token required"})
+		return
+	}
+	_ = handlers.Handler.ConnectControllerWS(c, classroomToken)
+}
