@@ -11,6 +11,7 @@ import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
+import Slider from "@material-ui/core/Slider";
 import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 
 const ASPECT_RATIO = 9 / 16;
@@ -27,6 +28,7 @@ const Canvas = (props: {
   const [lastPos, setLastPos] = useState([0, 0]);
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
+  const [toolWidth, setToolWidth] = useState(8);
 
   const translateXY = (x: number, y: number) => {
     const bound = canvasRef.current.getBoundingClientRect();
@@ -57,7 +59,14 @@ const Canvas = (props: {
   };
 
   const paint = useCallback(
-    (x1: number, y1: number, x2: number, y2: number, targetColor: string) => {
+    (
+      x1: number,
+      y1: number,
+      x2: number,
+      y2: number,
+      targetColor: string,
+      targetWidth: number
+    ) => {
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
@@ -65,6 +74,7 @@ const Canvas = (props: {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.strokeStyle = targetColor;
+      ctx.lineWidth = targetWidth;
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
@@ -81,8 +91,9 @@ const Canvas = (props: {
               x2: normX2,
               y2: normY2,
               color: targetColor,
+              width: targetWidth,
             },
-          })
+          } as WSMessage)
         );
       }
     },
@@ -164,7 +175,7 @@ const Canvas = (props: {
             role,
             type: WSMessageType.Fill,
             data: { x: normX, y: normY, color: targetColor },
-          })
+          } as WSMessage)
         );
       }
     },
@@ -180,7 +191,14 @@ const Canvas = (props: {
             if (msg.role === layer) {
               const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
               const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
-              paint(x1, y1, x2, y2, msg.data.color || "#000000ff");
+              paint(
+                x1,
+                y1,
+                x2,
+                y2,
+                msg.data.color || "#000000ff",
+                msg.data.width || 8
+              );
             }
             break;
           case WSMessageType.Fill:
@@ -227,7 +245,7 @@ const Canvas = (props: {
           Math.round(lastY) === Math.round(y)
         )
           return;
-        paint(lastX, lastY, x, y, toolColor);
+        paint(lastX, lastY, x, y, toolColor, toolWidth);
         setLastPos([x, y]);
         break;
       default:
@@ -296,6 +314,20 @@ const Canvas = (props: {
               />
             </RadioGroup>
           </FormControl>
+        </div>
+      )}
+      {toolMode === ToolMode.Paint && (
+        <div>
+          <Slider
+            defaultValue={8}
+            valueLabelDisplay="auto"
+            value={toolWidth}
+            onChange={(e, width) => setToolWidth(width as number)}
+            step={4}
+            marks
+            min={4}
+            max={32}
+          />
         </div>
       )}
       {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
