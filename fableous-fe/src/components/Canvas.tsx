@@ -188,16 +188,17 @@ const Canvas = (props: {
   );
 
   const placeText = useCallback(
-    (x, y, message) => {
+    (x, y, message, fontSize) => {
       if (!message) return;
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
-      ctx.font = `${18 * SCALE}px Arial`;
+      ctx.font = `${fontSize * SCALE}px Arial`;
       ctx.textAlign = "center";
       ctx.fillText(message, x, y);
       if (role !== ControllerRole.Hub) {
         const [normX, normY] = scaleDownXY(x, y);
+        const [normFontSize, i] = scaleDownXY(fontSize, 0);
         wsRef.current?.send(
           JSON.stringify({
             role,
@@ -205,6 +206,7 @@ const Canvas = (props: {
             data: {
               x1: normX,
               y1: normY,
+              width: normFontSize,
               text: message,
             },
           } as WSMessage)
@@ -237,7 +239,7 @@ const Canvas = (props: {
               placeFill(x1, y1, msg.data.color || "#000000ff");
               break;
             case WSMessageType.Text:
-              placeText(x1, y1, msg.data.text || "");
+              placeText(x1, y1, msg.data.text || "", width || 0);
               break;
             default:
           }
@@ -264,7 +266,7 @@ const Canvas = (props: {
         break;
       case ToolMode.Text:
         // eslint-disable-next-line no-alert
-        placeText(x, y, prompt("What do you want to write?")); // TODO
+        placeText(x, y, prompt("What do you want to write?"), 18); // TODO
         break;
       default:
     }
