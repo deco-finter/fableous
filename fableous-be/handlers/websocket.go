@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -13,7 +14,11 @@ import (
 
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	upgrader := websocket.Upgrader{}
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 	var conn *websocket.Conn
 	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, ctx.Request.Header); err != nil {
 		log.Printf("failed connecting hub websocket. %s\n", err)
@@ -56,7 +61,11 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role stri
 	}
 	m.sessions.mutex.RUnlock()
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	upgrader := websocket.Upgrader{}
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 	var conn *websocket.Conn
 	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, ctx.Request.Header); err != nil {
 		log.Printf("failed connecting hub websocket. %s\n", err)
