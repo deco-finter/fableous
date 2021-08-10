@@ -23,12 +23,11 @@ export default function ControllerCanvasPage() {
       `wss://dev.fableous.daystram.com/ws/controller?classroom_token=${classroomToken}&role=${role}&name=${name}`
     );
     wsRef.current.onopen = () => setControllerReady(true);
-    setPing(
-      setInterval(
-        () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
-        5000
-      )
+    const interval = setInterval(
+      () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
+      5000
     );
+    setPing(interval);
   };
 
   useEffect(() => {
@@ -37,7 +36,8 @@ export default function ControllerCanvasPage() {
       wsRef.current?.close();
       wsRef.current = undefined;
     };
-  }, [classroomToken, ping]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
