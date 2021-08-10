@@ -46,21 +46,29 @@ export default function HubCanvasPage() {
         {hubReady && (
           <>
             Hub {classroomToken}
-            <Canvas
-              wsRef={wsRef}
-              role={ControllerRole.Hub}
-              layer={ControllerRole.Story}
-            />
-            <Canvas
-              wsRef={wsRef}
-              role={ControllerRole.Hub}
-              layer={ControllerRole.Character}
-            />
-            <Canvas
-              wsRef={wsRef}
-              role={ControllerRole.Hub}
-              layer={ControllerRole.Background}
-            />
+            <div style={{ display: "grid" }}>
+              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
+                <Canvas
+                  wsRef={wsRef}
+                  role={ControllerRole.Hub}
+                  layer={ControllerRole.Story}
+                />
+              </div>
+              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
+                <Canvas
+                  wsRef={wsRef}
+                  role={ControllerRole.Hub}
+                  layer={ControllerRole.Character}
+                />
+              </div>
+              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
+                <Canvas
+                  wsRef={wsRef}
+                  role={ControllerRole.Hub}
+                  layer={ControllerRole.Background}
+                />
+              </div>
+            </div>
           </>
         )}
       </Grid>
