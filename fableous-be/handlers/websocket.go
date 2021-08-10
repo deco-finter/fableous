@@ -20,7 +20,7 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 		},
 	}
 	var conn *websocket.Conn
-	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, ctx.Request.Header); err != nil {
+	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting hub websocket. %s\n", err)
 		return
 	}
@@ -67,8 +67,8 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role stri
 		},
 	}
 	var conn *websocket.Conn
-	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, ctx.Request.Header); err != nil {
-		log.Printf("failed connecting hub websocket. %s\n", err)
+	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
+		log.Printf("failed connecting controller websocket. %s\n", err)
 		return
 	}
 	defer conn.Close()
