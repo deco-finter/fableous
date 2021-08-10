@@ -30,7 +30,7 @@ const Canvas = (props: {
   const [lastPos, setLastPos] = useState([0, 0]);
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
-  const [toolWidth, setToolWidth] = useState(8);
+  const [toolWidth, setToolWidth] = useState(8 * SCALE);
 
   const translateXY = (x: number, y: number) => {
     const bound = canvasRef.current.getBoundingClientRect();
@@ -331,7 +331,7 @@ const Canvas = (props: {
         onMouseUp={onMouseUp}
         style={{
           borderWidth: 4,
-          width: "90vw",
+          width: "100%",
         }}
       />
       {toolMode !== ToolMode.None && (
