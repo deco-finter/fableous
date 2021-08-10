@@ -18,6 +18,17 @@ import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 const ASPECT_RATIO = 9 / 16;
 const SCALE = 2;
 
+interface Shape {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+interface TextShape extends Shape {
+  text: string;
+}
+
 const Canvas = (props: {
   wsRef: MutableRefObject<WebSocket | undefined>;
   role: ControllerRole;
@@ -28,6 +39,7 @@ const Canvas = (props: {
   const [allowDrawing, setAllowDrawing] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [lastPos, setLastPos] = useState([0, 0]);
+  const [textShapes, setTextShapes] = useState<TextShape[]>([]);
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
@@ -49,7 +61,6 @@ const Canvas = (props: {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
       hex
     );
-    console.log(hex);
     return result
       ? [
           parseInt(result[1], 16),
@@ -120,7 +131,6 @@ const Canvas = (props: {
         image.data[startPixel + 2],
         image.data[startPixel + 3],
       ];
-      console.log(startX, startY);
       const setPixel = (pixel: number, rgb: number[]) => {
         [
           image.data[pixel],
@@ -196,6 +206,17 @@ const Canvas = (props: {
       ctx.font = `${fontSize * SCALE}px Arial`;
       ctx.textAlign = "center";
       ctx.fillText(message, x, y);
+      const bounds = ctx.measureText(message);
+      setTextShapes([
+        ...textShapes,
+        {
+          text: message,
+          x1: x - bounds.width / 2,
+          y1: y - (fontSize * SCALE) / 2,
+          x2: x + bounds.width / 2,
+          y2: y + (fontSize * SCALE) / 2,
+        } as TextShape,
+      ]);
       if (role !== ControllerRole.Hub) {
         const [normX, normY] = scaleDownXY(x, y);
         const [normFontSize] = scaleDownXY(fontSize, 0);
@@ -213,8 +234,22 @@ const Canvas = (props: {
         );
       }
     },
-    [role, wsRef]
+    [textShapes, role, wsRef]
   );
+
+  const interactCanvas = (x: number, y: number) => {
+    let clicked: TextShape | undefined;
+    for (let i = 0; i < textShapes.length; i++) {
+      const shape = textShapes[i];
+      if (x >= shape.x1 && x <= shape.x2 && y >= shape.y1 && y <= shape.y2) {
+        clicked = shape;
+        break;
+      }
+    }
+    if (clicked) {
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(clicked.text));
+    }
+  };
 
   const readMessage = useCallback(
     (ev: MessageEvent) => {
@@ -245,14 +280,14 @@ const Canvas = (props: {
           }
         }
       } catch (e) {
-        console.log(e);
+        console.error(e);
       }
     },
     [placePaint, placeFill, placeText, layer]
   );
 
   function onMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-    if (!allowDrawing) return;
+    // if (!allowDrawing) return;
     event.preventDefault();
     const [x, y] = translateXY(event.clientX, event.clientY);
     switch (toolMode) {
@@ -267,6 +302,9 @@ const Canvas = (props: {
       case ToolMode.Text:
         // eslint-disable-next-line no-alert
         placeText(x, y, prompt("What do you want to write?"), 18); // TODO
+        break;
+      case ToolMode.None:
+        interactCanvas(x, y);
         break;
       default:
     }
