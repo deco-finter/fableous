@@ -22,7 +22,7 @@ export enum WSMessageType {
   Ping = "PING",
 }
 
-export enum DrawingMode {
+export enum ToolMode {
   Paint = "PAINT",
   Fill = "FILL",
   None = "NONE",

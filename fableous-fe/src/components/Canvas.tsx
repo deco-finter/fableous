@@ -11,7 +11,7 @@ import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
-import { ControllerRole, DrawingMode, WSMessage, WSMessageType } from "../Data";
+import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 
 const ASPECT_RATIO = 9 / 16;
 
@@ -23,10 +23,10 @@ const Canvas = (props: {
   const { layer, role, wsRef } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [allowDrawing, setAllowDrawing] = useState(false);
-  const [color, setColor] = useState("#000000ff");
   const [drawing, setDrawing] = useState(false);
   const [lastPos, setLastPos] = useState([0, 0]);
-  const [mode, setMode] = useState<DrawingMode>(DrawingMode.None);
+  const [toolColor, setToolColor] = useState("#000000ff");
+  const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
 
   const translateXY = (x: number, y: number) => {
     const bound = canvasRef.current.getBoundingClientRect();
@@ -201,14 +201,14 @@ const Canvas = (props: {
   function onMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
     if (!allowDrawing) return;
     event.preventDefault();
-    switch (mode) {
-      case DrawingMode.Paint:
+    switch (toolMode) {
+      case ToolMode.Paint:
         setDrawing(true);
         setLastPos(translateXY(event.clientX, event.clientY));
         break;
-      case DrawingMode.Fill:
+      case ToolMode.Fill:
         const [x, y] = translateXY(event.clientX, event.clientY);
-        fill(x, y, color);
+        fill(x, y, toolColor);
         break;
       default:
     }
@@ -217,8 +217,8 @@ const Canvas = (props: {
   function onMouseMove(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
     if (!allowDrawing) return;
     event.preventDefault();
-    switch (mode) {
-      case DrawingMode.Paint:
+    switch (toolMode) {
+      case ToolMode.Paint:
         const [lastX, lastY] = lastPos;
         const [x, y] = translateXY(event.clientX, event.clientY);
         if (!drawing) return;
@@ -227,7 +227,7 @@ const Canvas = (props: {
           Math.round(lastY) === Math.round(y)
         )
           return;
-        paint(lastX, lastY, x, y, color);
+        paint(lastX, lastY, x, y, toolColor);
         setLastPos([x, y]);
         break;
       default:
@@ -247,16 +247,16 @@ const Canvas = (props: {
     setAllowDrawing(role !== ControllerRole.Hub);
     switch (role) {
       case ControllerRole.Story:
-        setMode(DrawingMode.Paint);
+        setToolMode(ToolMode.Paint);
         break;
       case ControllerRole.Character:
-        setMode(DrawingMode.Paint);
+        setToolMode(ToolMode.Paint);
         break;
       case ControllerRole.Background:
-        setMode(DrawingMode.Paint);
+        setToolMode(ToolMode.Paint);
         break;
       default:
-        setMode(DrawingMode.None);
+        setToolMode(ToolMode.None);
     }
     const ws = wsRef.current;
     ws?.addEventListener("message", readMessage);
@@ -276,33 +276,35 @@ const Canvas = (props: {
           width: "90vw",
         }}
       />
-      {mode !== DrawingMode.None && (
-        <FormControl component="fieldset">
-          <RadioGroup
-            row
-            value={mode}
-            onChange={(e) => setMode(e.target.value as DrawingMode)}
-          >
-            <FormControlLabel
-              value={DrawingMode.Paint}
-              control={<Radio />}
-              label="Paint"
-            />
-            <FormControlLabel
-              value={DrawingMode.Fill}
-              control={<Radio />}
-              label="Fill"
-            />
-          </RadioGroup>
-        </FormControl>
-      )}
-      {(mode === DrawingMode.Fill || mode === DrawingMode.Paint) && (
+      {toolMode !== ToolMode.None && (
         <div>
           <FormControl component="fieldset">
             <RadioGroup
               row
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
+              value={toolMode}
+              onChange={(e) => setToolMode(e.target.value as ToolMode)}
+            >
+              <FormControlLabel
+                value={ToolMode.Paint}
+                control={<Radio />}
+                label="Paint"
+              />
+              <FormControlLabel
+                value={ToolMode.Fill}
+                control={<Radio />}
+                label="Fill"
+              />
+            </RadioGroup>
+          </FormControl>
+        </div>
+      )}
+      {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
+        <div>
+          <FormControl component="fieldset">
+            <RadioGroup
+              row
+              value={toolColor}
+              onChange={(e) => setToolColor(e.target.value)}
             >
               <FormControlLabel
                 value="#000000ff"
