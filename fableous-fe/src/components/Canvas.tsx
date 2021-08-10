@@ -84,7 +84,7 @@ const Canvas = (props: {
       if (role !== ControllerRole.Hub) {
         const [normX1, normY1] = scaleDownXY(x1, y1);
         const [normX2, normY2] = scaleDownXY(x2, y2);
-        const [normWidth, i] = scaleDownXY(targetWidth || 0, 0);
+        const [normWidth] = scaleDownXY(targetWidth || 0, 0);
         wsRef.current?.send(
           JSON.stringify({
             role,
@@ -198,7 +198,7 @@ const Canvas = (props: {
       ctx.fillText(message, x, y);
       if (role !== ControllerRole.Hub) {
         const [normX, normY] = scaleDownXY(x, y);
-        const [normFontSize, i] = scaleDownXY(fontSize, 0);
+        const [normFontSize] = scaleDownXY(fontSize, 0);
         wsRef.current?.send(
           JSON.stringify({
             role,
@@ -223,7 +223,7 @@ const Canvas = (props: {
         if (msg.role === layer || msg.type === WSMessageType.Control) {
           const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
           const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
-          const [width, i] = scaleUpXY(msg.data.width || 0, 0);
+          const [width] = scaleUpXY(msg.data.width || 0, 0);
           switch (msg.type) {
             case WSMessageType.Paint:
               placePaint(
