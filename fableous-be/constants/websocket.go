@@ -2,6 +2,7 @@ package constants
 
 const (
 	WSMessageTypePaint   = "PAINT"
+	WSMessageTypeFill    = "FILL"
 	WSMessageTypeText    = "TEXT"
 	WSMessageTypeAudio   = "AUDIO"
 	WSMessageTypeConnect = "CONNECT"
