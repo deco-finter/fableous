@@ -131,7 +131,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, r
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill:
+		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText:
 			// TODO: use WS hub
 			var hubConn *websocket.Conn
 			m.sessions.mutex.RLock()
