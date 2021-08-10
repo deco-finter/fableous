@@ -79,6 +79,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err
 	classroomToken := utils.GenerateRandomString(constants.ClassroomTokenLength)
 	m.sessions.mutex.Lock()
 	m.sessions.keys[classroomToken] = &session{
+		conn:                conn,
 		classroomID:         classroomID,
 		characterConnected:  false,
 		backgroundConnected: false,
@@ -87,9 +88,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err
 	m.sessions.mutex.Unlock()
 	_ = conn.WriteJSON(datatransfers.WSMessage{
 		Type: constants.WSMessageTypeControl,
-		Data: datatransfers.WSMessageData{
-			Text: classroomToken,
-		},
+		Data: classroomToken,
 	})
 	for {
 		var message datatransfers.WSMessage
@@ -99,9 +98,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err
 			}
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypeError,
-				Data: datatransfers.WSMessageData{
-					Text: "failed reading message",
-				},
+				Data: "failed reading message",
 			})
 			break
 		}
@@ -113,9 +110,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err
 		default:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypeError,
-				Data: datatransfers.WSMessageData{
-					Text: "unsupported message type",
-				},
+				Data: "unsupported message type",
 			})
 		}
 	}
@@ -131,13 +126,22 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, r
 			}
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypeError,
-				Data: datatransfers.WSMessageData{
-					Text: "failed reading message",
-				},
+				Data: "failed reading message",
 			})
 			break
 		}
 		switch message.Type {
+		case constants.WSMessageTypePaint:
+			// TODO: use WS hub
+			var hubConn *websocket.Conn
+			m.sessions.mutex.RLock()
+			if session, ok := m.sessions.keys[classroomToken]; ok {
+				hubConn = session.conn
+			} else {
+				break
+			}
+			m.sessions.mutex.RUnlock()
+			_ = hubConn.WriteJSON(message)
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypePing,
@@ -145,9 +149,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, r
 		default:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypeError,
-				Data: datatransfers.WSMessageData{
-					Text: "unsupported message type",
-				},
+				Data: "unsupported message type",
 			})
 		}
 	}

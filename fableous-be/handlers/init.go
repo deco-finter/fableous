@@ -49,6 +49,7 @@ type sessionsEntity struct {
 }
 
 type session struct {
+	conn                *websocket.Conn
 	classroomID         string
 	characterConnected  bool
 	backgroundConnected bool
