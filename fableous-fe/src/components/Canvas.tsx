@@ -16,6 +16,7 @@ import Slider from "@material-ui/core/Slider";
 import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 
 const ASPECT_RATIO = 9 / 16;
+const SCALE = 2;
 
 const Canvas = (props: {
   wsRef: MutableRefObject<WebSocket | undefined>;
@@ -33,7 +34,7 @@ const Canvas = (props: {
 
   const translateXY = (x: number, y: number) => {
     const bound = canvasRef.current.getBoundingClientRect();
-    return [x - bound.x, y - bound.y];
+    return [(x - bound.x) * SCALE, (y - bound.y) * SCALE];
   };
 
   const scaleDownXY = (x: number, y: number) => {
@@ -78,6 +79,7 @@ const Canvas = (props: {
       ctx.lineWidth = targetWidth;
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
+      ctx.closePath();
       ctx.stroke();
       if (role !== ControllerRole.Hub) {
         const [normX1, normY1] = scaleDownXY(x1, y1);
@@ -257,8 +259,8 @@ const Canvas = (props: {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetWidth * ASPECT_RATIO;
+    canvas.width = canvas.offsetWidth * SCALE;
+    canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
     setAllowDrawing(role !== ControllerRole.Hub);
     switch (role) {
       case ControllerRole.Story:
@@ -320,10 +322,10 @@ const Canvas = (props: {
             valueLabelDisplay="auto"
             value={toolWidth}
             onChange={(e, width) => setToolWidth(width as number)}
-            step={4}
+            step={4 * SCALE}
             marks
-            min={4}
-            max={32}
+            min={4 * SCALE}
+            max={32 * SCALE}
           />
         </div>
       )}
