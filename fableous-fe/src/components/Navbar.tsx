@@ -11,7 +11,10 @@ interface NavbarLinkInfo {
 
 export default function Navbar() {
   const title = "fableous";
-  const links: NavbarLinkInfo[] = [{ to: "/canvas", text: "canvas" }];
+  const links: NavbarLinkInfo[] = [
+    { to: "/canvas", text: "canvas" },
+    { to: "/join", text: "join" },
+  ];
 
   return (
     <div className="flex-grow">
