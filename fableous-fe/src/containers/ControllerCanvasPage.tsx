@@ -8,28 +8,36 @@ import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import { TextField } from "@material-ui/core";
 import Canvas from "../components/Canvas";
-import { ControllerRole } from "../Data";
+import { ControllerRole, WSMessageType } from "../Data";
 
 export default function ControllerCanvasPage() {
   const wsRef = useRef<WebSocket>();
   const [controllerReady, setControllerReady] = useState(false);
   const [classroomToken, setClassroomToken] = useState("");
   const [name, setName] = useState("");
+  const [ping, setPing] = useState<NodeJS.Timeout>();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
-
-  useEffect(() => {
-    return () => {
-      wsRef.current?.close();
-      wsRef.current = undefined;
-    };
-  }, [classroomToken]);
 
   const joinSession = () => {
     wsRef.current = new WebSocket(
       `wss://dev.fableous.daystram.com/ws/controller?classroom_token=${classroomToken}&role=${role}&name=${name}`
     );
     wsRef.current.onopen = () => setControllerReady(true);
+    setPing(
+      setInterval(
+        () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
+        5000
+      )
+    );
   };
+
+  useEffect(() => {
+    return () => {
+      if (ping) clearInterval(ping);
+      wsRef.current?.close();
+      wsRef.current = undefined;
+    };
+  }, [classroomToken, ping]);
 
   return (
     <>
