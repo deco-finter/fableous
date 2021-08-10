@@ -25,6 +25,8 @@ export enum WSMessageType {
 export enum ToolMode {
   Paint = "PAINT",
   Fill = "FILL",
+  Text = "TEXT",
+  Audio = "AUDIO",
   None = "NONE",
 }
 

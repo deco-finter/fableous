@@ -60,7 +60,7 @@ const Canvas = (props: {
       : [0, 0, 0, 0];
   };
 
-  const paint = useCallback(
+  const placePaint = useCallback(
     (
       x1: number,
       y1: number,
@@ -104,7 +104,7 @@ const Canvas = (props: {
     [role, wsRef]
   );
 
-  const fill = useCallback(
+  const placeFill = useCallback(
     (startX: number, startY: number, targetColor: string) => {
       const ctx = canvasRef.current.getContext(
         "2d"
@@ -187,31 +187,66 @@ const Canvas = (props: {
     [role, wsRef]
   );
 
+  const placeText = useCallback(
+    (x, y, message) => {
+      if (!message) return;
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      ctx.font = `${18 * SCALE}px Arial`;
+      ctx.textAlign = "center";
+      ctx.fillText(message, x, y);
+      if (role !== ControllerRole.Hub) {
+        const [normX, normY] = scaleDownXY(x, y);
+        wsRef.current?.send(
+          JSON.stringify({
+            role,
+            type: WSMessageType.Text,
+            data: {
+              x1: normX,
+              y1: normY,
+              text: message,
+            },
+          } as WSMessage)
+        );
+      }
+    },
+    [role, wsRef]
+  );
+
   const readMessage = useCallback(
     (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
-        const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
-        const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
-        const [width, i] = scaleUpXY(msg.data.width || 0, 0);
-        switch (msg.type) {
-          case WSMessageType.Paint:
-            if (msg.role === layer) {
-              paint(x1, y1, x2, y2, msg.data.color || "#000000ff", width || 8);
-            }
-            break;
-          case WSMessageType.Fill:
-            if (msg.role === layer) {
-              fill(x1, y1, msg.data.color || "#000000ff");
-            }
-            break;
-          default:
+        if (msg.role === layer || msg.type === WSMessageType.Control) {
+          const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
+          const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
+          const [width, i] = scaleUpXY(msg.data.width || 0, 0);
+          switch (msg.type) {
+            case WSMessageType.Paint:
+              placePaint(
+                x1,
+                y1,
+                x2,
+                y2,
+                msg.data.color || "#000000ff",
+                width || 8
+              );
+              break;
+            case WSMessageType.Fill:
+              placeFill(x1, y1, msg.data.color || "#000000ff");
+              break;
+            case WSMessageType.Text:
+              placeText(x1, y1, msg.data.text || "");
+              break;
+            default:
+          }
         }
       } catch (e) {
         console.log(e);
       }
     },
-    [fill, paint, layer]
+    [placePaint, placeFill, placeText, layer]
   );
 
   function onMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
@@ -221,11 +256,15 @@ const Canvas = (props: {
     switch (toolMode) {
       case ToolMode.Paint:
         setDrawing(true);
-        paint(x, y, x, y, toolColor, toolWidth);
+        placePaint(x, y, x, y, toolColor, toolWidth);
         setLastPos([x, y]);
         break;
       case ToolMode.Fill:
-        fill(x, y, toolColor);
+        placeFill(x, y, toolColor);
+        break;
+      case ToolMode.Text:
+        // eslint-disable-next-line no-alert
+        placeText(x, y, prompt("What do you want to write?")); // TODO
         break;
       default:
     }
@@ -244,7 +283,7 @@ const Canvas = (props: {
           Math.round(lastY) === Math.round(y)
         )
           return;
-        paint(lastX, lastY, x, y, toolColor, toolWidth);
+        placePaint(lastX, lastY, x, y, toolColor, toolWidth);
         setLastPos([x, y]);
         break;
       default:
@@ -264,7 +303,7 @@ const Canvas = (props: {
     setAllowDrawing(role !== ControllerRole.Hub);
     switch (role) {
       case ControllerRole.Story:
-        setToolMode(ToolMode.Paint);
+        setToolMode(ToolMode.Text);
         break;
       case ControllerRole.Character:
         setToolMode(ToolMode.Paint);
@@ -301,16 +340,36 @@ const Canvas = (props: {
               value={toolMode}
               onChange={(e) => setToolMode(e.target.value as ToolMode)}
             >
-              <FormControlLabel
-                value={ToolMode.Paint}
-                control={<Radio />}
-                label="Paint"
-              />
-              <FormControlLabel
-                value={ToolMode.Fill}
-                control={<Radio />}
-                label="Fill"
-              />
+              {role === ControllerRole.Story && (
+                <>
+                  <FormControlLabel
+                    value={ToolMode.Text}
+                    control={<Radio />}
+                    label="Text"
+                  />
+                  <FormControlLabel
+                    disabled
+                    value={ToolMode.Audio}
+                    control={<Radio />}
+                    label="Audio"
+                  />
+                </>
+              )}
+              {(role === ControllerRole.Character ||
+                role === ControllerRole.Background) && (
+                <>
+                  <FormControlLabel
+                    value={ToolMode.Paint}
+                    control={<Radio />}
+                    label="Paint"
+                  />
+                  <FormControlLabel
+                    value={ToolMode.Fill}
+                    control={<Radio />}
+                    label="Fill"
+                  />
+                </>
+              )}
             </RadioGroup>
           </FormControl>
         </div>
