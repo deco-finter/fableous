@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-case-declarations */
 import React, {
@@ -81,6 +82,7 @@ const Canvas = (props: {
       if (role !== ControllerRole.Hub) {
         const [normX1, normY1] = scaleDownXY(x1, y1);
         const [normX2, normY2] = scaleDownXY(x2, y2);
+        const [normWidth, i] = scaleDownXY(targetWidth || 0, 0);
         wsRef.current?.send(
           JSON.stringify({
             role,
@@ -91,7 +93,7 @@ const Canvas = (props: {
               x2: normX2,
               y2: normY2,
               color: targetColor,
-              width: targetWidth,
+              width: normWidth,
             },
           } as WSMessage)
         );
@@ -105,7 +107,8 @@ const Canvas = (props: {
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
-
+      startX = Math.floor(startX);
+      startY = Math.floor(startY);
       const { width, height } = canvasRef.current;
       const image = ctx.getImageData(0, 0, width, height);
       const startPixel = (startY * width + startX) * 4;
@@ -115,6 +118,7 @@ const Canvas = (props: {
         image.data[startPixel + 2],
         image.data[startPixel + 3],
       ];
+      console.log(startX, startY);
       const setPixel = (pixel: number, rgb: number[]) => {
         [
           image.data[pixel],
@@ -167,14 +171,13 @@ const Canvas = (props: {
         }
       }
       ctx.putImageData(image, 0, 0);
-
-      const [normX, normY] = scaleDownXY(startX, startY);
       if (role !== ControllerRole.Hub) {
+        const [normX, normY] = scaleDownXY(startX, startY);
         wsRef.current?.send(
           JSON.stringify({
             role,
             type: WSMessageType.Fill,
-            data: { x: normX, y: normY, color: targetColor },
+            data: { x1: normX, y1: normY, color: targetColor },
           } as WSMessage)
         );
       }
@@ -186,25 +189,18 @@ const Canvas = (props: {
     (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
+        const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
+        const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
+        const [width, i] = scaleUpXY(msg.data.width || 0, 0);
         switch (msg.type) {
           case WSMessageType.Paint:
             if (msg.role === layer) {
-              const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
-              const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
-              paint(
-                x1,
-                y1,
-                x2,
-                y2,
-                msg.data.color || "#000000ff",
-                msg.data.width || 8
-              );
+              paint(x1, y1, x2, y2, msg.data.color || "#000000ff", width || 8);
             }
             break;
           case WSMessageType.Fill:
             if (msg.role === layer) {
-              const [x, y] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
-              fill(x, y, msg.data.color || "#000000ff");
+              fill(x1, y1, msg.data.color || "#000000ff");
             }
             break;
           default:
@@ -219,13 +215,14 @@ const Canvas = (props: {
   function onMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
     if (!allowDrawing) return;
     event.preventDefault();
+    const [x, y] = translateXY(event.clientX, event.clientY);
     switch (toolMode) {
       case ToolMode.Paint:
         setDrawing(true);
-        setLastPos(translateXY(event.clientX, event.clientY));
+        paint(x, y, x, y, toolColor, toolWidth);
+        setLastPos([x, y]);
         break;
       case ToolMode.Fill:
-        const [x, y] = translateXY(event.clientX, event.clientY);
         fill(x, y, toolColor);
         break;
       default:
@@ -235,10 +232,10 @@ const Canvas = (props: {
   function onMouseMove(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
     if (!allowDrawing) return;
     event.preventDefault();
+    const [lastX, lastY] = lastPos;
+    const [x, y] = translateXY(event.clientX, event.clientY);
     switch (toolMode) {
       case ToolMode.Paint:
-        const [lastX, lastY] = lastPos;
-        const [x, y] = translateXY(event.clientX, event.clientY);
         if (!drawing) return;
         if (
           Math.round(lastX) === Math.round(x) &&
@@ -357,6 +354,11 @@ const Canvas = (props: {
                 value="#0000ffff"
                 control={<Radio />}
                 label="Blue"
+              />
+              <FormControlLabel
+                value="#00000000"
+                control={<Radio />}
+                label="Erase"
               />
             </RadioGroup>
           </FormControl>
