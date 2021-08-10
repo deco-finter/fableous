@@ -56,7 +56,9 @@ export default function ControllerCanvasPage() {
                 <FormLabel component="legend">Token</FormLabel>
                 <TextField
                   value={classroomToken}
-                  onChange={(e) => setClassroomToken(e.target.value)}
+                  onChange={(e) =>
+                    setClassroomToken(e.target.value.toUpperCase())
+                  }
                 />
               </div>
               <div>
