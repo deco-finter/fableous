@@ -7,18 +7,25 @@ export interface WSMessage {
     x2?: number;
     y2?: number;
     text?: string;
-    colour?: string;
+    color?: string;
     width?: number;
   };
 }
 
 export enum WSMessageType {
   Paint = "PAINT",
+  Fill = "FILL",
   Text = "TEXT",
   Audio = "AUDIO",
   Connect = "CONNECT",
   Control = "CONTROL",
   Ping = "PING",
+}
+
+export enum DrawingMode {
+  Paint = "PAINT",
+  Fill = "FILL",
+  None = "NONE",
 }
 
 export enum ControllerRole {

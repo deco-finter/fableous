@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-case-declarations */
 import React, {
@@ -24,6 +23,7 @@ const Canvas = (props: {
   const { layer, role, wsRef } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [allowDrawing, setAllowDrawing] = useState(false);
+  const [color, setColor] = useState("#000000ff");
   const [drawing, setDrawing] = useState(false);
   const [lastPos, setLastPos] = useState([0, 0]);
   const [mode, setMode] = useState<DrawingMode>(DrawingMode.None);
@@ -41,11 +41,30 @@ const Canvas = (props: {
     return [x * canvasRef.current.width, y * canvasRef.current.height];
   };
 
+  const convHEXtoRGBA = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+      hex
+    );
+    console.log(hex);
+    return result
+      ? [
+          parseInt(result[1], 16),
+          parseInt(result[2], 16),
+          parseInt(result[3], 16),
+          parseInt(result[4], 16),
+        ]
+      : [0, 0, 0, 0];
+  };
+
   const paint = useCallback(
-    (x1: number, y1: number, x2: number, y2: number) => {
+    (x1: number, y1: number, x2: number, y2: number, targetColor: string) => {
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
+      ctx.beginPath();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = targetColor;
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
@@ -56,7 +75,13 @@ const Canvas = (props: {
           JSON.stringify({
             role,
             type: WSMessageType.Paint,
-            data: { x1: normX1, y1: normY1, x2: normX2, y2: normY2 },
+            data: {
+              x1: normX1,
+              y1: normY1,
+              x2: normX2,
+              y2: normY2,
+              color: targetColor,
+            },
           })
         );
       }
@@ -65,7 +90,7 @@ const Canvas = (props: {
   );
 
   const fill = useCallback(
-    (startX: number, startY: number) => {
+    (startX: number, startY: number, targetColor: string) => {
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
@@ -79,27 +104,28 @@ const Canvas = (props: {
         image.data[startPixel + 2],
         image.data[startPixel + 3],
       ];
-      const setPixel = (pixel: number, color: number[]) => {
+      const setPixel = (pixel: number, rgb: number[]) => {
         [
           image.data[pixel],
           image.data[pixel + 1],
           image.data[pixel + 2],
           image.data[pixel + 3],
-        ] = color;
+        ] = rgb;
       };
-      const checkPixel = (pixel: number, color: number[]) => {
+      const checkPixel = (pixel: number, rgb: number[]) => {
         return (
-          image.data[pixel] === color[0] &&
-          image.data[pixel + 1] === color[1] &&
-          image.data[pixel + 2] === color[2] &&
-          image.data[pixel + 3] === color[3]
+          image.data[pixel] === rgb[0] &&
+          image.data[pixel + 1] === rgb[1] &&
+          image.data[pixel + 2] === rgb[2] &&
+          image.data[pixel + 3] === rgb[3]
         );
       };
-      let color = [255, 0, 0, 255];
-      let stack = [[startX, startY]];
-      if (checkPixel(startPixel, color)) return;
+      const colorRGB = convHEXtoRGBA(targetColor);
+      const stack = [[startX, startY]];
+      if (checkPixel(startPixel, colorRGB)) return;
       while (stack.length) {
-        let [x, y] = stack.pop()!;
+        // eslint-disable-next-line prefer-const
+        let [x, y] = stack.pop() || [startX, startY];
         let pixel = (y * width + x) * 4;
         while (y-- > 0 && checkPixel(pixel, startColor)) {
           pixel -= width * 4;
@@ -109,7 +135,7 @@ const Canvas = (props: {
         let expandLeft = false;
         let expandRight = false;
         while (y++ < height - 1 && checkPixel(pixel, startColor)) {
-          setPixel(pixel, color);
+          setPixel(pixel, colorRGB);
           if (x > 0) {
             if (checkPixel(pixel - 4, startColor) && !expandLeft) {
               stack.push([x - 1, y]);
@@ -137,7 +163,7 @@ const Canvas = (props: {
           JSON.stringify({
             role,
             type: WSMessageType.Fill,
-            data: { x: normX, y: normY },
+            data: { x: normX, y: normY, color: targetColor },
           })
         );
       }
@@ -154,13 +180,13 @@ const Canvas = (props: {
             if (msg.role === layer) {
               const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
               const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
-              paint(x1, y1, x2, y2);
+              paint(x1, y1, x2, y2, msg.data.color || "#000000ff");
             }
             break;
           case WSMessageType.Fill:
             if (msg.role === layer) {
               const [x, y] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
-              fill(x, y);
+              fill(x, y, msg.data.color || "#000000ff");
             }
             break;
           default:
@@ -182,7 +208,7 @@ const Canvas = (props: {
         break;
       case DrawingMode.Fill:
         const [x, y] = translateXY(event.clientX, event.clientY);
-        fill(x, y);
+        fill(x, y, color);
         break;
       default:
     }
@@ -201,7 +227,7 @@ const Canvas = (props: {
           Math.round(lastY) === Math.round(y)
         )
           return;
-        paint(lastX, lastY, x, y);
+        paint(lastX, lastY, x, y, color);
         setLastPos([x, y]);
         break;
       default:
@@ -235,7 +261,8 @@ const Canvas = (props: {
     const ws = wsRef.current;
     ws?.addEventListener("message", readMessage);
     return () => ws?.removeEventListener("message", readMessage);
-  }, [readMessage, role, wsRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, wsRef]);
 
   return (
     <>
@@ -269,8 +296,38 @@ const Canvas = (props: {
           </RadioGroup>
         </FormControl>
       )}
-      {mode === DrawingMode.Paint && <div>Brush</div>}
-      {mode === DrawingMode.Fill && <div>Bucket</div>}
+      {(mode === DrawingMode.Fill || mode === DrawingMode.Paint) && (
+        <div>
+          <FormControl component="fieldset">
+            <RadioGroup
+              row
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+            >
+              <FormControlLabel
+                value="#000000ff"
+                control={<Radio />}
+                label="Black"
+              />
+              <FormControlLabel
+                value="#ff0000ff"
+                control={<Radio />}
+                label="Red"
+              />
+              <FormControlLabel
+                value="#00ff00ff"
+                control={<Radio />}
+                label="Green"
+              />
+              <FormControlLabel
+                value="#0000ffff"
+                control={<Radio />}
+                label="Blue"
+              />
+            </RadioGroup>
+          </FormControl>
+        </div>
+      )}
     </>
   );
 };
