@@ -52,7 +52,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [editingTextId, setEditingTextId] = useState(0);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
-    const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
+    const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
@@ -292,14 +292,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const placeAudio = (b64Audio: string) => {
-      fetch(b64Audio).then((res) =>
-        res.blob().then((blob) => {
-          const player = document.createElement("audio");
-          player.src = window.URL.createObjectURL(blob);
-          player.play();
-          setAudioBlobs((prev) => [...prev, blob]);
-        })
-      );
+      const player = document.createElement("audio");
+      player.src = b64Audio;
+      player.play();
+      setAudioB64Strings((prev) => [...prev, b64Audio]);
     };
 
     const initAudio = () => {
@@ -545,9 +541,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           }}
         />
         {role === ControllerRole.Hub &&
-          audioBlobs.map((blob) => (
-            <audio src={window.URL.createObjectURL(blob)} controls />
-          ))}
+          audioB64Strings.map((b64Audio) => <audio src={b64Audio} controls />)}
         {toolMode !== ToolMode.None && (
           <div>
             <FormControl component="fieldset">
