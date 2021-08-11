@@ -84,7 +84,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         // clear overlapped pixels
         ctx.globalCompositeOperation = "destination-out";
         ctx.strokeStyle = "white";
-        ctx.lineWidth = targetWidth - 1; // compensate aliased edges
+        ctx.lineWidth = targetWidth - 3; // compensate aliased edges
         ctx.stroke();
         // draw new pixels
         ctx.globalCompositeOperation = "source-over";
