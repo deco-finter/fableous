@@ -4,7 +4,7 @@ module.exports = {
     "airbnb/hooks",
     "plugin:@typescript-eslint/recommended",
     "plugin:jest/recommended",
-    "plugin:prettier/recommended"
+    "plugin:prettier/recommended",
   ],
   plugins: ["react", "@typescript-eslint", "jest"],
   env: {
@@ -19,11 +19,11 @@ module.exports = {
   // resolve parserOptions.project warning, src: https://stackoverflow.com/a/64488474/11337921
   overrides: [
     {
-      files: ['*.ts', '*.tsx'], // Your TypeScript files extension
+      files: ["*.ts", "*.tsx"], // Your TypeScript files extension
       parserOptions: {
-        project: ['./tsconfig.json'], // Specify it only for TypeScript files
+        project: ["./tsconfig.json"], // Specify it only for TypeScript files
       },
-    }
+    },
   ],
   // end
   parser: "@typescript-eslint/parser",
@@ -32,10 +32,11 @@ module.exports = {
       jsx: true,
     },
     ecmaVersion: 2018,
-    sourceType: "module"
+    sourceType: "module",
   },
   rules: {
     "linebreak-style": "off",
+    "no-console": "off",
     "prettier/prettier": [
       "error",
       {
