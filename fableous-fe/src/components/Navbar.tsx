@@ -26,7 +26,7 @@ export default function Navbar() {
             </Typography>
           </Button>
           {links.map((link) => (
-            <Button className="mr-4">
+            <Button className="mr-4" key={link.to}>
               <Typography variant="h6" className="text-white capitalize">
                 <Link to={link.to}>{link.text}</Link>
               </Typography>
