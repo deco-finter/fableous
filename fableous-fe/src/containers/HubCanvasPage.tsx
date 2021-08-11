@@ -1,12 +1,13 @@
 import { useRef, useEffect, useState } from "react";
-import { Button, Grid } from "@material-ui/core";
+import FormControl from "@material-ui/core/FormControl";
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
+import TextField from "@material-ui/core/TextField";
 import Canvas from "../components/Canvas";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
 
 export default function HubCanvasPage() {
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNWQ0OWNmZS01YjNkLTRiOGItYmVjNS1mMDcwYjE5YjI0N2YiLCJleHAiOjE2Mjg3MzkxNzYsImlhdCI6MTYyODU2NjM3Nn0.-aBTRYMqjCar6Oi3MC0grob4YMRYQxUVRVuW48ov16w";
-  const classroomId = "room";
+  const wsRef = useRef<WebSocket>();
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
@@ -16,9 +17,13 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
-  const wsRef = useRef<WebSocket>();
-  const [hubReady, setHubReady] = useState(false);
+  const [classroomId, setClassroomId] = useState("");
   const [classroomToken, setClassroomToken] = useState("");
+  const [hubReady, setHubReady] = useState(false);
+  const [ping, setPing] = useState<NodeJS.Timeout>();
+  const [token, setToken] = useState(
+    localStorage.getItem("authorization") || ""
+  );
 
   const exportCanvas = () => {
     const canvas = document.createElement("canvas");
@@ -33,7 +38,6 @@ export default function HubCanvasPage() {
     ctx.drawImage(backgroundCanvasRef.current, 0, 0, width, height);
     ctx.drawImage(characterCanvasRef.current, 0, 0, width, height);
     ctx.drawImage(storyCanvasRef.current, 0, 0, width, height);
-
     const link = document.createElement("a");
     link.download = "output.png";
     link.href = canvas
@@ -42,9 +46,12 @@ export default function HubCanvasPage() {
     link.click();
   };
 
-  useEffect(() => {
+  const beginSession = () => {
     wsRef.current = new WebSocket(
-      `wss://dev.fableous.daystram.com/ws/hub?token=${token}&classroom_id=${classroomId}`
+      `wss://dev.fableous.daystram.com/ws/hub?token=${token.substring(
+        7,
+        token.length
+      )}&classroom_id=${classroomId}`
     );
     wsRef.current.onopen = () => setHubReady(true);
     wsRef.current.onmessage = (ev: MessageEvent) => {
@@ -57,24 +64,46 @@ export default function HubCanvasPage() {
           default:
         }
       } catch (e) {
-        console.log(e);
+        console.error(e);
       }
     };
-    const ping = setInterval(
+    const interval = setInterval(
       () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
       5000
     );
+    setPing(interval);
+  };
+
+  useEffect(() => {
     return () => {
-      clearInterval(ping);
+      if (ping) clearInterval(ping);
       wsRef.current?.close();
       wsRef.current = undefined;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <>
       <Grid item xs={12}>
-        {hubReady && (
+        {!hubReady ? (
+          <FormControl component="fieldset">
+            <TextField
+              value={token}
+              onChange={(e) => {
+                setToken(e.target.value);
+                localStorage.setItem("authorization", e.target.value);
+              }}
+              placeholder="Auth Token"
+            />
+            <TextField
+              value={classroomId}
+              onChange={(e) => setClassroomId(e.target.value)}
+              placeholder="Classroom ID"
+            />
+            <Button onClick={beginSession}>Start Session</Button>
+          </FormControl>
+        ) : (
           <>
             Hub {classroomToken}
             <div style={{ display: "grid" }}>

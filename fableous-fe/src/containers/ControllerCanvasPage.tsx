@@ -3,21 +3,20 @@ import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
-import FormLabel from "@material-ui/core/FormLabel";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import { TextField } from "@material-ui/core";
+import TextField from "@material-ui/core/TextField";
 import Canvas from "../components/Canvas";
 import { ControllerRole, WSMessageType } from "../Data";
 
 export default function ControllerCanvasPage() {
   const wsRef = useRef<WebSocket>();
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [controllerReady, setControllerReady] = useState(false);
   const [classroomToken, setClassroomToken] = useState("");
   const [name, setName] = useState("");
   const [ping, setPing] = useState<NodeJS.Timeout>();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
 
   const joinSession = () => {
     wsRef.current = new WebSocket(
@@ -46,46 +45,39 @@ export default function ControllerCanvasPage() {
         {!controllerReady ? (
           <>
             <FormControl component="fieldset">
-              <div>
-                <FormLabel component="legend">Name</FormLabel>
-                <TextField
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+              <TextField
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Name"
+              />
+              <TextField
+                value={classroomToken}
+                onChange={(e) =>
+                  setClassroomToken(e.target.value.toUpperCase())
+                }
+                placeholder="Token"
+              />
+              <RadioGroup
+                value={role}
+                onChange={(e) => setRole(e.target.value as ControllerRole)}
+              >
+                <FormControlLabel
+                  value={ControllerRole.Story}
+                  control={<Radio />}
+                  label="Story"
                 />
-              </div>
-              <div>
-                <FormLabel component="legend">Token</FormLabel>
-                <TextField
-                  value={classroomToken}
-                  onChange={(e) =>
-                    setClassroomToken(e.target.value.toUpperCase())
-                  }
+                <FormControlLabel
+                  value={ControllerRole.Character}
+                  control={<Radio />}
+                  label="Character"
                 />
-              </div>
-              <div>
-                <FormLabel component="legend">Role</FormLabel>
-                <RadioGroup
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as ControllerRole)}
-                >
-                  <FormControlLabel
-                    value={ControllerRole.Story}
-                    control={<Radio />}
-                    label="Story"
-                  />
-                  <FormControlLabel
-                    value={ControllerRole.Character}
-                    control={<Radio />}
-                    label="Character"
-                  />
-                  <FormControlLabel
-                    value={ControllerRole.Background}
-                    control={<Radio />}
-                    label="Background"
-                  />
-                </RadioGroup>
-              </div>
-              <Button onClick={joinSession}>Join</Button>
+                <FormControlLabel
+                  value={ControllerRole.Background}
+                  control={<Radio />}
+                  label="Background"
+                />
+              </RadioGroup>
+              <Button onClick={joinSession}>Join Session</Button>
             </FormControl>
           </>
         ) : (
