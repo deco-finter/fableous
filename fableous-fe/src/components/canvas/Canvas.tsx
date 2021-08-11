@@ -390,8 +390,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           console.error(e);
         }
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [layer, placePaint, placeFill, placeText, refreshText, textShapes]
+      [layer, canvasRef, placePaint, placeFill, placeText]
     );
 
     function onMouseDown(
@@ -512,6 +511,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       return () => {
         ws?.removeEventListener("message", readMessage);
       };
+      // only trigger once during componentMount
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, wsRef]);
 
