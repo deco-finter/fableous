@@ -17,6 +17,7 @@ export default function ControllerCanvasPage() {
   const [name, setName] = useState("");
   const [ping, setPing] = useState<NodeJS.Timeout>();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
 
   const joinSession = () => {
     wsRef.current = new WebSocket(
@@ -90,7 +91,7 @@ export default function ControllerCanvasPage() {
         ) : (
           <>
             {role}
-            <Canvas wsRef={wsRef} role={role} layer={role} />
+            <Canvas ref={canvasRef} wsRef={wsRef} role={role} layer={role} />
           </>
         )}
       </Grid>

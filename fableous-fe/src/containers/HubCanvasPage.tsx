@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from "react";
-import { Grid } from "@material-ui/core";
+import { useRef, useEffect, useState, createRef } from "react";
+import { Button, Grid } from "@material-ui/core";
 import Canvas from "../components/Canvas";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
 
@@ -7,6 +7,15 @@ export default function HubCanvasPage() {
   const token =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNWQ0OWNmZS01YjNkLTRiOGItYmVjNS1mMDcwYjE5YjI0N2YiLCJleHAiOjE2Mjg3MzkxNzYsImlhdCI6MTYyODU2NjM3Nn0.-aBTRYMqjCar6Oi3MC0grob4YMRYQxUVRVuW48ov16w";
   const classroomId = "room";
+  const storyCanvasRef = useRef<HTMLCanvasElement>(
+    document.createElement("canvas")
+  );
+  const characterCanvasRef = useRef<HTMLCanvasElement>(
+    document.createElement("canvas")
+  );
+  const backgroundCanvasRef = useRef<HTMLCanvasElement>(
+    document.createElement("canvas")
+  );
   const wsRef = useRef<WebSocket>();
   const [hubReady, setHubReady] = useState(false);
   const [classroomToken, setClassroomToken] = useState("");
@@ -49,6 +58,7 @@ export default function HubCanvasPage() {
             <div style={{ display: "grid" }}>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
                 <Canvas
+                  ref={storyCanvasRef}
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
@@ -56,6 +66,7 @@ export default function HubCanvasPage() {
               </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
                 <Canvas
+                  ref={characterCanvasRef}
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
@@ -63,6 +74,7 @@ export default function HubCanvasPage() {
               </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
                 <Canvas
+                  ref={backgroundCanvasRef}
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
