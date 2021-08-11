@@ -17,7 +17,7 @@ import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 
 const ASPECT_RATIO = 9 / 16;
 const SCALE = 2;
-const FRAMETIME = 15;
+const FRAMETIME = 1000 / 60;
 
 const SELECT_PADDING = 8;
 
@@ -226,8 +226,6 @@ const Canvas = (props: {
 
   const placeText = useCallback(
     (x, y, id, text, fontSize) => {
-      console.log(x, y);
-      if (!text) return;
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
@@ -276,7 +274,7 @@ const Canvas = (props: {
         (shape.x1 + shape.x2) / 2,
         (shape.y1 + shape.y2) / 2
       );
-      if (parseInt(id, 10) === editingText || ControllerRole.Hub) {
+      if (parseInt(id, 10) === editingText) {
         ctx.beginPath();
         ctx.strokeStyle = "#00aaaa";
         ctx.rect(
@@ -311,8 +309,8 @@ const Canvas = (props: {
         setEditingText(clickedId);
         console.log(clicked);
       } else {
-        // eslint-disable-next-line no-alert
-        placeText(x, y, textId, prompt("What do you want to write?"), 18);
+        placeText(x, y, textId, "", 18);
+        setEditingText(textId);
         setTextId(textId + 1);
       }
     } else if (clicked) {
@@ -343,7 +341,6 @@ const Canvas = (props: {
               placeFill(x1, y1, msg.data.color || "#000000ff");
               break;
             case WSMessageType.Text:
-              // TODO
               placeText(
                 x1,
                 y1,
@@ -365,18 +362,20 @@ const Canvas = (props: {
   const onKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!editingText) return;
-      event.preventDefault();
+      const shape = textShapes[editingText];
       const { key } = event;
       if (key === "Escape" || key === "Enter") {
         setEditingText(0);
+        if (!shape.text) {
+          // asd
+        }
       }
       if (key.length === 1 || key === "Backspace") {
-        const shape = textShapes[editingText];
-        if (key === "Backspace") {
+        if (key.length === 1) {
+          shape.text += key;
+        } else if (key === "Backspace") {
           if (shape.text)
             shape.text = shape.text.substring(0, shape.text.length - 1);
-        } else {
-          shape.text += key;
         }
         placeText(
           (shape.x1 + shape.x2) / 2,
@@ -536,6 +535,12 @@ const Canvas = (props: {
               )}
             </RadioGroup>
           </FormControl>
+        </div>
+      )}
+      {toolMode === ToolMode.Text && (
+        <div>
+          Click on canvas insert text. Press ESC or ENTER when finished. Click
+          on text again to edit text.
         </div>
       )}
       {toolMode === ToolMode.Paint && (
