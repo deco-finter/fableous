@@ -388,9 +388,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [layer, canvasRef, placePaint, placeFill, placeText]
     );
 
-    function onMouseDown(
-      event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
-    ) {
+    function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
       event.preventDefault();
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
@@ -413,9 +411,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }
 
-    function onMouseMove(
-      event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
-    ) {
+    function onPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
       if (!allowDrawing) return;
       event.preventDefault();
       const [lastX, lastY] = lastPos;
@@ -441,7 +437,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setLastPos([x, y]);
     }
 
-    function onMouseUp(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    function onPointerUp(event: React.PointerEvent<HTMLCanvasElement>) {
       if (!allowDrawing) return;
       event.preventDefault();
       if (dragging) setEditingTextId(0);
@@ -532,12 +528,15 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       <>
         <canvas
           ref={canvasRef}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
           style={{
             borderWidth: 4,
             width: "100%",
+            // allows onPointerMove to be fired continuously on touch,
+            // else will be treated as pan gesture leading to short strokes
+            touchAction: "none",
           }}
         />
         {role === ControllerRole.Hub &&
