@@ -5,6 +5,7 @@ import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import Canvas from "../components/Canvas";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
+import { wsAPI } from "../Api";
 
 export default function HubCanvasPage() {
   const wsRef = useRef<WebSocket>();
@@ -47,12 +48,7 @@ export default function HubCanvasPage() {
   };
 
   const beginSession = () => {
-    wsRef.current = new WebSocket(
-      `wss://dev.fableous.daystram.com/ws/hub?token=${token.substring(
-        7,
-        token.length
-      )}&classroom_id=${classroomId}`
-    );
+    wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
     wsRef.current.onopen = () => setHubReady(true);
     wsRef.current.onmessage = (ev: MessageEvent) => {
       try {

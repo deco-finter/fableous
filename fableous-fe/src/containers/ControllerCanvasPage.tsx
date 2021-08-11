@@ -8,6 +8,7 @@ import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import Canvas from "../components/Canvas";
 import { ControllerRole, WSMessageType } from "../Data";
+import { wsAPI } from "../Api";
 
 export default function ControllerCanvasPage() {
   const wsRef = useRef<WebSocket>();
@@ -20,7 +21,7 @@ export default function ControllerCanvasPage() {
 
   const joinSession = () => {
     wsRef.current = new WebSocket(
-      `wss://dev.fableous.daystram.com/ws/controller?classroom_token=${classroomToken}&role=${role}&name=${name}`
+      wsAPI.controller.main(classroomToken, role, name)
     );
     wsRef.current.onopen = () => setControllerReady(true);
     const interval = setInterval(
