@@ -6,7 +6,7 @@ import FormControl from "@material-ui/core/FormControl";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
-import Canvas from "../components/Canvas";
+import Canvas from "../components/canvas/Canvas";
 import { ControllerRole, WSMessageType } from "../Data";
 import { wsAPI } from "../Api";
 

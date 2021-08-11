@@ -15,12 +15,15 @@ import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import Slider from "@material-ui/core/Slider";
-import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
-
-const ASPECT_RATIO = 9 / 16;
-const SCALE = 2;
-
-const SELECT_PADDING = 8;
+import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../../Data";
+import {
+  convHEXtoRGBA,
+  getTextBounds,
+  scaleDownXY,
+  scaleUpXY,
+  translateXY,
+} from "./helpers";
+import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
 
 interface Shape {
   x1: number;
@@ -62,52 +65,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
 
-    const translateXY = (x: number, y: number) => {
-      const bound = canvasRef.current.getBoundingClientRect();
-      return [(x - bound.x) * SCALE, (y - bound.y) * SCALE];
-    };
-
-    // wrap with useCallback() because dependency chain leads to being used at useEffect()
-    const scaleDownXY = useCallback(
-      (x: number, y: number) => {
-        return [x / canvasRef.current.width, y / canvasRef.current.height];
-      },
-      [canvasRef]
-    );
-
-    const scaleUpXY = (x: number, y: number) => {
-      return [x * canvasRef.current.width, y * canvasRef.current.height];
-    };
-
-    const convHEXtoRGBA = (hex: string) => {
-      const result =
-        /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result
-        ? [
-            parseInt(result[1], 16),
-            parseInt(result[2], 16),
-            parseInt(result[3], 16),
-            parseInt(result[4], 16),
-          ]
-        : [0, 0, 0, 0];
-    };
-
-    const getTextBounds = useCallback(
-      (x: number, y: number, text: string, fontSize: number) => {
-        const bounds = canvasRef.current?.getContext("2d")?.measureText(text);
-        if (bounds) {
-          return [
-            x - bounds.width / 2,
-            y - (fontSize * SCALE) / 2,
-            x + bounds.width / 2,
-            y + (fontSize * SCALE) / 2,
-          ];
-        }
-        return [0, 0, 0, 0];
-      },
-      [canvasRef]
-    );
-
     const placePaint = useCallback(
       (
         x1: number,
@@ -130,9 +87,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
-          const [normX1, normY1] = scaleDownXY(x1, y1);
-          const [normX2, normY2] = scaleDownXY(x2, y2);
-          const [normWidth] = scaleDownXY(targetWidth || 0, 0);
+          const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
+          const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
+          const [normWidth] = scaleDownXY(canvasRef, targetWidth || 0, 0);
           wsRef.current?.send(
             JSON.stringify({
               role,
@@ -149,7 +106,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, scaleDownXY, wsRef]
+      [canvasRef, role, wsRef]
     );
 
     const placeFill = useCallback(
@@ -223,7 +180,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         }
         ctx.putImageData(image, 0, 0);
         if (role !== ControllerRole.Hub) {
-          const [normX, normY] = scaleDownXY(startX, startY);
+          const [normX, normY] = scaleDownXY(canvasRef, startX, startY);
           wsRef.current?.send(
             JSON.stringify({
               role,
@@ -233,7 +190,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, scaleDownXY, wsRef]
+      [canvasRef, role, wsRef]
     );
 
     const placeText = useCallback(
@@ -242,7 +199,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           "2d"
         ) as CanvasRenderingContext2D;
         ctx.font = `${fontSize * SCALE}px Arial`;
-        const [x1, y1, x2, y2] = getTextBounds(x, y, text, fontSize);
+        const [x1, y1, x2, y2] = getTextBounds(canvasRef, x, y, text, fontSize);
         setTextShapes((prev) => ({
           ...prev,
           [id]: {
@@ -255,8 +212,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           } as TextShape,
         }));
         if (role !== ControllerRole.Hub) {
-          const [normX, normY] = scaleDownXY(x, y);
-          const [normFontSize] = scaleDownXY(fontSize, 0);
+          const [normX, normY] = scaleDownXY(canvasRef, x, y);
+          const [normFontSize] = scaleDownXY(canvasRef, fontSize, 0);
           wsRef.current?.send(
             JSON.stringify({
               role,
@@ -272,7 +229,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, getTextBounds, role, scaleDownXY, wsRef]
+      [canvasRef, role, wsRef]
     );
 
     const refreshText = useCallback(() => {
@@ -389,9 +346,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         try {
           const msg: WSMessage = JSON.parse(ev.data);
           if (msg.role === layer || msg.type === WSMessageType.Control) {
-            const [x1, y1] = scaleUpXY(msg.data.x1 || 0, msg.data.y1 || 0);
-            const [x2, y2] = scaleUpXY(msg.data.x2 || 0, msg.data.y2 || 0);
-            const [width] = scaleUpXY(msg.data.width || 0, 0);
+            const [x1, y1] = scaleUpXY(
+              canvasRef,
+              msg.data.x1 || 0,
+              msg.data.y1 || 0
+            );
+            const [x2, y2] = scaleUpXY(
+              canvasRef,
+              msg.data.x2 || 0,
+              msg.data.y2 || 0
+            );
+            const [width] = scaleUpXY(canvasRef, msg.data.width || 0, 0);
             switch (msg.type) {
               case WSMessageType.Paint:
                 placePaint(
@@ -433,7 +398,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
     ) {
       event.preventDefault();
-      const [x, y] = translateXY(event.clientX, event.clientY);
+      const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
         case ToolMode.Paint:
           setDragging(true);
@@ -460,7 +425,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       if (!allowDrawing) return;
       event.preventDefault();
       const [lastX, lastY] = lastPos;
-      const [x, y] = translateXY(event.clientX, event.clientY);
+      const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
         case ToolMode.Paint:
           if (!dragging) return;
