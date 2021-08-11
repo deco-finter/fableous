@@ -42,7 +42,8 @@ const Canvas = (props: {
   const { layer, role, wsRef } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [allowDrawing, setAllowDrawing] = useState(false);
-  const [drawing, setDrawing] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [hasLifted, setHasLifted] = useState(false);
   const [editingText, setEditingText] = useState(0);
   const [lastPos, setLastPos] = useState([0, 0]);
   const [textId, setTextId] = useState(1);
@@ -76,6 +77,24 @@ const Canvas = (props: {
           parseInt(result[4], 16),
         ]
       : [0, 0, 0, 0];
+  };
+
+  const getTextBounds = (
+    x: number,
+    y: number,
+    text: string,
+    fontSize: number
+  ) => {
+    const bounds = canvasRef.current?.getContext("2d")?.measureText(text);
+    if (bounds) {
+      return [
+        x - bounds.width / 2,
+        y - (fontSize * SCALE) / 2,
+        x + bounds.width / 2,
+        y + (fontSize * SCALE) / 2,
+      ];
+    }
+    return [0, 0, 0, 0];
   };
 
   const placePaint = useCallback(
@@ -206,24 +225,6 @@ const Canvas = (props: {
     [role, wsRef]
   );
 
-  const getTextBounds = (
-    x: number,
-    y: number,
-    text: string,
-    fontSize: number
-  ) => {
-    const bounds = canvasRef.current?.getContext("2d")?.measureText(text);
-    if (bounds) {
-      return [
-        x - bounds.width / 2,
-        y - (fontSize * SCALE) / 2,
-        x + bounds.width / 2,
-        y + (fontSize * SCALE) / 2,
-      ];
-    }
-    return [0, 0, 0, 0];
-  };
-
   const placeText = useCallback(
     (x, y, id, text, fontSize) => {
       const ctx = canvasRef.current.getContext(
@@ -263,31 +264,36 @@ const Canvas = (props: {
     [role, wsRef]
   );
 
-  const refreshText = useCallback(() => {
-    const ctx = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
-    const { width, height } = canvasRef.current;
-    ctx.clearRect(0, 0, width, height);
-    Object.entries(textShapes).forEach(([id, shape]) => {
-      ctx.font = `${shape.fontSize * SCALE}px Arial`;
-      ctx.fillText(
-        shape.text,
-        (shape.x1 + shape.x2) / 2,
-        (shape.y1 + shape.y2) / 2
-      );
-      if (parseInt(id, 10) === editingText) {
-        ctx.beginPath();
-        ctx.strokeStyle = "#00aaaa";
-        ctx.rect(
-          shape.x1 - SELECT_PADDING,
-          shape.y1 - SELECT_PADDING,
-          shape.x2 - shape.x1 + 2 * SELECT_PADDING,
-          shape.y2 - shape.y1 + 2 * SELECT_PADDING
+  const refreshText = useCallback(
+    (shapes: { [id: number]: TextShape }) => {
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      Object.entries(shapes).forEach(([id, shape]) => {
+        ctx.font = `${shape.fontSize * SCALE}px Arial`;
+        ctx.fillText(
+          shape.text,
+          (shape.x1 + shape.x2) / 2,
+          (shape.y1 + shape.y2) / 2
         );
-        ctx.stroke();
-        ctx.closePath();
-      }
-    });
-  }, [editingText, textShapes]);
+        if (parseInt(id, 10) === editingText) {
+          ctx.beginPath();
+          ctx.strokeStyle = "#00aaaa";
+          ctx.rect(
+            shape.x1 - SELECT_PADDING,
+            shape.y1 - SELECT_PADDING,
+            shape.x2 - shape.x1 + 2 * SELECT_PADDING,
+            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+          );
+          ctx.stroke();
+          ctx.closePath();
+        }
+      });
+    },
+    [editingText]
+  );
 
   const interactCanvas = (x: number, y: number, editing: boolean) => {
     let clickedId: number | undefined;
@@ -312,6 +318,7 @@ const Canvas = (props: {
         placeText(x, y, textId, "", 18);
         setEditingText(textId);
         setTextId(textId + 1);
+        setHasLifted(true); // disable dragging for new texts
       }
     } else if (clicked) {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(clicked.text));
@@ -356,8 +363,67 @@ const Canvas = (props: {
         console.error(e);
       }
     },
-    [placePaint, placeFill, placeText, layer]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layer, placePaint, placeFill, placeText, refreshText, textShapes]
   );
+
+  function onMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    // if (!allowDrawing) return;
+    event.preventDefault();
+    const [x, y] = translateXY(event.clientX, event.clientY);
+    switch (toolMode) {
+      case ToolMode.Paint:
+        setDragging(true);
+        placePaint(x, y, x, y, toolColor, toolWidth);
+        setLastPos([x, y]);
+        break;
+      case ToolMode.Fill:
+        placeFill(x, y, toolColor);
+        break;
+      case ToolMode.Text:
+        setHasLifted(false);
+        interactCanvas(x, y, true);
+        break;
+      case ToolMode.None:
+        interactCanvas(x, y, false);
+        break;
+      default:
+    }
+  }
+
+  function onMouseMove(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    if (!allowDrawing) return;
+    event.preventDefault();
+    const [lastX, lastY] = lastPos;
+    const [x, y] = translateXY(event.clientX, event.clientY);
+    switch (toolMode) {
+      case ToolMode.Paint:
+        if (!dragging) return;
+        if (
+          Math.round(lastX) === Math.round(x) &&
+          Math.round(lastY) === Math.round(y)
+        )
+          return;
+        placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+        break;
+      case ToolMode.Text:
+        if (!editingText || hasLifted) return;
+        const shape = textShapes[editingText];
+        setDragging(true);
+        placeText(x, y, editingText, shape.text, shape.fontSize);
+        break;
+      default:
+    }
+    setLastPos([x, y]);
+  }
+
+  function onMouseUp(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    if (!allowDrawing) return;
+    event.preventDefault();
+    if (dragging) setEditingText(0);
+    setDragging(false);
+    setHasLifted(true);
+  }
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -366,9 +432,6 @@ const Canvas = (props: {
       const { key } = event;
       if (key === "Escape" || key === "Enter") {
         setEditingText(0);
-        if (!shape.text) {
-          // asd
-        }
       }
       if (key.length === 1 || key === "Backspace") {
         if (key.length === 1) {
@@ -389,55 +452,7 @@ const Canvas = (props: {
     [editingText, placeText, textShapes]
   );
 
-  function onMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-    // if (!allowDrawing) return;
-    event.preventDefault();
-    const [x, y] = translateXY(event.clientX, event.clientY);
-    switch (toolMode) {
-      case ToolMode.Paint:
-        setDrawing(true);
-        placePaint(x, y, x, y, toolColor, toolWidth);
-        setLastPos([x, y]);
-        break;
-      case ToolMode.Fill:
-        placeFill(x, y, toolColor);
-        break;
-      case ToolMode.Text:
-        interactCanvas(x, y, true);
-        break;
-      case ToolMode.None:
-        interactCanvas(x, y, false);
-        break;
-      default:
-    }
-  }
-
-  function onMouseMove(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-    if (!allowDrawing) return;
-    event.preventDefault();
-    const [lastX, lastY] = lastPos;
-    const [x, y] = translateXY(event.clientX, event.clientY);
-    switch (toolMode) {
-      case ToolMode.Paint:
-        if (!drawing) return;
-        if (
-          Math.round(lastX) === Math.round(x) &&
-          Math.round(lastY) === Math.round(y)
-        )
-          return;
-        placePaint(lastX, lastY, x, y, toolColor, toolWidth);
-        setLastPos([x, y]);
-        break;
-      default:
-    }
-  }
-
-  function onMouseUp(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-    if (!allowDrawing) return;
-    event.preventDefault();
-    setDrawing(false);
-  }
-
+  // setup on component mount
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -469,11 +484,12 @@ const Canvas = (props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, wsRef]);
 
+  // initialize frame timer for text layer
   useEffect(() => {
     let refresher: NodeJS.Timeout | undefined;
     if (layer === ControllerRole.Story) {
       refresher = setInterval(() => {
-        refreshText();
+        refreshText(textShapes);
       }, FRAMETIME);
       window.addEventListener("keydown", onKeyDown);
     }
@@ -481,7 +497,12 @@ const Canvas = (props: {
       if (refresher) clearInterval(refresher);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [onKeyDown, refreshText, layer]);
+  }, [layer, onKeyDown, refreshText, textShapes]);
+
+  // rerender text frame on textShape update
+  useEffect(() => {
+    refreshText(textShapes);
+  }, [refreshText, textShapes]);
 
   return (
     <>
