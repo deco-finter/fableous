@@ -20,6 +20,9 @@ type HandlerFunc interface {
 	UserRegister(userInfo datatransfers.UserSignup) (err error)
 	UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error)
 	UserUpdate(userInfo datatransfers.UserInfo) (err error)
+
+	ClassroomGetOneByID(id string) (classroomInfo datatransfers.ClassroomInfo, err error)
+	ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err error)
 }
 
 type module struct {
