@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -9,8 +11,10 @@ type classroomOrm struct {
 }
 
 type Classroom struct {
-	ID   string `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
-	Name string `gorm:"column:name;type:varchar(32);not null" json:"-"`
+	ID        string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
+	Name      string    `gorm:"column:name;type:varchar(32);not null" json:"-"`
+	TeacherID string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
 }
 
 type ClassroomOrmer interface {
