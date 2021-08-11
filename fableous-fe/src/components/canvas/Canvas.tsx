@@ -30,7 +30,6 @@ interface Shape {
   y1: number;
   x2: number;
   y2: number;
-  selected: boolean;
 }
 
 interface TextShape extends Shape {
@@ -529,6 +528,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       window.requestAnimationFrame(refreshText);
     }, [refreshText]);
+
+    // unselect text on tool change
+    useEffect(() => setEditingTextId(0), [toolMode]);
 
     return (
       <>
