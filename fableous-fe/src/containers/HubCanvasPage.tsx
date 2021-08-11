@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, createRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Button, Grid } from "@material-ui/core";
 import Canvas from "../components/Canvas";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
@@ -19,6 +19,28 @@ export default function HubCanvasPage() {
   const wsRef = useRef<WebSocket>();
   const [hubReady, setHubReady] = useState(false);
   const [classroomToken, setClassroomToken] = useState("");
+
+  const exportCanvas = () => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const { width, height } = storyCanvasRef.current;
+    if (!ctx) return;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(backgroundCanvasRef.current, 0, 0, width, height);
+    ctx.drawImage(characterCanvasRef.current, 0, 0, width, height);
+    ctx.drawImage(storyCanvasRef.current, 0, 0, width, height);
+
+    const link = document.createElement("a");
+    link.download = "output.png";
+    link.href = canvas
+      .toDataURL("image/png")
+      .replace("image/png", "image/octet-stream");
+    link.click();
+  };
 
   useEffect(() => {
     wsRef.current = new WebSocket(
@@ -81,6 +103,7 @@ export default function HubCanvasPage() {
                 />
               </div>
             </div>
+            <Button onClick={() => exportCanvas()}>Export</Button>
           </>
         )}
       </Grid>

@@ -6,7 +6,6 @@ import React, {
   forwardRef,
   useCallback,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import Radio from "@material-ui/core/Radio";
@@ -17,7 +16,7 @@ import Slider from "@material-ui/core/Slider";
 import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 
 const ASPECT_RATIO = 9 / 16;
-const SCALE = 2;
+const SCALE = 4;
 const FRAMETIME = 1000 / 60;
 
 const SELECT_PADDING = 8;
