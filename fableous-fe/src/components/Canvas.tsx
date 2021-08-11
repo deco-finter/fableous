@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-case-declarations */
@@ -7,7 +8,10 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  ReactElement,
+  createRef,
 } from "react";
+import Button from "@material-ui/core/Button";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -45,9 +49,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
-    const [hasLifted, setHasLifted] = useState(false);
     const [editingText, setEditingText] = useState(0);
+    const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
+    const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
+    const [audioMediaRecorder, setAudioMediaRecorder] =
+      useState<MediaRecorder>();
+    const [audioRecording, setAudioRecording] = useState(false);
     const [textId, setTextId] = useState(1);
     const [textShapes, setTextShapes] = useState<{ [id: string]: TextShape }>(
       {}
@@ -329,6 +337,55 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     };
 
+    const placeAudio = (b64Audio: string) => {
+      fetch(b64Audio).then((res) =>
+        res.blob().then((blob) => {
+          const player = document.createElement("audio");
+          player.src = window.URL.createObjectURL(blob);
+          player.play();
+          setAudioBlobs((prev) => [...prev, blob]);
+        })
+      );
+    };
+
+    const initAudio = () => {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(
+        (stream) => {
+          const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = ({ data }) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(
+              new Blob([data], { type: "audio/ogg;codecs=opus" })
+            );
+            reader.onloadend = () => {
+              wsRef.current?.send(
+                JSON.stringify({
+                  role,
+                  type: WSMessageType.Audio,
+                  data: {
+                    text: reader.result,
+                  },
+                } as WSMessage)
+              );
+            };
+          };
+          setAudioMediaRecorder(mediaRecorder);
+        },
+        (e) => console.error(e)
+      );
+    };
+
+    const recordAudio = useCallback(() => {
+      if (!audioMediaRecorder) return;
+      if (!audioRecording) {
+        setAudioRecording(true);
+        audioMediaRecorder.start();
+      } else {
+        setAudioRecording(false);
+        audioMediaRecorder.stop();
+      }
+    }, [audioMediaRecorder, audioRecording]);
+
     const readMessage = useCallback(
       (ev: MessageEvent) => {
         try {
@@ -359,6 +416,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                   msg.data.text || "",
                   width || 0
                 );
+                break;
+              case WSMessageType.Audio:
+                placeAudio(msg.data.text || "");
                 break;
               default:
             }
@@ -469,6 +529,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setAllowDrawing(role !== ControllerRole.Hub);
       switch (role) {
         case ControllerRole.Story:
+          initAudio();
           setToolMode(ToolMode.Text);
           break;
         case ControllerRole.Character:
@@ -519,6 +580,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             width: "100%",
           }}
         />
+        {role === ControllerRole.Hub &&
+          audioBlobs.map((blob) => (
+            <audio src={window.URL.createObjectURL(blob)} controls />
+          ))}
         {toolMode !== ToolMode.None && (
           <div>
             <FormControl component="fieldset">
@@ -533,12 +598,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                       value={ToolMode.Text}
                       control={<Radio />}
                       label="Text"
+                      disabled={audioRecording}
                     />
                     <FormControlLabel
-                      disabled
                       value={ToolMode.Audio}
                       control={<Radio />}
                       label="Audio"
+                      disabled={audioRecording}
                     />
                   </>
                 )}
@@ -615,6 +681,15 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                   label="Erase"
                 />
               </RadioGroup>
+            </FormControl>
+          </div>
+        )}
+        {toolMode === ToolMode.Audio && (
+          <div>
+            <FormControl component="fieldset">
+              <Button onClick={recordAudio}>
+                {audioRecording ? "Stop" : "Record"}
+              </Button>
             </FormControl>
           </div>
         )}
