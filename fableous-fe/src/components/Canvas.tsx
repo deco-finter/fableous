@@ -16,8 +16,7 @@ import Slider from "@material-ui/core/Slider";
 import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 
 const ASPECT_RATIO = 9 / 16;
-const SCALE = 4;
-const FRAMETIME = 1000 / 60;
+const SCALE = 2;
 
 const SELECT_PADDING = 8;
 
@@ -269,36 +268,34 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [canvasRef, getTextBounds, role, scaleDownXY, wsRef]
     );
 
-    const refreshText = useCallback(
-      (shapes: { [id: number]: TextShape }) => {
-        const ctx = canvasRef.current.getContext(
-          "2d"
-        ) as CanvasRenderingContext2D;
-        const { width, height } = canvasRef.current;
-        ctx.clearRect(0, 0, width, height);
-        Object.entries(shapes).forEach(([id, shape]) => {
-          ctx.font = `${shape.fontSize * SCALE}px Arial`;
-          ctx.fillText(
-            shape.text,
-            (shape.x1 + shape.x2) / 2,
-            (shape.y1 + shape.y2) / 2
+    const refreshText = useCallback(() => {
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      if (!ctx) return;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      Object.entries(textShapes).forEach(([id, shape]) => {
+        ctx.font = `${shape.fontSize * SCALE}px Arial`;
+        ctx.fillText(
+          shape.text,
+          (shape.x1 + shape.x2) / 2,
+          (shape.y1 + shape.y2) / 2
+        );
+        if (parseInt(id, 10) === editingText) {
+          ctx.beginPath();
+          ctx.strokeStyle = "#00aaaa";
+          ctx.rect(
+            shape.x1 - SELECT_PADDING,
+            shape.y1 - SELECT_PADDING,
+            shape.x2 - shape.x1 + 2 * SELECT_PADDING,
+            shape.y2 - shape.y1 + 2 * SELECT_PADDING
           );
-          if (parseInt(id, 10) === editingText) {
-            ctx.beginPath();
-            ctx.strokeStyle = "#00aaaa";
-            ctx.rect(
-              shape.x1 - SELECT_PADDING,
-              shape.y1 - SELECT_PADDING,
-              shape.x2 - shape.x1 + 2 * SELECT_PADDING,
-              shape.y2 - shape.y1 + 2 * SELECT_PADDING
-            );
-            ctx.stroke();
-            ctx.closePath();
-          }
-        });
-      },
-      [canvasRef, editingText]
-    );
+          ctx.stroke();
+          ctx.closePath();
+        }
+      });
+    }, [canvasRef, editingText, textShapes]);
 
     const interactCanvas = (x: number, y: number, editing: boolean) => {
       let clickedId: number | undefined;
@@ -465,7 +462,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     // setup on component mount
     useEffect(() => {
-      console.log(canvasRef);
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       canvas.width = canvas.offsetWidth * SCALE;
@@ -496,25 +492,20 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, wsRef]);
 
-    // initialize frame timer for text layer
+    // initialize keyboard listener
     useEffect(() => {
-      let refresher: NodeJS.Timeout | undefined;
       if (layer === ControllerRole.Story) {
-        refresher = setInterval(() => {
-          refreshText(textShapes);
-        }, FRAMETIME);
         window.addEventListener("keydown", onKeyDown);
       }
       return () => {
-        if (refresher) clearInterval(refresher);
         window.removeEventListener("keydown", onKeyDown);
       };
-    }, [layer, onKeyDown, refreshText, textShapes]);
+    }, [layer, onKeyDown]);
 
-    // rerender text frame on textShape update
+    // start text layer animation
     useEffect(() => {
-      refreshText(textShapes);
-    }, [refreshText, textShapes]);
+      window.requestAnimationFrame(refreshText);
+    }, [refreshText]);
 
     return (
       <>
