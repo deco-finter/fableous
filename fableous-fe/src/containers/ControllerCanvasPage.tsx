@@ -23,12 +23,20 @@ export default function ControllerCanvasPage() {
     wsRef.current = new WebSocket(
       wsAPI.controller.main(classroomToken, role, name)
     );
-    wsRef.current.onopen = () => setControllerReady(true);
-    const interval = setInterval(
-      () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
-      5000
-    );
-    setPing(interval);
+    wsRef.current.onopen = () => {
+      setControllerReady(true);
+      const interval = setInterval(
+        () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
+        5000
+      );
+      setPing(interval);
+    };
+    wsRef.current.onclose = () => {
+      if (ping) clearInterval(ping);
+    };
+    wsRef.current.onerror = () => {
+      if (ping) clearInterval(ping);
+    };
   };
 
   useEffect(() => {

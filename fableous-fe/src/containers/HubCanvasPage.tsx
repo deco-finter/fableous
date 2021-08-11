@@ -26,6 +26,42 @@ export default function HubCanvasPage() {
     localStorage.getItem("authorization") || ""
   );
 
+  const beginSession = () => {
+    wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
+    wsRef.current.onopen = () => {
+      setHubReady(true);
+      const interval = setInterval(
+        () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
+        5000
+      );
+      setPing(interval);
+    };
+    wsRef.current.onclose = () => {
+      if (ping) clearInterval(ping);
+    };
+    wsRef.current.onerror = () => {
+      if (ping) clearInterval(ping);
+    };
+    wsRef.current.onmessage = (ev: MessageEvent) => {
+      try {
+        const msg: WSMessage = JSON.parse(ev.data);
+        switch (msg.type) {
+          case WSMessageType.Control:
+            setClassroomToken(msg.data as string);
+            break;
+          default:
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    const interval = setInterval(
+      () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
+      5000
+    );
+    setPing(interval);
+  };
+
   const exportCanvas = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -45,29 +81,6 @@ export default function HubCanvasPage() {
       .toDataURL("image/png")
       .replace("image/png", "image/octet-stream");
     link.click();
-  };
-
-  const beginSession = () => {
-    wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
-    wsRef.current.onopen = () => setHubReady(true);
-    wsRef.current.onmessage = (ev: MessageEvent) => {
-      try {
-        const msg: WSMessage = JSON.parse(ev.data);
-        switch (msg.type) {
-          case WSMessageType.Control:
-            setClassroomToken(msg.data as string);
-            break;
-          default:
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    const interval = setInterval(
-      () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
-      5000
-    );
-    setPing(interval);
   };
 
   useEffect(() => {
