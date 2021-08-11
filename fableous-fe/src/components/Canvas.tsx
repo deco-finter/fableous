@@ -8,8 +8,6 @@ import React, {
   useCallback,
   useEffect,
   useState,
-  ReactElement,
-  createRef,
 } from "react";
 import Button from "@material-ui/core/Button";
 import Radio from "@material-ui/core/Radio";
@@ -49,7 +47,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
-    const [editingText, setEditingText] = useState(0);
+    const [editingTextId, setEditingTextId] = useState(0);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
     const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
@@ -69,6 +67,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       return [(x - bound.x) * SCALE, (y - bound.y) * SCALE];
     };
 
+    // wrap with useCallback() because dependency chain leads to being used at useEffect()
     const scaleDownXY = useCallback(
       (x: number, y: number) => {
         return [x / canvasRef.current.width, y / canvasRef.current.height];
@@ -290,7 +289,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           (shape.x1 + shape.x2) / 2,
           (shape.y1 + shape.y2) / 2
         );
-        if (parseInt(id, 10) === editingText) {
+        if (parseInt(id, 10) === editingTextId) {
           ctx.beginPath();
           ctx.strokeStyle = "#00aaaa";
           ctx.rect(
@@ -303,9 +302,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ctx.closePath();
         }
       });
-    }, [canvasRef, editingText, textShapes]);
+    }, [canvasRef, editingTextId, textShapes]);
 
-    const interactCanvas = (x: number, y: number, editing: boolean) => {
+    const interactCanvas = (x: number, y: number, isEditingText: boolean) => {
       let clickedId: number | undefined;
       let clicked: TextShape | undefined;
       Object.entries(textShapes).forEach(([id, shape]) => {
@@ -320,13 +319,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           clicked = shape;
         }
       });
-      if (editing) {
+      if (isEditingText) {
         if (clickedId && clicked) {
-          setEditingText(clickedId);
-          console.log(clicked);
+          setEditingTextId(clickedId);
         } else {
           placeText(x, y, textId, "", 18);
-          setEditingText(textId);
+          setEditingTextId(textId);
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
         }
@@ -434,7 +432,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     function onMouseDown(
       event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
     ) {
-      // if (!allowDrawing) return;
       event.preventDefault();
       const [x, y] = translateXY(event.clientX, event.clientY);
       switch (toolMode) {
@@ -475,10 +472,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           placePaint(lastX, lastY, x, y, toolColor, toolWidth);
           break;
         case ToolMode.Text:
-          if (!editingText || hasLifted) return;
-          const shape = textShapes[editingText];
+          if (!editingTextId || hasLifted) return;
+          const shape = textShapes[editingTextId];
           setDragging(true);
-          placeText(x, y, editingText, shape.text, shape.fontSize);
+          placeText(x, y, editingTextId, shape.text, shape.fontSize);
           break;
         default:
       }
@@ -488,18 +485,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     function onMouseUp(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
       if (!allowDrawing) return;
       event.preventDefault();
-      if (dragging) setEditingText(0);
+      if (dragging) setEditingTextId(0);
       setDragging(false);
       setHasLifted(true);
     }
 
     const onKeyDown = useCallback(
       (event: KeyboardEvent) => {
-        if (!editingText) return;
-        const shape = textShapes[editingText];
+        if (!editingTextId) return;
+        const shape = textShapes[editingTextId];
         const { key } = event;
         if (key === "Escape" || key === "Enter") {
-          setEditingText(0);
+          setEditingTextId(0);
         }
         if (key.length === 1 || key === "Backspace") {
           if (key.length === 1) {
@@ -511,13 +508,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           placeText(
             (shape.x1 + shape.x2) / 2,
             (shape.y1 + shape.y2) / 2,
-            editingText,
+            editingTextId,
             shape.text,
             shape.fontSize
           );
         }
       },
-      [editingText, placeText, textShapes]
+      [editingTextId, placeText, textShapes]
     );
 
     // setup on component mount
