@@ -632,9 +632,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                   label="Red"
                 />
                 <FormControlLabel
-                  value="#00ff0044"
+                  value="#ffff00ff"
+                  control={<Radio />}
+                  label="Yellow"
+                />
+                <FormControlLabel
+                  value="#00ff00ff"
                   control={<Radio />}
                   label="Green"
+                />
+                <FormControlLabel
+                  value="#00ffffff"
+                  control={<Radio />}
+                  label="Cyan"
                 />
                 <FormControlLabel
                   value="#0000ffff"
