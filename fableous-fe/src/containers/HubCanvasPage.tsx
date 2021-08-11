@@ -55,11 +55,6 @@ export default function HubCanvasPage() {
         console.error(e);
       }
     };
-    const interval = setInterval(
-      () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
-      5000
-    );
-    setPing(interval);
   };
 
   const exportCanvas = () => {
