@@ -6,6 +6,7 @@ export interface WSMessage {
     y1?: number;
     x2?: number;
     y2?: number;
+    id?: number;
     text?: string;
     color?: string;
     width?: number;

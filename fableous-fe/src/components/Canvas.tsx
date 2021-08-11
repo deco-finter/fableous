@@ -17,16 +17,21 @@ import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../Data";
 
 const ASPECT_RATIO = 9 / 16;
 const SCALE = 2;
+const FRAMETIME = 15;
+
+const SELECT_PADDING = 8;
 
 interface Shape {
   x1: number;
   y1: number;
   x2: number;
   y2: number;
+  selected: boolean;
 }
 
 interface TextShape extends Shape {
   text: string;
+  fontSize: number;
 }
 
 const Canvas = (props: {
@@ -38,8 +43,10 @@ const Canvas = (props: {
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [allowDrawing, setAllowDrawing] = useState(false);
   const [drawing, setDrawing] = useState(false);
+  const [editingText, setEditingText] = useState(0);
   const [lastPos, setLastPos] = useState([0, 0]);
-  const [textShapes, setTextShapes] = useState<TextShape[]>([]);
+  const [textId, setTextId] = useState(1);
+  const [textShapes, setTextShapes] = useState<{ [id: string]: TextShape }>({});
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
@@ -154,14 +161,15 @@ const Canvas = (props: {
         // eslint-disable-next-line prefer-const
         let [x, y] = stack.pop() || [startX, startY];
         let pixel = (y * width + x) * 4;
-        while (y-- > 0 && checkPixel(pixel, startColor)) {
+        while (y > 0 && checkPixel(pixel, startColor)) {
+          y--;
           pixel -= width * 4;
         }
-        pixel += width * 4;
         y++;
+        pixel += width * 4;
         let expandLeft = false;
         let expandRight = false;
-        while (y++ < height - 1 && checkPixel(pixel, startColor)) {
+        while (y < height - 1 && checkPixel(pixel, startColor)) {
           setPixel(pixel, colorRGB);
           if (x > 0) {
             if (checkPixel(pixel - 4, startColor) && !expandLeft) {
@@ -179,6 +187,7 @@ const Canvas = (props: {
               expandRight = false;
             }
           }
+          y++;
           pixel += width * 4;
         }
       }
@@ -197,26 +206,44 @@ const Canvas = (props: {
     [role, wsRef]
   );
 
+  const getTextBounds = (
+    x: number,
+    y: number,
+    text: string,
+    fontSize: number
+  ) => {
+    const bounds = canvasRef.current?.getContext("2d")?.measureText(text);
+    if (bounds) {
+      return [
+        x - bounds.width / 2,
+        y - (fontSize * SCALE) / 2,
+        x + bounds.width / 2,
+        y + (fontSize * SCALE) / 2,
+      ];
+    }
+    return [0, 0, 0, 0];
+  };
+
   const placeText = useCallback(
-    (x, y, message, fontSize) => {
-      if (!message) return;
+    (x, y, id, text, fontSize) => {
+      console.log(x, y);
+      if (!text) return;
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
       ctx.font = `${fontSize * SCALE}px Arial`;
-      ctx.textAlign = "center";
-      ctx.fillText(message, x, y);
-      const bounds = ctx.measureText(message);
-      setTextShapes([
-        ...textShapes,
-        {
-          text: message,
-          x1: x - bounds.width / 2,
-          y1: y - (fontSize * SCALE) / 2,
-          x2: x + bounds.width / 2,
-          y2: y + (fontSize * SCALE) / 2,
+      const [x1, y1, x2, y2] = getTextBounds(x, y, text, fontSize);
+      setTextShapes((prev) => ({
+        ...prev,
+        [id]: {
+          text,
+          fontSize,
+          x1,
+          y1,
+          x2,
+          y2,
         } as TextShape,
-      ]);
+      }));
       if (role !== ControllerRole.Hub) {
         const [normX, normY] = scaleDownXY(x, y);
         const [normFontSize] = scaleDownXY(fontSize, 0);
@@ -227,26 +254,68 @@ const Canvas = (props: {
             data: {
               x1: normX,
               y1: normY,
+              id,
+              text,
               width: normFontSize,
-              text: message,
             },
           } as WSMessage)
         );
       }
     },
-    [textShapes, role, wsRef]
+    [role, wsRef]
   );
 
-  const interactCanvas = (x: number, y: number) => {
-    let clicked: TextShape | undefined;
-    for (let i = 0; i < textShapes.length; i++) {
-      const shape = textShapes[i];
-      if (x >= shape.x1 && x <= shape.x2 && y >= shape.y1 && y <= shape.y2) {
-        clicked = shape;
-        break;
+  const refreshText = useCallback(() => {
+    const ctx = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
+    const { width, height } = canvasRef.current;
+    ctx.clearRect(0, 0, width, height);
+    Object.entries(textShapes).forEach(([id, shape]) => {
+      ctx.font = `${shape.fontSize * SCALE}px Arial`;
+      ctx.fillText(
+        shape.text,
+        (shape.x1 + shape.x2) / 2,
+        (shape.y1 + shape.y2) / 2
+      );
+      if (parseInt(id, 10) === editingText || ControllerRole.Hub) {
+        ctx.beginPath();
+        ctx.strokeStyle = "#00aaaa";
+        ctx.rect(
+          shape.x1 - SELECT_PADDING,
+          shape.y1 - SELECT_PADDING,
+          shape.x2 - shape.x1 + 2 * SELECT_PADDING,
+          shape.y2 - shape.y1 + 2 * SELECT_PADDING
+        );
+        ctx.stroke();
+        ctx.closePath();
       }
-    }
-    if (clicked) {
+    });
+  }, [editingText, textShapes]);
+
+  const interactCanvas = (x: number, y: number, editing: boolean) => {
+    let clickedId: number | undefined;
+    let clicked: TextShape | undefined;
+    Object.entries(textShapes).forEach(([id, shape]) => {
+      if (
+        !clicked &&
+        x >= shape.x1 - SELECT_PADDING &&
+        x <= shape.x2 + SELECT_PADDING &&
+        y >= shape.y1 - SELECT_PADDING &&
+        y <= shape.y2 + SELECT_PADDING
+      ) {
+        clickedId = parseInt(id, 10);
+        clicked = shape;
+      }
+    });
+    if (editing) {
+      if (clickedId && clicked) {
+        setEditingText(clickedId);
+        console.log(clicked);
+      } else {
+        // eslint-disable-next-line no-alert
+        placeText(x, y, textId, prompt("What do you want to write?"), 18);
+        setTextId(textId + 1);
+      }
+    } else if (clicked) {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(clicked.text));
     }
   };
@@ -274,7 +343,14 @@ const Canvas = (props: {
               placeFill(x1, y1, msg.data.color || "#000000ff");
               break;
             case WSMessageType.Text:
-              placeText(x1, y1, msg.data.text || "", width || 0);
+              // TODO
+              placeText(
+                x1,
+                y1,
+                msg.data.id || 1,
+                msg.data.text || "",
+                width || 0
+              );
               break;
             default:
           }
@@ -284,6 +360,34 @@ const Canvas = (props: {
       }
     },
     [placePaint, placeFill, placeText, layer]
+  );
+
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!editingText) return;
+      event.preventDefault();
+      const { key } = event;
+      if (key === "Escape" || key === "Enter") {
+        setEditingText(0);
+      }
+      if (key.length === 1 || key === "Backspace") {
+        const shape = textShapes[editingText];
+        if (key === "Backspace") {
+          if (shape.text)
+            shape.text = shape.text.substring(0, shape.text.length - 1);
+        } else {
+          shape.text += key;
+        }
+        placeText(
+          (shape.x1 + shape.x2) / 2,
+          (shape.y1 + shape.y2) / 2,
+          editingText,
+          shape.text,
+          shape.fontSize
+        );
+      }
+    },
+    [editingText, placeText, textShapes]
   );
 
   function onMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
@@ -300,11 +404,10 @@ const Canvas = (props: {
         placeFill(x, y, toolColor);
         break;
       case ToolMode.Text:
-        // eslint-disable-next-line no-alert
-        placeText(x, y, prompt("What do you want to write?"), 18); // TODO
+        interactCanvas(x, y, true);
         break;
       case ToolMode.None:
-        interactCanvas(x, y);
+        interactCanvas(x, y, false);
         break;
       default:
     }
@@ -338,6 +441,7 @@ const Canvas = (props: {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
     canvas.width = canvas.offsetWidth * SCALE;
     canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
     setAllowDrawing(role !== ControllerRole.Hub);
@@ -354,11 +458,31 @@ const Canvas = (props: {
       default:
         setToolMode(ToolMode.None);
     }
+    if (ctx) {
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+    }
     const ws = wsRef.current;
     ws?.addEventListener("message", readMessage);
-    return () => ws?.removeEventListener("message", readMessage);
+    return () => {
+      ws?.removeEventListener("message", readMessage);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, wsRef]);
+
+  useEffect(() => {
+    let refresher: NodeJS.Timeout | undefined;
+    if (layer === ControllerRole.Story) {
+      refresher = setInterval(() => {
+        refreshText();
+      }, FRAMETIME);
+      window.addEventListener("keydown", onKeyDown);
+    }
+    return () => {
+      if (refresher) clearInterval(refresher);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onKeyDown, refreshText, layer]);
 
   return (
     <>
