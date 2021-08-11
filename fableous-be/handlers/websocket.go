@@ -131,8 +131,9 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, r
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText:
+		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeAudio:
 			// TODO: use WS hub
+			// TODO: decode and save audio
 			var hubConn *websocket.Conn
 			m.sessions.mutex.RLock()
 			if session, ok := m.sessions.keys[classroomToken]; ok {
