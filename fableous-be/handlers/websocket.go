@@ -164,7 +164,9 @@ func (m *module) SavePayload(sess *session, message datatransfers.WSMessage) {
 		return
 	}
 	defer file.Close()
-	file.Write(data)
+	if _, err = file.Write(data); err != nil {
+		log.Println(err)
+	}
 }
 
 func (m *module) GetClassroomSession(classroomToken string) (sess *session) {
