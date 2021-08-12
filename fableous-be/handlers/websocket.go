@@ -118,7 +118,10 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *session, ro
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeAudio:
+		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText:
+			_ = sess.hubConn.WriteJSON(message)
+		case constants.WSMessageTypeAudio:
+			go m.SavePayload(sess, message)
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
