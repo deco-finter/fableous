@@ -13,12 +13,8 @@ import (
 func GETUser(c *gin.Context) {
 	var err error
 	var userInfo datatransfers.UserInfo
-	if err = c.ShouldBindUri(&userInfo); err != nil {
-		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
-		return
-	}
-	if userInfo, err = handlers.Handler.UserGetOneByID(userInfo.ID); err != nil {
-		c.JSON(http.StatusNotFound, datatransfers.Response{Error: "cannot find user"})
+	if userInfo, err = handlers.Handler.UserGetOneByID(c.GetString(constants.RouterKeyUserID)); err != nil {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get user detail"})
 		return
 	}
 	c.JSON(http.StatusOK, datatransfers.Response{Data: userInfo})
