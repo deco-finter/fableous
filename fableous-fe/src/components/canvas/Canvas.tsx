@@ -43,6 +43,11 @@ interface CanvasProps {
   layer: ControllerRole;
 }
 
+interface SimplePointerEventData {
+  clientX: number;
+  clientY: number;
+}
+
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
     const { layer, role, wsRef } = props;
@@ -388,8 +393,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [layer, canvasRef, placePaint, placeFill, placeText]
     );
 
-    function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
-      event.preventDefault();
+    function onPointerDown(event: SimplePointerEventData) {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
         case ToolMode.Paint:
@@ -411,9 +415,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }
 
-    function onPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
+    function onPointerMove(event: SimplePointerEventData) {
       if (!allowDrawing) return;
-      event.preventDefault();
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
@@ -437,13 +440,27 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setLastPos([x, y]);
     }
 
-    function onPointerUp(event: React.PointerEvent<HTMLCanvasElement>) {
+    function onPointerUp(_event: SimplePointerEventData) {
       if (!allowDrawing) return;
-      event.preventDefault();
       if (dragging) setEditingTextId(0);
       setDragging(false);
       setHasLifted(true);
     }
+
+    const wrapMouseHandler =
+      (handler: (event: SimplePointerEventData) => void) =>
+      (event: React.MouseEvent<HTMLCanvasElement>) => {
+        handler({ clientX: event.clientX, clientY: event.clientY });
+      };
+
+    const wrapTouchHandler =
+      (handler: (event: SimplePointerEventData) => void) =>
+      (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (event.targetTouches.length > 0) {
+          const firstTouch = event.targetTouches[0];
+          handler({ clientX: firstTouch.clientX, clientY: firstTouch.clientY });
+        }
+      };
 
     const onKeyDown = useCallback(
       (event: KeyboardEvent) => {
@@ -528,6 +545,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       <>
         <canvas
           ref={canvasRef}
+          onMouseDown={wrapMouseHandler(onPointerDown)}
+          onMouseMove={wrapMouseHandler(onPointerMove)}
+          onMouseUp={wrapMouseHandler(onPointerUp)}
+          onTouchStart={wrapTouchHandler(onPointerDown)}
+          onTouchMove={wrapTouchHandler(onPointerMove)}
+          onTouchEnd={wrapTouchHandler(onPointerUp)}
           onContextMenu={(e) => {
             e.preventDefault();
           }}
