@@ -81,19 +81,15 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         const ctx = canvasRef.current.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
+        const isCoordEq = x1 === x2 && y1 === y2;
+
         ctx.beginPath();
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.strokeStyle = targetColor;
         ctx.lineWidth = targetWidth;
-        if (x1 !== x2 || y1 !== y2) {
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-        } else {
-          // Safari prunes zero-length lines
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2 + 1, y2 + 1);
-        }
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(isCoordEq ? x1 + 1 : x2, isCoordEq ? y1 + 1 : y2);
         ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
