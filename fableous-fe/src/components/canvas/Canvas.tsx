@@ -86,8 +86,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.lineJoin = "round";
         ctx.strokeStyle = targetColor;
         ctx.lineWidth = targetWidth;
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        if (x1 !== x2 || y1 !== y2) {
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+        } else {
+          // Safari prunes zero-length lines
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2 + 1, y2 + 1);
+        }
         ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
