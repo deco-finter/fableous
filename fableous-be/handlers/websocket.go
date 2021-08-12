@@ -1,12 +1,16 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
+	"github.com/deco-finter/fableous/fableous-be/config"
 	"github.com/deco-finter/fableous/fableous-be/constants"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/utils"
@@ -128,6 +132,36 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *session, ro
 		}
 	}
 	return
+}
+
+func (m *module) SavePayload(sess *session, message datatransfers.WSMessage) {
+	var err error
+	var data []byte
+	if data, err = utils.ExtractPayload(message); err != nil {
+		log.Println(err)
+		return
+	}
+	directory := fmt.Sprintf("%s/%s/%s/%d", config.AppConfig.StaticDir, sess.classroomID, sess.sessionID, sess.currentPage)
+	if _, err = os.Stat(directory); os.IsNotExist(err) {
+		if err = os.MkdirAll(directory, 0700); err != nil {
+			log.Println(err)
+			return
+		}
+	}
+	var fileName string
+	switch message.Type {
+	case constants.WSMessageTypeAudio:
+		fileName = fmt.Sprintf("%d.ogg", time.Now().Unix())
+	default:
+		return
+	}
+	var file *os.File
+	if file, err = os.OpenFile(fmt.Sprintf("%s/%s", directory, fileName), os.O_WRONLY|os.O_CREATE, 0700); err != nil {
+		log.Println(err)
+		return
+	}
+	defer file.Close()
+	file.Write(data)
 }
 
 func (m *module) GetClassroomSession(classroomToken string) (sess *session) {

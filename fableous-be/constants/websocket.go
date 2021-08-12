@@ -10,6 +10,8 @@ const (
 	WSMessageTypePing    = "PING"
 	WSMessageTypeError   = "ERROR"
 
+	WSMessageDataPayloadKey = "text"
+
 	ControllerRoleCharacter  = "CHARACTER"
 	ControllerRoleBackground = "BACKGROUND"
 	ControllerRoleStory      = "STORY"
