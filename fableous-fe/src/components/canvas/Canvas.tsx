@@ -76,14 +76,22 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         const ctx = canvasRef.current.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
+        // lay down path
         ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.closePath();
+        // clear overlapped pixels
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = targetWidth - 3; // compensate aliased edges
+        ctx.stroke();
+        // draw new pixels
+        ctx.globalCompositeOperation = "source-over";
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.strokeStyle = targetColor;
         ctx.lineWidth = targetWidth;
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
@@ -624,9 +632,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                   label="Red"
                 />
                 <FormControlLabel
+                  value="#ffff00ff"
+                  control={<Radio />}
+                  label="Yellow"
+                />
+                <FormControlLabel
                   value="#00ff00ff"
                   control={<Radio />}
                   label="Green"
+                />
+                <FormControlLabel
+                  value="#00ffffff"
+                  control={<Radio />}
+                  label="Cyan"
                 />
                 <FormControlLabel
                   value="#0000ffff"
