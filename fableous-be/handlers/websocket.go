@@ -25,41 +25,31 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 		return
 	}
 	defer conn.Close()
-	return m.HubCommandWorker(conn, classroomID)
+	classroomToken := utils.GenerateRandomString(constants.ClassroomTokenLength)
+	sess := &session{
+		classroomToken: classroomToken,
+		classroomID:    classroomID,
+		sessionID:      "SESSION_ID", // TODO: session management
+		currentPage:    1,            // TOD0: session management
+		hubConn:        conn,
+		controllerConn: make(map[string]*websocket.Conn),
+	}
+	m.sessions.mutex.Lock()
+	m.sessions.keys[classroomToken] = sess
+	m.sessions.mutex.Unlock()
+	return m.HubCommandWorker(conn, sess)
 }
 
 func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role string) (err error) {
-	m.sessions.mutex.RLock()
-	if session, ok := m.sessions.keys[classroomToken]; ok {
-		switch role {
-		case constants.ControllerRoleBackground:
-			if session.backgroundConnected {
-				log.Printf("background role already connected")
-				m.sessions.mutex.RUnlock()
-				return
-			}
-			session.backgroundConnected = true
-		case constants.ControllerRoleCharacter:
-			if session.characterConnected {
-				log.Printf("character role already connected")
-				m.sessions.mutex.RUnlock()
-				return
-			}
-			session.characterConnected = true
-		case constants.ControllerRoleStory:
-			if session.storyConnected {
-				log.Printf("story role already connected")
-				m.sessions.mutex.RUnlock()
-				return
-			}
-			session.storyConnected = true
-		}
-	} else {
+	var sess *session
+	if sess = m.GetClassroomSession(classroomToken); sess == nil {
 		log.Printf("session not initialised")
-		m.sessions.mutex.RUnlock()
 		return
 	}
-	m.sessions.mutex.RUnlock()
+	if conn := m.GetSessionController(sess, role); conn != nil {
+		log.Printf("role already connected")
+		return
+	}
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -72,23 +62,16 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role stri
 		return
 	}
 	defer conn.Close()
-	return m.ControllerCommandWorker(conn, classroomToken, role)
+	sess.mutex.Lock()
+	sess.controllerConn[role] = conn
+	sess.mutex.Unlock()
+	return m.ControllerCommandWorker(conn, sess, role)
 }
 
-func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err error) {
-	classroomToken := utils.GenerateRandomString(constants.ClassroomTokenLength)
-	m.sessions.mutex.Lock()
-	m.sessions.keys[classroomToken] = &session{
-		conn:                conn,
-		classroomID:         classroomID,
-		characterConnected:  false,
-		backgroundConnected: false,
-		storyConnected:      false,
-	}
-	m.sessions.mutex.Unlock()
+func (m *module) HubCommandWorker(conn *websocket.Conn, sess *session) (err error) {
 	_ = conn.WriteJSON(datatransfers.WSMessage{
 		Type: constants.WSMessageTypeControl,
-		Data: classroomToken,
+		Data: sess.classroomToken,
 	})
 	for {
 		var message datatransfers.WSMessage
@@ -117,7 +100,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, classroomID string) (err
 	return
 }
 
-func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, role string) (err error) {
+func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *session, role string) (err error) {
 	for {
 		var message datatransfers.WSMessage
 		if err = conn.ReadJSON(&message); err != nil {
@@ -132,17 +115,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, r
 		}
 		switch message.Type {
 		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeAudio:
-			// TODO: use WS hub
-			// TODO: decode and save audio
-			var hubConn *websocket.Conn
-			m.sessions.mutex.RLock()
-			if session, ok := m.sessions.keys[classroomToken]; ok {
-				hubConn = session.conn
-			} else {
-				break
-			}
-			m.sessions.mutex.RUnlock()
-			_ = hubConn.WriteJSON(message)
+			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypePing,
@@ -153,6 +126,24 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, classroomToken, r
 				Data: "unsupported message type",
 			})
 		}
+	}
+	return
+}
+
+func (m *module) GetClassroomSession(classroomToken string) (sess *session) {
+	m.sessions.mutex.RLock()
+	defer m.sessions.mutex.RUnlock()
+	if selected, ok := m.sessions.keys[classroomToken]; ok {
+		sess = selected
+	}
+	return
+}
+
+func (m *module) GetSessionController(sess *session, role string) (conn *websocket.Conn) {
+	sess.mutex.RLock()
+	defer sess.mutex.RUnlock()
+	if selected, ok := sess.controllerConn[role]; ok {
+		conn = selected
 	}
 	return
 }

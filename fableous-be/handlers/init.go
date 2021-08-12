@@ -29,8 +29,8 @@ type HandlerFunc interface {
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
 	ConnectControllerWS(ctx *gin.Context, classroomToken, role string) (err error)
-	HubCommandWorker(conn *websocket.Conn, classroomID string) (err error)
-	ControllerCommandWorker(conn *websocket.Conn, classroomToken, role string) (err error)
+	HubCommandWorker(conn *websocket.Conn, sess *session) (err error)
+	ControllerCommandWorker(conn *websocket.Conn, sess *session, role string) (err error)
 }
 
 type module struct {
@@ -44,16 +44,18 @@ type dbEntity struct {
 }
 
 type sessionsEntity struct {
-	keys  map[string]*session
+	keys  map[string]*session // key: classroomToken, value: session
 	mutex sync.RWMutex
 }
 
 type session struct {
-	conn                *websocket.Conn
-	classroomID         string
-	characterConnected  bool
-	backgroundConnected bool
-	storyConnected      bool
+	classroomToken string
+	classroomID    string
+	sessionID      string
+	currentPage    int
+	hubConn        *websocket.Conn
+	controllerConn map[string]*websocket.Conn // key: role, value: ws.Conn
+	mutex          sync.RWMutex
 }
 
 func InitializeHandler() (err error) {
