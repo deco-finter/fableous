@@ -528,15 +528,22 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       <>
         <canvas
           ref={canvasRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           style={{
             borderWidth: 4,
             width: "100%",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
+            msTouchAction: "none",
+            msTouchSelect: "none",
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            userSelect: "none",
           }}
         />
         {role === ControllerRole.Hub &&
