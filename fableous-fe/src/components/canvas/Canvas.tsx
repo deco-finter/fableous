@@ -83,7 +83,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ) as CanvasRenderingContext2D;
         const isCoordEq = x1 === x2 && y1 === y2;
 
+        // lay down path
         ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.closePath();
+        // clear overlapped pixels
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = targetWidth - 3; // compensate aliased edges
+        ctx.stroke();
+        // draw new pixels
+        ctx.globalCompositeOperation = "source-over";
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.strokeStyle = targetColor;
@@ -654,9 +665,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                   label="Red"
                 />
                 <FormControlLabel
+                  value="#ffff00ff"
+                  control={<Radio />}
+                  label="Yellow"
+                />
+                <FormControlLabel
                   value="#00ff00ff"
                   control={<Radio />}
                   label="Green"
+                />
+                <FormControlLabel
+                  value="#00ffffff"
+                  control={<Radio />}
+                  label="Cyan"
                 />
                 <FormControlLabel
                   value="#0000ffff"
