@@ -1,6 +1,8 @@
 package config
 
 import (
+	"log"
+
 	"github.com/spf13/viper"
 )
 
@@ -10,6 +12,8 @@ type Config struct {
 	Port        int
 	Environment string
 	Debug       bool
+
+	StaticDir string
 
 	DBHost     string
 	DBPort     int
@@ -39,6 +43,8 @@ func InitializeAppConfig() {
 	AppConfig.Environment = viper.GetString("ENVIRONMENT")
 	AppConfig.Debug = viper.GetBool("DEBUG")
 
+	AppConfig.StaticDir = viper.GetString("STATIC_DIR")
+
 	AppConfig.DBHost = viper.GetString("DB_HOST")
 	AppConfig.DBPort = viper.GetInt("DB_PORT")
 	AppConfig.DBDatabase = viper.GetString("DB_DATABASE")
@@ -51,4 +57,6 @@ func InitializeAppConfig() {
 	AppConfig.RedisPassword = viper.GetString("REDIS_PASSWORD")
 
 	AppConfig.JWTSecret = viper.GetString("JWT_SECRET")
+
+	log.Println("[INIT] Configuration loaded")
 }
