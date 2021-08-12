@@ -43,6 +43,11 @@ interface CanvasProps {
   layer: ControllerRole;
 }
 
+interface SimplePointerEventData {
+  clientX: number;
+  clientY: number;
+}
+
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
     const { layer, role, wsRef } = props;
@@ -76,6 +81,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         const ctx = canvasRef.current.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
+        const isCoordEq = x1 === x2 && y1 === y2;
+
         // lay down path
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -92,6 +99,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.lineJoin = "round";
         ctx.strokeStyle = targetColor;
         ctx.lineWidth = targetWidth;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(isCoordEq ? x1 + 1 : x2, isCoordEq ? y1 + 1 : y2);
+        ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
@@ -396,10 +406,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [layer, canvasRef, placePaint, placeFill, placeText]
     );
 
-    function onMouseDown(
-      event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
-    ) {
-      event.preventDefault();
+    function onPointerDown(event: SimplePointerEventData) {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
         case ToolMode.Paint:
@@ -421,11 +428,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }
 
-    function onMouseMove(
-      event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
-    ) {
+    function onPointerMove(event: SimplePointerEventData) {
       if (!allowDrawing) return;
-      event.preventDefault();
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
@@ -449,13 +453,27 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setLastPos([x, y]);
     }
 
-    function onMouseUp(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    function onPointerUp(_event: SimplePointerEventData) {
       if (!allowDrawing) return;
-      event.preventDefault();
       if (dragging) setEditingTextId(0);
       setDragging(false);
       setHasLifted(true);
     }
+
+    const wrapMouseHandler =
+      (handler: (event: SimplePointerEventData) => void) =>
+      (event: React.MouseEvent<HTMLCanvasElement>) => {
+        handler({ clientX: event.clientX, clientY: event.clientY });
+      };
+
+    const wrapTouchHandler =
+      (handler: (event: SimplePointerEventData) => void) =>
+      (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (event.targetTouches.length > 0) {
+          const firstTouch = event.targetTouches[0];
+          handler({ clientX: firstTouch.clientX, clientY: firstTouch.clientY });
+        }
+      };
 
     const onKeyDown = useCallback(
       (event: KeyboardEvent) => {
@@ -540,12 +558,28 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       <>
         <canvas
           ref={canvasRef}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
+          onMouseDown={wrapMouseHandler(onPointerDown)}
+          onMouseMove={wrapMouseHandler(onPointerMove)}
+          onMouseUp={wrapMouseHandler(onPointerUp)}
+          onTouchStart={wrapTouchHandler(onPointerDown)}
+          onTouchMove={wrapTouchHandler(onPointerMove)}
+          onTouchEnd={wrapTouchHandler(onPointerUp)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           style={{
             borderWidth: 4,
             width: "100%",
+            // allows onPointerMove to be fired continuously on touch,
+            // else will be treated as pan gesture leading to short strokes
+            touchAction: "none",
+            msTouchAction: "none",
+            msTouchSelect: "none",
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            userSelect: "none",
           }}
         />
         {role === ControllerRole.Hub &&
@@ -599,20 +633,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             on text again to edit text.
           </div>
         )}
-        {toolMode === ToolMode.Paint && (
-          <div>
-            <Slider
-              defaultValue={8}
-              valueLabelDisplay="auto"
-              value={toolWidth}
-              onChange={(e, width) => setToolWidth(width as number)}
-              step={4 * SCALE}
-              marks
-              min={4 * SCALE}
-              max={32 * SCALE}
-            />
-          </div>
-        )}
+        <div>
+          <Slider
+            disabled={toolMode !== ToolMode.Paint}
+            defaultValue={8}
+            valueLabelDisplay="auto"
+            value={toolWidth}
+            onChange={(e, width) => setToolWidth(width as number)}
+            step={4 * SCALE}
+            marks
+            min={4 * SCALE}
+            max={32 * SCALE}
+          />
+        </div>
         {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
           <div>
             <FormControl component="fieldset">

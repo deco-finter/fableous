@@ -51,50 +51,58 @@ export default function ControllerCanvasPage() {
   return (
     <>
       <Grid item xs={12}>
-        {!controllerReady ? (
-          <>
-            <FormControl component="fieldset">
-              <TextField
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Name"
-              />
-              <TextField
-                value={classroomToken}
-                onChange={(e) =>
-                  setClassroomToken(e.target.value.toUpperCase())
-                }
-                placeholder="Token"
-              />
-              <RadioGroup
-                value={role}
-                onChange={(e) => setRole(e.target.value as ControllerRole)}
-              >
-                <FormControlLabel
-                  value={ControllerRole.Story}
-                  control={<Radio />}
-                  label="Story"
+        <div
+          style={{
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none",
+          }}
+        >
+          {!controllerReady ? (
+            <>
+              <FormControl component="fieldset">
+                <TextField
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Name"
                 />
-                <FormControlLabel
-                  value={ControllerRole.Character}
-                  control={<Radio />}
-                  label="Character"
+                <TextField
+                  value={classroomToken}
+                  onChange={(e) =>
+                    setClassroomToken(e.target.value.toUpperCase())
+                  }
+                  placeholder="Token"
                 />
-                <FormControlLabel
-                  value={ControllerRole.Background}
-                  control={<Radio />}
-                  label="Background"
-                />
-              </RadioGroup>
-              <Button onClick={joinSession}>Join Session</Button>
-            </FormControl>
-          </>
-        ) : (
-          <>
-            {role}
-            <Canvas ref={canvasRef} wsRef={wsRef} role={role} layer={role} />
-          </>
-        )}
+                <RadioGroup
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as ControllerRole)}
+                >
+                  <FormControlLabel
+                    value={ControllerRole.Story}
+                    control={<Radio />}
+                    label="Story"
+                  />
+                  <FormControlLabel
+                    value={ControllerRole.Character}
+                    control={<Radio />}
+                    label="Character"
+                  />
+                  <FormControlLabel
+                    value={ControllerRole.Background}
+                    control={<Radio />}
+                    label="Background"
+                  />
+                </RadioGroup>
+                <Button onClick={joinSession}>Join Session</Button>
+              </FormControl>
+            </>
+          ) : (
+            <>
+              {role}
+              <Canvas ref={canvasRef} wsRef={wsRef} role={role} layer={role} />
+            </>
+          )}
+        </div>
       </Grid>
     </>
   );
