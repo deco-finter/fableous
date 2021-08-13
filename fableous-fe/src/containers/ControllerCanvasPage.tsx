@@ -14,7 +14,7 @@ import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 export default function ControllerCanvasPage() {
   const wsRef = useRef<WebSocket>();
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
-  const [cursor, setCursor] = useState<Cursor>();
+  const [cursor, setCursor] = useState<Cursor | undefined>();
   const [controllerReady, setControllerReady] = useState(false);
   const [classroomToken, setClassroomToken] = useState("");
   const [name, setName] = useState("");
@@ -110,14 +110,13 @@ export default function ControllerCanvasPage() {
                     pointerEvents: "none", // forwards pointer events to next layer
                   }}
                 >
-                  <CursorScreen cursor={cursor} />
+                  <CursorScreen cursor={cursor} name="" />
                 </div>
                 <div
                   style={{
                     gridRowStart: 1,
                     gridColumnStart: 1,
                     zIndex: 10,
-                    cursor: "none",
                   }}
                 >
                   <Canvas

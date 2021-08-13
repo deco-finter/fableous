@@ -19,9 +19,11 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
-  const [storyCursor, setStoryCursor] = useState<Cursor>();
-  const [characterCursor, setCharacterCursor] = useState<Cursor>();
-  const [backgroundCursor, setBackgroundCursor] = useState<Cursor>();
+  const [storyCursor, setStoryCursor] = useState<Cursor | undefined>();
+  const [characterCursor, setCharacterCursor] = useState<Cursor | undefined>();
+  const [backgroundCursor, setBackgroundCursor] = useState<
+    Cursor | undefined
+  >();
   const [classroomId, setClassroomId] = useState("");
   const [classroomToken, setClassroomToken] = useState("");
   const [hubReady, setHubReady] = useState(false);
@@ -123,7 +125,7 @@ export default function HubCanvasPage() {
                   pointerEvents: "none",
                 }}
               >
-                <CursorScreen cursor={storyCursor} />
+                <CursorScreen cursor={storyCursor} name="Story" />
               </div>
               <div
                 style={{
@@ -133,7 +135,7 @@ export default function HubCanvasPage() {
                   pointerEvents: "none",
                 }}
               >
-                <CursorScreen cursor={characterCursor} />
+                <CursorScreen cursor={characterCursor} name="Character" />
               </div>
               <div
                 style={{
@@ -143,7 +145,7 @@ export default function HubCanvasPage() {
                   pointerEvents: "none",
                 }}
               >
-                <CursorScreen cursor={backgroundCursor} />
+                <CursorScreen cursor={backgroundCursor} name="Background" />
               </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
                 <Canvas

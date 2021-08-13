@@ -16,28 +16,35 @@ export interface Cursor {
 
 interface CursorScreenProps {
   cursor: Cursor | undefined;
+  name: string;
 }
 
 const CursorScreen = (props: CursorScreenProps) => {
-  const { cursor } = props;
+  const { cursor, name } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
 
   const refreshCursor = useCallback(() => {
-    if (!cursor) return;
     const ctx = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
+    const { width, height } = canvasRef.current;
+    ctx.clearRect(0, 0, width, height);
+    if (!cursor) return;
     const { normX, normY, normWidth, toolMode } = cursor;
     const [x, y] = scaleUpXY(canvasRef, normX, normY);
     const [toolWidth] = scaleUpXY(canvasRef, normWidth, 0);
-    const { width, height } = canvasRef.current;
-    ctx.clearRect(0, 0, width, height);
     switch (toolMode) {
       case ToolMode.Paint:
+        const radius = toolWidth / 2;
         ctx.strokeStyle = "gray";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.ellipse(x, y, toolWidth / 2, toolWidth / 2, 0, 0, 2 * Math.PI);
+        ctx.ellipse(x, y, radius, radius, 0, 0, 2 * Math.PI);
         ctx.closePath();
         ctx.stroke();
+        if (name) {
+          ctx.font = "18px Arial";
+          ctx.fillStyle = "gray";
+          ctx.fillText(name, x + radius * 0.71 + 8, y + radius * 0.71 + 8);
+        }
         break;
       case ToolMode.Fill:
         ctx.strokeStyle = "gray";
@@ -49,6 +56,11 @@ const CursorScreen = (props: CursorScreenProps) => {
         ctx.lineTo(x, y + 16);
         ctx.closePath();
         ctx.stroke();
+        if (name) {
+          ctx.font = "18px Arial";
+          ctx.fillStyle = "gray";
+          ctx.fillText(name, x + 8, y + 18);
+        }
         break;
       case ToolMode.Text:
         ctx.strokeStyle = "gray";
@@ -62,10 +74,15 @@ const CursorScreen = (props: CursorScreenProps) => {
         ctx.lineTo(x + 6, y + 16);
         ctx.closePath();
         ctx.stroke();
+        if (name) {
+          ctx.font = "18px Arial";
+          ctx.fillStyle = "gray";
+          ctx.fillText(name, x + 8, y + 8);
+        }
         break;
       default:
     }
-  }, [canvasRef, cursor]);
+  }, [cursor, name]);
 
   // setup on component mount
   useEffect(() => {
@@ -74,7 +91,6 @@ const CursorScreen = (props: CursorScreenProps) => {
     canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      ctx.textAlign = "center";
       ctx.textBaseline = "middle";
     }
     // only trigger once during componentMount
