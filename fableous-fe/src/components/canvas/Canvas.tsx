@@ -42,7 +42,7 @@ interface CanvasProps {
   wsRef: MutableRefObject<WebSocket | undefined>;
   role: ControllerRole;
   layer: ControllerRole;
-  setCursor: React.Dispatch<Cursor>;
+  setCursor: React.Dispatch<Cursor | undefined>;
 }
 
 interface SimplePointerEventData {
@@ -601,10 +601,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       <>
         <canvas
           ref={canvasRef}
-          onMouseLeave={wrapMouseHandler(onPointerUp)}
           onMouseDown={wrapMouseHandler(onPointerDown)}
           onMouseMove={wrapMouseHandler(onPointerMove)}
           onMouseUp={wrapMouseHandler(onPointerUp)}
+          onMouseLeave={() => {
+            setCursor(undefined);
+            wrapMouseHandler(onPointerUp);
+          }}
           onTouchStart={wrapTouchHandler(onPointerDown)}
           onTouchMove={wrapTouchHandler(onPointerMove)}
           onTouchEnd={wrapTouchHandler(onPointerUp)}
@@ -624,6 +627,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             MozUserSelect: "none",
             msUserSelect: "none",
             userSelect: "none",
+            cursor:
+              role === ControllerRole.Hub || toolMode === ToolMode.Audio
+                ? "auto"
+                : "none",
           }}
         />
         {role === ControllerRole.Hub &&
