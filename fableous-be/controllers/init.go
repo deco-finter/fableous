@@ -1,8 +1,11 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
+	"github.com/deco-finter/fableous/fableous-be/config"
 	"github.com/deco-finter/fableous/fableous-be/controllers/middleware"
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
@@ -25,6 +28,15 @@ func InitializeRouter() (router *gin.Engine) {
 			user.GET("/:id", utils.AuthOnly, GETUser)
 			user.PUT("/", utils.AuthOnly, PUTUser)
 		}
+		gallery := api.Group("/gallery")
+		{
+			gallery.StaticFS("/assets", utils.FilteredFileSystem{FileSystem: http.Dir(config.AppConfig.StaticDir)})
+		}
+	}
+	ws := router.Group("/ws")
+	{
+		ws.GET("/controller", GETConnectControllerWS)
+		ws.GET("/hub", utils.AuthOnly, GETConnectHubWS)
 	}
 	return
 }
