@@ -6,10 +6,10 @@
 
 The application is divided into two parts:
 
-|   Name    |  Code Name  | Stack                             |
-| :-------: | :---------: | --------------------------------- |
-| Back-end  | fableous-be | Go, Gin + Gorm, PostgreSQL, Redis |
-| Front-end | fableous-fe | TypeScript, React                 |
+|   Name    |  Code Name  | Stack                      |
+| :-------: | :---------: | -------------------------- |
+| Back-end  | fableous-be | Go, Gin + Gorm, PostgreSQL |
+| Front-end | fableous-fe | TypeScript, React          |
 
 ## Develop
 
