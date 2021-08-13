@@ -5,6 +5,7 @@ const (
 	WSMessageTypeFill    = "FILL"
 	WSMessageTypeText    = "TEXT"
 	WSMessageTypeAudio   = "AUDIO"
+	WSMessageTypeCursor  = "CURSOR"
 	WSMessageTypeConnect = "CONNECT"
 	WSMessageTypeControl = "CONTROL"
 	WSMessageTypePing    = "PING"
