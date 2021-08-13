@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ func POSTLogin(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, datatransfers.Response{Error: "incorrect username or password"})
 		return
 	}
-	c.Header("Authorization", token)
+	c.Header("Authorization", fmt.Sprintf("Bearer %s", token))
 	c.JSON(http.StatusOK, datatransfers.Response{})
 }
 
