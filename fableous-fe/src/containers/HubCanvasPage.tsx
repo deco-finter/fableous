@@ -7,6 +7,12 @@ import Canvas from "../components/canvas/Canvas";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
 import { wsAPI } from "../Api";
 
+enum HubState {
+  SessionForm = "SESSION_FORM",
+  WaitingRoom = "WAITING_ROOM",
+  DrawingSession = "DRAWING_SESSION",
+}
+
 export default function HubCanvasPage() {
   const wsRef = useRef<WebSocket>();
   const storyCanvasRef = useRef<HTMLCanvasElement>(
@@ -20,16 +26,21 @@ export default function HubCanvasPage() {
   );
   const [classroomId, setClassroomId] = useState("");
   const [classroomToken, setClassroomToken] = useState("");
-  const [hubReady, setHubReady] = useState(false);
+  const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   const [ping, setPing] = useState<NodeJS.Timeout>();
   const [token, setToken] = useState(
     localStorage.getItem("authorization") || ""
   );
+  const [joinedStudents, setJoinedStudents] = useState<
+    {
+      [key in ControllerRole]?: string | null;
+    }
+  >({});
 
   const beginSession = () => {
     wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
     wsRef.current.onopen = () => {
-      setHubReady(true);
+      setHubState(HubState.WaitingRoom);
       const interval = setInterval(
         () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
         5000
@@ -48,6 +59,12 @@ export default function HubCanvasPage() {
         switch (msg.type) {
           case WSMessageType.Control:
             setClassroomToken(msg.data as string);
+            break;
+          case WSMessageType.Join:
+            setJoinedStudents((prev) => ({
+              ...prev,
+              [msg.role]: msg.data as string,
+            }));
             break;
           default:
         }
@@ -78,6 +95,28 @@ export default function HubCanvasPage() {
     link.click();
   };
 
+  const isAllControllersJoined = (): boolean => {
+    return [
+      ControllerRole.Story,
+      ControllerRole.Character,
+      ControllerRole.Background,
+    ].every((role) => role in joinedStudents);
+  };
+
+  const startDrawing = () => {
+    // TODO send post request about session info
+    setHubState(HubState.DrawingSession);
+  };
+
+  const finishDrawing = () => {
+    setHubState(HubState.SessionForm);
+    // TODO add support for multi page story
+    wsRef.current?.send(
+      JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
+    );
+    wsRef.current?.close();
+  };
+
   useEffect(() => {
     return () => {
       if (ping) clearInterval(ping);
@@ -90,7 +129,7 @@ export default function HubCanvasPage() {
   return (
     <>
       <Grid item xs={12}>
-        {!hubReady ? (
+        {hubState === HubState.SessionForm && (
           <FormControl component="fieldset">
             <TextField
               value={token}
@@ -107,7 +146,32 @@ export default function HubCanvasPage() {
             />
             <Button onClick={beginSession}>Start Session</Button>
           </FormControl>
-        ) : (
+        )}
+        {hubState === HubState.WaitingRoom && (
+          <>
+            <h1>waiting room</h1>
+            <p>
+              code to join: <span>{classroomToken}</span>
+            </p>
+            <p>joined students</p>
+            <ul>
+              {Object.entries(joinedStudents).map(([role, name]) => (
+                <li>
+                  {role} - {name}
+                </li>
+              ))}
+            </ul>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={startDrawing}
+              disabled={!isAllControllersJoined()}
+            >
+              start
+            </Button>
+          </>
+        )}
+        {hubState === HubState.DrawingSession && (
           <>
             Hub {classroomToken}
             <div style={{ display: "grid" }}>
@@ -137,6 +201,8 @@ export default function HubCanvasPage() {
               </div>
             </div>
             <Button onClick={() => exportCanvas()}>Export</Button>
+            {/* TODO add support for multi page story */}
+            <Button onClick={finishDrawing}>Finish</Button>
           </>
         )}
       </Grid>
