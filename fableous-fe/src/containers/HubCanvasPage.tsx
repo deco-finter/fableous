@@ -294,7 +294,7 @@ export default function HubCanvasPage() {
             </div>
             <Button onClick={() => exportCanvas()}>Export</Button>
             <Button onClick={onNextPage}>
-              {currentPageIdx > storyPageCnt ? "Finish" : "Next page"}
+              {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
             </Button>
           </>
         )}
