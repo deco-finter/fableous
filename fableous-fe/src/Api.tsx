@@ -35,6 +35,13 @@ export const restAPI = {
       method: "get",
     }),
   },
+  hub: {
+    // TODO ensure url is correct
+    postSessionInfo: () => ({
+      url: "/session",
+      method: "post",
+    }),
+  },
 } as ApiEndpoints;
 
 export const wsAPI = {
