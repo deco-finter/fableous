@@ -13,12 +13,20 @@ export interface WSMessage {
   };
 }
 
+export interface WSControlMessageData {
+  classroomToken?: string;
+  classroomId?: string;
+  sessionId?: string;
+  nextPage?: boolean;
+}
+
 export enum WSMessageType {
   Paint = "PAINT",
   Fill = "FILL",
   Text = "TEXT",
   Audio = "AUDIO",
   Connect = "CONNECT",
+  Join = "JOIN",
   Control = "CONTROL",
   Ping = "PING",
 }
