@@ -633,19 +633,21 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             on text again to edit text.
           </div>
         )}
-        <div>
-          <Slider
-            disabled={toolMode !== ToolMode.Paint}
-            defaultValue={8}
-            valueLabelDisplay="auto"
-            value={toolWidth}
-            onChange={(e, width) => setToolWidth(width as number)}
-            step={4 * SCALE}
-            marks
-            min={4 * SCALE}
-            max={32 * SCALE}
-          />
-        </div>
+        {role !== ControllerRole.Hub && (
+          <div>
+            <Slider
+              disabled={toolMode !== ToolMode.Paint}
+              defaultValue={8}
+              valueLabelDisplay="auto"
+              value={toolWidth}
+              onChange={(e, width) => setToolWidth(width as number)}
+              step={4 * SCALE}
+              marks
+              min={4 * SCALE}
+              max={32 * SCALE}
+            />
+          </div>
+        )}
         {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
           <div>
             <FormControl component="fieldset">
