@@ -1,13 +1,13 @@
 import { useRef, useEffect, useState } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { useFormik } from "formik";
 import Canvas from "../components/canvas/Canvas";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
 import { restAPI, wsAPI } from "../Api";
+import FormikTextField from "../components/FormikTextField";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -169,80 +169,49 @@ export default function HubCanvasPage() {
         {hubState === HubState.SessionForm && (
           <form onSubmit={formikSession.handleSubmit}>
             <div>
-              {/* TODO extract to separate component */}
-              <TextField
+              <FormikTextField
+                formik={formikSession}
                 name="authToken"
                 label="Auth Token"
-                value={formikSession.values.authToken}
-                onChange={(e) => {
-                  formikSession.handleChange(e);
-                  localStorage.setItem("authorization", e.target.value);
+                overrides={{
+                  onChange: (e: any) => {
+                    formikSession.handleChange(e);
+                    localStorage.setItem("authorization", e.target.value);
+                  },
                 }}
               />
             </div>
             <div>
-              <TextField
+              <FormikTextField
+                formik={formikSession}
                 name="classroomId"
                 label="Classroom ID"
-                value={formikSession.values.classroomId}
-                onChange={formikSession.handleChange}
-                error={
-                  formikSession.touched.classroomId &&
-                  Boolean(formikSession.errors.classroomId)
-                }
-                helperText={
-                  formikSession.touched.classroomId &&
-                  formikSession.errors.classroomId
-                }
               />
             </div>
             <div>
-              <TextField
+              <FormikTextField
+                formik={formikSession}
                 name="title"
                 label="Title"
-                value={formikSession.values.title}
-                onChange={formikSession.handleChange}
-                error={
-                  formikSession.touched.title &&
-                  Boolean(formikSession.errors.title)
-                }
-                helperText={
-                  formikSession.touched.title && formikSession.errors.title
-                }
               />
             </div>
             <div>
-              <TextField
+              <FormikTextField
+                formik={formikSession}
                 name="description"
                 label="Description"
-                value={formikSession.values.description}
-                onChange={formikSession.handleChange}
-                error={
-                  formikSession.touched.description &&
-                  Boolean(formikSession.errors.description)
-                }
-                helperText={
-                  formikSession.touched.description &&
-                  formikSession.errors.description
-                }
               />
             </div>
             <div>
-              <TextField
+              <FormikTextField
+                formik={formikSession}
                 name="pages"
                 label="Pages"
-                type="number"
                 // TODO support multi page
-                disabled
-                value={formikSession.values.pages}
-                onChange={formikSession.handleChange}
-                error={
-                  formikSession.touched.pages &&
-                  Boolean(formikSession.errors.pages)
-                }
-                helperText={
-                  formikSession.touched.pages && formikSession.errors.pages
-                }
+                overrides={{
+                  type: "number",
+                  disabled: true,
+                }}
               />
             </div>
             <div>
