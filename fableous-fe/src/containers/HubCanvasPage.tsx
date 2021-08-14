@@ -37,11 +37,12 @@ export default function HubCanvasPage() {
       [key in ControllerRole]?: string | null;
     }
   >({});
+  const [currentPageIdx, setCurrentPageIdx] = useState(0);
+  const [storyPageCnt, setStoryPageCnt] = useState(0);
 
   const beginSession = (classroomId: string) => {
     wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
     wsRef.current.onopen = () => {
-      setHubState(HubState.WaitingRoom);
       const interval = setInterval(
         () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
         5000
@@ -100,6 +101,9 @@ export default function HubCanvasPage() {
       })
         .then(() => {
           beginSession(values.classroomId);
+          setCurrentPageIdx(0);
+          setStoryPageCnt(values.pages);
+          setHubState(HubState.WaitingRoom);
         })
         .catch((err: any) => {
           console.error(err);
@@ -139,20 +143,32 @@ export default function HubCanvasPage() {
     ].every((role) => role in joinedControllers);
   };
 
-  const startDrawing = () => {
-    // TODO send ws control msg
-    setHubState(HubState.DrawingSession);
-  };
-
-  const finishDrawing = () => {
-    // TODO add support for multi page story, currently assumes 1 page story
-    formikSession.resetForm();
+  const onNextPage = () => {
     wsRef.current?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
-    wsRef.current?.close();
-    setHubState(HubState.SessionForm);
+    // TODO send canvas result to BE now before changing page
+    // canvas will clear when page number changes
+    setCurrentPageIdx((prev) => prev + 1);
   };
+
+  const onBeginDrawing = () => {
+    onNextPage();
+    setHubState(HubState.DrawingSession);
+  };
+
+  // go back to session form once all pages in story completed
+  useEffect(() => {
+    if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
+      formikSession.resetForm();
+      setCurrentPageIdx(0);
+      setStoryPageCnt(0);
+      wsRef.current?.close();
+      setHubState(HubState.SessionForm);
+    }
+    // do not run when formikSession changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPageIdx, storyPageCnt]);
 
   useEffect(() => {
     return () => {
@@ -207,10 +223,8 @@ export default function HubCanvasPage() {
                 formik={formikSession}
                 name="pages"
                 label="Pages"
-                // TODO support multi page
                 overrides={{
                   type: "number",
-                  disabled: true,
                 }}
               />
             </div>
@@ -236,7 +250,7 @@ export default function HubCanvasPage() {
             <Button
               variant="contained"
               color="primary"
-              onClick={startDrawing}
+              onClick={onBeginDrawing}
               disabled={!isAllControllersJoined()}
             >
               start
@@ -245,7 +259,10 @@ export default function HubCanvasPage() {
         )}
         {hubState === HubState.DrawingSession && (
           <>
-            Hub {classroomToken}
+            <h1>Hub {classroomToken}</h1>
+            <p>
+              page {currentPageIdx} of {storyPageCnt}
+            </p>
             <div style={{ display: "grid" }}>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
                 <Canvas
@@ -253,6 +270,7 @@ export default function HubCanvasPage() {
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
+                  pageNum={currentPageIdx}
                 />
               </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
@@ -261,6 +279,7 @@ export default function HubCanvasPage() {
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
+                  pageNum={currentPageIdx}
                 />
               </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
@@ -269,12 +288,14 @@ export default function HubCanvasPage() {
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
+                  pageNum={currentPageIdx}
                 />
               </div>
             </div>
             <Button onClick={() => exportCanvas()}>Export</Button>
-            {/* TODO add support for multi page story */}
-            <Button onClick={finishDrawing}>Finish</Button>
+            <Button onClick={onNextPage}>
+              {currentPageIdx > storyPageCnt ? "Finish" : "Next page"}
+            </Button>
           </>
         )}
       </Grid>

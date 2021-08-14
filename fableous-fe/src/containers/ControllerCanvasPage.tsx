@@ -99,7 +99,13 @@ export default function ControllerCanvasPage() {
           ) : (
             <>
               {role}
-              <Canvas ref={canvasRef} wsRef={wsRef} role={role} layer={role} />
+              <Canvas
+                ref={canvasRef}
+                wsRef={wsRef}
+                role={role}
+                layer={role}
+                pageNum={0}
+              />
             </>
           )}
         </div>

@@ -41,6 +41,7 @@ interface CanvasProps {
   wsRef: MutableRefObject<WebSocket | undefined>;
   role: ControllerRole;
   layer: ControllerRole;
+  pageNum: number;
 }
 
 interface SimplePointerEventData {
@@ -50,7 +51,7 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, wsRef } = props;
+    const { layer, role, wsRef, pageNum } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -68,6 +69,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [toolColor, setToolColor] = useState("#000000ff");
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
+
+    useEffect(() => {
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      setAudioB64Strings([]);
+      setTextShapes({});
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageNum]);
 
     const placePaint = useCallback(
       (
