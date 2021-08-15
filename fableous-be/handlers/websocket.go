@@ -69,7 +69,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 				ClassroomToken: sess.classroomToken,
 				ClassroomID:    sess.classroomID,
 				SessionID:      sess.sessionID,
-				NextPage:       false,
+				NextPage:       utils.BoolAddr(false),
 			},
 		},
 	})

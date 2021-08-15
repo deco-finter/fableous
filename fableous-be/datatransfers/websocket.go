@@ -28,12 +28,13 @@ type WSControlMessageData struct {
 	ClassroomToken string `json:"classroom_token,omitempty"`
 	ClassroomID    string `json:"classroom_id,omitempty"`
 	SessionID      string `json:"session_id,omitempty"`
-	NextPage       bool   `json:"nextPage,omitempty"`
+	NextPage       *bool  `json:"nextPage,omitempty"`
 }
 
 type WSJoinMessageData struct {
-	Role string `json:"role,omitempty"`
-	Name string `json:"name,omitempty"`
+	Role    string `json:"role,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Joining *bool  `json:"joining,omitempty"`
 }
 
 type WSErrorMessageData struct {
