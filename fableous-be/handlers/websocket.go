@@ -101,12 +101,42 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 }
 
 func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role, name string) (err error) {
+	_ = conn.WriteJSON(datatransfers.WSMessage{
+		Type: constants.WSMessageTypeControl,
+		Data: datatransfers.WSMessageData{
+			WSControlMessageData: datatransfers.WSControlMessageData{
+				ClassroomToken: sess.classroomToken,
+				ClassroomID:    sess.classroomID,
+				SessionID:      sess.sessionID,
+				NextPage:       utils.BoolAddr(false),
+			},
+		},
+	})
+	_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
+		Type: constants.WSMessageTypeJoin,
+		Data: datatransfers.WSMessageData{
+			WSJoinMessageData: datatransfers.WSJoinMessageData{
+				Role:    role,
+				Name:    name,
+				Joining: utils.BoolAddr(true),
+			},
+		},
+	})
 	for {
 		var message datatransfers.WSMessage
 		if err = conn.ReadJSON(&message); err != nil {
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[ControllerCommandWorker] failed reading message. %s\n", err)
 			}
+			_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
+				Type: constants.WSMessageTypeJoin,
+				Data: datatransfers.WSMessageData{
+					WSJoinMessageData: datatransfers.WSJoinMessageData{
+						Role:    role,
+						Joining: utils.BoolAddr(false),
+					},
+				},
+			})
 			break
 		}
 		switch message.Type {
