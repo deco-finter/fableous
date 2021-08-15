@@ -61,10 +61,17 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role, nam
 	return m.ControllerCommandWorker(conn, sess, role, name)
 }
 
-func (m *module) HubCommandWorker(conn *websocket.Conn, sess *session) (err error) {
+func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (err error) {
 	_ = conn.WriteJSON(datatransfers.WSMessage{
 		Type: constants.WSMessageTypeControl,
-		Data: sess.classroomToken,
+		Data: datatransfers.WSMessageData{
+			WSControlMessageData: datatransfers.WSControlMessageData{
+				ClassroomToken: sess.classroomToken,
+				ClassroomID:    sess.classroomID,
+				SessionID:      sess.sessionID,
+				NextPage:       false,
+			},
+		},
 	})
 	for {
 		var message datatransfers.WSMessage
@@ -72,10 +79,6 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *session) (err erro
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[HubCommandWorker] failed reading message. %s\n", err)
 			}
-			_ = conn.WriteJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypeError,
-				Data: "failed reading message",
-			})
 			break
 		}
 		switch message.Type {
@@ -86,7 +89,11 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *session) (err erro
 		default:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypeError,
-				Data: "unsupported message type",
+				Data: datatransfers.WSMessageData{
+					WSErrorMessageData: datatransfers.WSErrorMessageData{
+						Error: "unsupported message type",
+					},
+				},
 			})
 		}
 	}
@@ -100,10 +107,6 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[ControllerCommandWorker] failed reading message. %s\n", err)
 			}
-			_ = conn.WriteJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypeError,
-				Data: "failed reading message",
-			})
 			break
 		}
 		switch message.Type {
@@ -119,7 +122,11 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 		default:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypeError,
-				Data: "unsupported message type",
+				Data: datatransfers.WSMessageData{
+					WSErrorMessageData: datatransfers.WSErrorMessageData{
+						Error: "unsupported message type",
+					},
+				},
 			})
 		}
 	}
