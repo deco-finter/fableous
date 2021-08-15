@@ -34,5 +34,10 @@ func GETConnectControllerWS(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "role invalid"})
 		return
 	}
-	_ = handlers.Handler.ConnectControllerWS(c, classroomToken, role)
+	var name string
+	if name = c.Request.URL.Query().Get("name"); name == "" {
+		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "name required"})
+		return
+	}
+	_ = handlers.Handler.ConnectControllerWS(c, classroomToken, role, name)
 }
