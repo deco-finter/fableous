@@ -79,6 +79,23 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[HubCommandWorker] failed reading message. %s\n", err)
 			}
+			sess.mutex.Lock()
+			for _, conn := range sess.controllerConn {
+				_ = conn.WriteJSON(datatransfers.WSMessage{
+					Type: constants.WSMessageTypeJoin,
+					Data: datatransfers.WSMessageData{
+						WSJoinMessageData: datatransfers.WSJoinMessageData{
+							Role:    constants.ControllerRoleHub,
+							Joining: utils.BoolAddr(false),
+						},
+					},
+				})
+			}
+			sess.mutex.Unlock()
+			if err = m.db.sessionOrmer.Delete(sess.sessionID); err != nil {
+				log.Printf("[HubCommandWorker] failed deleting session. %s\n", err)
+			}
+			// TODO: cleanup static dir
 			break
 		}
 		switch message.Type {
@@ -128,6 +145,9 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[ControllerCommandWorker] failed reading message. %s\n", err)
 			}
+			sess.mutex.Lock()
+			delete(sess.controllerConn, role)
+			sess.mutex.Unlock()
 			_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypeJoin,
 				Data: datatransfers.WSMessageData{
