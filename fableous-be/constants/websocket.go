@@ -5,12 +5,10 @@ const (
 	WSMessageTypeFill    = "FILL"
 	WSMessageTypeText    = "TEXT"
 	WSMessageTypeAudio   = "AUDIO"
-	WSMessageTypeConnect = "CONNECT"
+	WSMessageTypeJoin    = "JOIN"
 	WSMessageTypeControl = "CONTROL"
 	WSMessageTypePing    = "PING"
 	WSMessageTypeError   = "ERROR"
-
-	WSMessageDataPayloadKey = "text"
 
 	ControllerRoleCharacter  = "CHARACTER"
 	ControllerRoleBackground = "BACKGROUND"
