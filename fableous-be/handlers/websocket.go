@@ -130,6 +130,13 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 						},
 					},
 				})
+				var session models.Session
+				if session, err = m.db.sessionOrmer.GetOneByID(sess.sessionID); err == nil && sess.currentPage > session.Pages {
+					session.Completed = true
+					if err = m.db.sessionOrmer.Update(session); err != nil {
+						log.Printf("[HubCommandWorker] failed completing session. %s\n", err)
+					}
+				}
 			}
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
