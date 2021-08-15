@@ -11,7 +11,7 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: baseAPI,
 });
 
@@ -33,6 +33,16 @@ export const restAPI = {
     getRandomTheme: () => ({
       url: "/random/theme",
       method: "get",
+    }),
+  },
+  auth: {
+    postRegister: () => ({
+      url: "/api/auth/register",
+      method: "post",
+    }),
+    postLogin: () => ({
+      url: "/api/auth/login",
+      method: "post",
     }),
   },
 } as ApiEndpoints;
