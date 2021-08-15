@@ -12,11 +12,17 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/config"
 	"github.com/deco-finter/fableous/fableous-be/constants"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
+	"github.com/deco-finter/fableous/fableous-be/models"
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
 
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
+	var session models.Session
+	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
+		log.Printf("no active session. %s\n", err)
+		return
+	}
 	var conn *websocket.Conn
 	if conn, err = m.upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting hub websocket. %s\n", err)
@@ -27,8 +33,8 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 	sess := &activeSession{
 		classroomToken: classroomToken,
 		classroomID:    classroomID,
-		sessionID:      "SESSION_ID", // TODO: session management
-		currentPage:    1,            // TOD0: session management
+		sessionID:      session.ID,
+		currentPage:    0,
 		hubConn:        conn,
 		controllerConn: make(map[string]*websocket.Conn),
 	}
