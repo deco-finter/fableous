@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
@@ -18,19 +17,14 @@ import (
 
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
 	var conn *websocket.Conn
-	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
+	if conn, err = m.upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting hub websocket. %s\n", err)
 		return
 	}
 	defer conn.Close()
 	classroomToken := utils.GenerateRandomString(constants.ClassroomTokenLength)
-	sess := &session{
+	sess := &activeSession{
 		classroomToken: classroomToken,
 		classroomID:    classroomID,
 		sessionID:      "SESSION_ID", // TODO: session management
@@ -44,24 +38,19 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 	return m.HubCommandWorker(conn, sess)
 }
 
-func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role string) (err error) {
-	var sess *session
-	if sess = m.GetClassroomSession(classroomToken); sess == nil {
-		log.Printf("session not initialised")
-		return
-	}
-	if conn := m.GetSessionController(sess, role); conn != nil {
-		log.Printf("role already connected")
-		return
-	}
+func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role, name string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
+	var sess *activeSession
+	if sess = m.GetClassroomActiveSession(classroomToken); sess == nil {
+		log.Println("session not activated")
+		return
+	}
+	if conn := m.GetActiveSessionController(sess, role); conn != nil {
+		log.Println("role already connected")
+		return
 	}
 	var conn *websocket.Conn
-	if conn, err = upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
+	if conn, err = m.upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting controller websocket. %s\n", err)
 		return
 	}
@@ -69,7 +58,7 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role stri
 	sess.mutex.Lock()
 	sess.controllerConn[role] = conn
 	sess.mutex.Unlock()
-	return m.ControllerCommandWorker(conn, sess, role)
+	return m.ControllerCommandWorker(conn, sess, role, name)
 }
 
 func (m *module) HubCommandWorker(conn *websocket.Conn, sess *session) (err error) {
@@ -104,7 +93,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *session) (err erro
 	return
 }
 
-func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *session, role string) (err error) {
+func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role, name string) (err error) {
 	for {
 		var message datatransfers.WSMessage
 		if err = conn.ReadJSON(&message); err != nil {
@@ -137,7 +126,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *session, ro
 	return
 }
 
-func (m *module) SavePayload(sess *session, message datatransfers.WSMessage) {
+func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage) {
 	var err error
 	var data []byte
 	if data, err = utils.ExtractPayload(message); err != nil {
@@ -169,7 +158,7 @@ func (m *module) SavePayload(sess *session, message datatransfers.WSMessage) {
 	}
 }
 
-func (m *module) GetClassroomSession(classroomToken string) (sess *session) {
+func (m *module) GetClassroomActiveSession(classroomToken string) (sess *activeSession) {
 	m.sessions.mutex.RLock()
 	defer m.sessions.mutex.RUnlock()
 	if selected, ok := m.sessions.keys[classroomToken]; ok {
@@ -178,7 +167,7 @@ func (m *module) GetClassroomSession(classroomToken string) (sess *session) {
 	return
 }
 
-func (m *module) GetSessionController(sess *session, role string) (conn *websocket.Conn) {
+func (m *module) GetActiveSessionController(sess *activeSession, role string) (conn *websocket.Conn) {
 	sess.mutex.RLock()
 	defer sess.mutex.RUnlock()
 	if selected, ok := sess.controllerConn[role]; ok {

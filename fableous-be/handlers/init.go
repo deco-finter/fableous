@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -28,27 +29,29 @@ type HandlerFunc interface {
 
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
-	ConnectControllerWS(ctx *gin.Context, classroomToken, role string) (err error)
-	HubCommandWorker(conn *websocket.Conn, sess *session) (err error)
-	ControllerCommandWorker(conn *websocket.Conn, sess *session, role string) (err error)
+	ConnectControllerWS(ctx *gin.Context, classroomToken, role, name string) (err error)
+	HubCommandWorker(conn *websocket.Conn, sess *activeSession) (err error)
+	ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role, name string) (err error)
 }
 
 type module struct {
 	db       *dbEntity
-	sessions sessionsEntity
+	upgrader websocket.Upgrader
+	sessions activeSessionsEntity
 }
 
 type dbEntity struct {
-	conn      *gorm.DB
-	userOrmer models.UserOrmer
+	conn         *gorm.DB
+	userOrmer    models.UserOrmer
+	sessionOrmer models.SessionOrmer
 }
 
-type sessionsEntity struct {
-	keys  map[string]*session // key: classroomToken, value: session
+type activeSessionsEntity struct {
+	keys  map[string]*activeSession // key: classroomToken, value: activeSession
 	mutex sync.RWMutex
 }
 
-type session struct {
+type activeSession struct {
 	classroomToken string
 	classroomID    string
 	sessionID      string
@@ -74,11 +77,17 @@ func InitializeHandler() (err error) {
 	// Compose handler modules
 	Handler = &module{
 		db: &dbEntity{
-			conn:      db,
-			userOrmer: models.NewUserOrmer(db),
+			conn:         db,
+			userOrmer:    models.NewUserOrmer(db),
+			sessionOrmer: models.NewSessionOrmer(db),
 		},
-		sessions: sessionsEntity{
-			keys: make(map[string]*session),
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+		sessions: activeSessionsEntity{
+			keys: make(map[string]*activeSession),
 		},
 	}
 	return
