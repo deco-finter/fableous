@@ -51,16 +51,6 @@ type activeSessionsEntity struct {
 	mutex sync.RWMutex
 }
 
-type activeSession struct {
-	classroomToken string
-	classroomID    string
-	sessionID      string
-	currentPage    int
-	hubConn        *websocket.Conn
-	controllerConn map[string]*websocket.Conn // key: role, value: ws.Conn
-	mutex          sync.RWMutex
-}
-
 func InitializeHandler() (err error) {
 	// Initialize DB
 	var db *gorm.DB

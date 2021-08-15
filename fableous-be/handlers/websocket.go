@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,23 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/models"
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
+
+type activeSession struct {
+	classroomToken string
+	classroomID    string
+	sessionID      string
+	currentPage    int
+	hubConn        *websocket.Conn
+	controllerConn map[string]*websocket.Conn // key: role, value: ws.Conn
+	mutex          sync.RWMutex
+}
+
+func (sess *activeSession) BroadcastJSON(message datatransfers.WSMessage) (err error) {
+	for _, conn := range sess.controllerConn {
+		err = conn.WriteJSON(message)
+	}
+	return
+}
 
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
@@ -85,19 +103,15 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[HubCommandWorker] failed reading message. %s\n", err)
 			}
-			sess.mutex.Lock()
-			for _, conn := range sess.controllerConn {
-				_ = conn.WriteJSON(datatransfers.WSMessage{
-					Type: constants.WSMessageTypeJoin,
-					Data: datatransfers.WSMessageData{
-						WSJoinMessageData: datatransfers.WSJoinMessageData{
-							Role:    constants.ControllerRoleHub,
-							Joining: utils.BoolAddr(false),
-						},
+			_ = sess.BroadcastJSON(datatransfers.WSMessage{
+				Type: constants.WSMessageTypeJoin,
+				Data: datatransfers.WSMessageData{
+					WSJoinMessageData: datatransfers.WSJoinMessageData{
+						Role:    constants.ControllerRoleHub,
+						Joining: utils.BoolAddr(false),
 					},
-				})
-			}
-			sess.mutex.Unlock()
+				},
+			})
 			if err = m.db.sessionOrmer.Delete(sess.sessionID); err != nil {
 				log.Printf("[HubCommandWorker] failed deleting session. %s\n", err)
 			}
@@ -105,6 +119,18 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			break
 		}
 		switch message.Type {
+		case constants.WSMessageTypeControl:
+			if message.Data.WSControlMessageData.NextPage != nil && *message.Data.WSControlMessageData.NextPage {
+				sess.currentPage++
+				_ = sess.BroadcastJSON(datatransfers.WSMessage{
+					Type: constants.WSMessageTypeControl,
+					Data: datatransfers.WSMessageData{
+						WSControlMessageData: datatransfers.WSControlMessageData{
+							NextPage: utils.BoolAddr(true),
+						},
+					},
+				})
+			}
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypePing,
