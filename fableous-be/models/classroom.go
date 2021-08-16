@@ -11,12 +11,12 @@ type classroomOrm struct {
 }
 
 type Classroom struct {
-	ID     string `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
-	User   User   `gorm:"foreignKey:UserID;references:id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
-	UserID string `json:"-"`
-
+	ID        string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
+	User      User      `gorm:"foreignKey:UserID;references:id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
+	UserID    string    `json:"-"`
 	Name      string    `gorm:"column:name;type:varchar(32);not null" json:"-"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"-"`
 }
 
 type ClassroomOrmer interface {
