@@ -3,7 +3,8 @@ import Card from "@material-ui/core/Card";
 import { makeStyles } from "@material-ui/core/styles";
 import { Button, TextField, FormControl, Grid } from "@material-ui/core";
 import { useState } from "react";
-import { apiClient } from "../Api";
+import axios from "axios";
+import { restAPI } from "../Api";
 import auth from "../Auth";
 
 const useStyles = makeStyles({
@@ -32,8 +33,9 @@ export default function LoginPage() {
 
   const postLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    apiClient
-      .post("/api/auth/login", {
+    axios
+      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+      .post(restAPI.auth.postLogin().url!, {
         email,
         password,
       })
