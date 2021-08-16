@@ -4,7 +4,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import { Button, TextField, FormControl, Grid } from "@material-ui/core";
 
 import { useState } from "react";
-import { apiClient } from "../Api";
+import axios from "axios";
+import { restAPI } from "../Api";
 
 const useStyles = makeStyles({
   root: {
@@ -33,8 +34,9 @@ export default function RegisterPage() {
 
   const postRegister = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    apiClient
-      .post("/api/auth/register", {
+    axios
+      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+      .post(restAPI.auth.postRegister().url!, {
         name: userName,
         email: eMail,
         password: passWord,
