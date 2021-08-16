@@ -112,9 +112,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					},
 				},
 			})
-			if err = m.db.sessionOrmer.Delete(sess.sessionID); err != nil {
-				log.Printf("[HubCommandWorker] failed deleting session. %s\n", err)
-			}
+			_ = m.db.sessionOrmer.Delete(sess.sessionID)
 			// TODO: cleanup static dir
 			break
 		}
