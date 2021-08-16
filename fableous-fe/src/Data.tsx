@@ -18,6 +18,7 @@ export enum WSMessageType {
   Fill = "FILL",
   Text = "TEXT",
   Audio = "AUDIO",
+  Cursor = "CURSOR",
   Connect = "CONNECT",
   Control = "CONTROL",
   Ping = "PING",
