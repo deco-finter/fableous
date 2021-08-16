@@ -27,6 +27,10 @@ type HandlerFunc interface {
 	UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error)
 	UserUpdate(userInfo datatransfers.UserInfo) (err error)
 
+	// Session
+	SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error)
+	SessionInsert(sessionInfo datatransfers.SessionInfo) (sessionID string, err error)
+
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
 	ConnectControllerWS(ctx *gin.Context, classroomToken, role, name string) (err error)

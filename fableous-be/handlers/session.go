@@ -5,9 +5,9 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
 
-func (m *module) SessionGetOneByID(sessionID string) (sessionInfo datatransfers.SessionInfo, err error) {
+func (m *module) SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error) {
 	var session models.Session
-	if session, err = m.db.sessionOrmer.GetOneByID(sessionID); err != nil {
+	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
 		return
 	}
 	sessionInfo = datatransfers.SessionInfo{
@@ -23,6 +23,7 @@ func (m *module) SessionGetOneByID(sessionID string) (sessionInfo datatransfers.
 
 func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (sessionID string, err error) {
 	if sessionID, err = m.db.sessionOrmer.Insert(models.Session{
+		ClassroomID: sessionInfo.ClassroomID,
 		Title:       sessionInfo.Title,
 		Description: sessionInfo.Description,
 		Pages:       sessionInfo.Pages,
