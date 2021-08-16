@@ -36,8 +36,10 @@ func InitializeRouter() (router *gin.Engine) {
 			classroom.PUT("/:classroom_id", utils.AuthOnly, PUTClassroom)
 			session := classroom.Group("/:classroom_id/session")
 			{
-				session.GET("/", GETSession)
+				session.GET("/ongoing", GETOngoingSession)
+				session.GET("/", utils.AuthOnly, GETSessionList)
 				session.POST("/", utils.AuthOnly, POSTSession)
+				session.DELETE("/:session_id", utils.AuthOnly, DELETESession)
 			}
 		}
 		gallery := api.Group("/gallery")

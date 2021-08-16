@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +11,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
-func GETSession(c *gin.Context) {
+func GETOngoingSession(c *gin.Context) {
 	var err error
 	var sessionInfo datatransfers.SessionInfo
 	if sessionInfo, err = handlers.Handler.SessionGetOneOngoingByClassroomID(c.Param("classroom_id")); err == gorm.ErrRecordNotFound {
@@ -25,6 +24,19 @@ func GETSession(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo})
 }
 
+func GETSessionList(c *gin.Context) {
+	var err error
+	var sessionInfos []datatransfers.SessionInfo
+	if sessionInfos, err = handlers.Handler.SessionGetAllByClassroomID(c.Param("classroom_id")); err == gorm.ErrRecordNotFound {
+		c.JSON(http.StatusNotFound, datatransfers.Response{})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get session list"})
+		return
+	}
+	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfos})
+}
+
 func POSTSession(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
@@ -35,8 +47,6 @@ func POSTSession(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get classroom detail"})
 		return
 	}
-	log.Println(classroomInfo.UserID)
-	log.Println(c.GetString(constants.RouterKeyUserID))
 	if classroomInfo.UserID != c.GetString(constants.RouterKeyUserID) {
 		c.JSON(http.StatusForbidden, datatransfers.Response{Error: "user does not own this classroom"})
 		return
@@ -59,4 +69,28 @@ func POSTSession(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo.ID})
+}
+
+func DELETESession(c *gin.Context) {
+	var err error
+	var classroomInfo datatransfers.ClassroomInfo
+	if classroomInfo, err = handlers.Handler.ClassroomGetOneByID(c.Param("classroom_id")); err == gorm.ErrRecordNotFound {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "classroom does not exist"})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get classroom detail"})
+		return
+	}
+	if classroomInfo.UserID != c.GetString(constants.RouterKeyUserID) {
+		c.JSON(http.StatusForbidden, datatransfers.Response{Error: "user does not own this classroom"})
+		return
+	}
+	if err = handlers.Handler.SessionDelete(c.Param("session_id")); err == gorm.ErrRecordNotFound {
+		c.JSON(http.StatusNotFound, datatransfers.Response{})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get session list"})
+		return
+	}
+	c.JSON(http.StatusOK, datatransfers.Response{})
 }
