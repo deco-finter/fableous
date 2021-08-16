@@ -32,6 +32,21 @@ func GETClassrooms(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: classroomInfos})
 }
 
+func POSTClassroom(c *gin.Context) {
+	var err error
+	var classroomInfo datatransfers.ClassroomInfo
+	if err = c.ShouldBind(&classroomInfo); err != nil {
+		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
+		return
+	}
+	classroomInfo.UserID = c.GetString(constants.RouterKeyUserID)
+	if classroomInfo.ID, err = handlers.Handler.ClassroomInsert(classroomInfo); err != nil {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot create classroom"})
+		return
+	}
+	c.JSON(http.StatusOK, datatransfers.Response{Data: classroomInfo.ID})
+}
+
 func PUTClassroom(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
@@ -41,7 +56,7 @@ func PUTClassroom(c *gin.Context) {
 	}
 	classroomInfo.ID = c.Param("classroom_id")
 	if err = handlers.Handler.ClassroomUpdate(classroomInfo); err != nil {
-		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "failed updating classroom"})
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot update classroom"})
 		return
 	}
 	c.JSON(http.StatusOK, datatransfers.Response{})
