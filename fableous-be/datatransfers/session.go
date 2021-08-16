@@ -3,10 +3,11 @@ package datatransfers
 import "time"
 
 type SessionInfo struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Pages       int       `json:"pages"`
-	Completed   bool      `json:"completed"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID          string    `json:"id" binding:"-"`
+	ClassroomID string    `json:"-" binding:"-"`
+	Title       string    `json:"title" binding:"required"`
+	Description string    `json:"description" binding:"required"`
+	Pages       int       `json:"pages" binding:"required"`
+	Completed   bool      `json:"completed" binding:"-"`
+	CreatedAt   time.Time `json:"createdAt" binding:"-"`
 }
