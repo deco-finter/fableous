@@ -25,6 +25,7 @@ type Session struct {
 type SessionOrmer interface {
 	GetOneByID(id string) (session Session, err error)
 	GetOneOngoingByClassroomID(classroomID string) (session Session, err error)
+	GetAllByClassroomID(classroomID string) (sessions []Session, err error)
 	GetAllCompletedByClassroomID(classroomID string) (sessions []Session, err error)
 	Insert(session Session) (id string, err error)
 	Update(session Session) (err error)
@@ -46,6 +47,11 @@ func (o *sessionOrm) GetOneOngoingByClassroomID(classroomID string) (session Ses
 	return session, result.Error
 }
 
+func (o *sessionOrm) GetAllByClassroomID(classroomID string) (sessions []Session, err error) {
+	result := o.db.Model(&Session{}).Where("classroom_id = ?", classroomID).Find(&sessions)
+	return sessions, result.Error
+}
+
 func (o *sessionOrm) GetAllCompletedByClassroomID(classroomID string) (sessions []Session, err error) {
 	result := o.db.Model(&Session{}).Where("classroom_id = ? AND completed = ?", classroomID, true).Find(&sessions)
 	return sessions, result.Error
@@ -62,6 +68,6 @@ func (o *sessionOrm) Update(session Session) (err error) {
 }
 
 func (o *sessionOrm) Delete(id string) (err error) {
-	result := o.db.Delete(&Session{ID: id})
+	result := o.db.Model(&Session{}).Delete(&Session{ID: id})
 	return result.Error
 }
