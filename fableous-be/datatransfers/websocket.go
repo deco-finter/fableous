@@ -25,9 +25,9 @@ type WSPaintMessageData struct {
 }
 
 type WSControlMessageData struct {
-	ClassroomToken string `json:"classroom_token,omitempty"`
-	ClassroomID    string `json:"classroom_id,omitempty"`
-	SessionID      string `json:"session_id,omitempty"`
+	ClassroomToken string `json:"classroomToken,omitempty"`
+	ClassroomID    string `json:"classroomId,omitempty"`
+	SessionID      string `json:"sessionId,omitempty"`
 	NextPage       *bool  `json:"nextPage,omitempty"`
 }
 
