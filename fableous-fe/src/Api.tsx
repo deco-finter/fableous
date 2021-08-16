@@ -11,9 +11,8 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
-export const apiClient = axios.create({
-  baseURL: baseAPI,
-});
+axios.defaults.baseURL = baseAPI;
+const apiClient = axios.create();
 
 configure({
   axios: apiClient,
