@@ -28,6 +28,12 @@ func InitializeRouter() (router *gin.Engine) {
 			user.GET("/:id", utils.AuthOnly, GETUser)
 			user.PUT("/", utils.AuthOnly, PUTUser)
 		}
+		classroom := api.Group("/classroom")
+		{
+			classroom.GET("/:classroom_id", utils.AuthOnly, GETClassroom)
+			classroom.GET("/", utils.AuthOnly, GETClassrooms)
+			classroom.PUT("/:classroom_id", utils.AuthOnly, PUTClassroom)
+		}
 		gallery := api.Group("/gallery")
 		{
 			gallery.StaticFS("/assets", utils.FilteredFileSystem{FileSystem: http.Dir(config.AppConfig.StaticDir)})
