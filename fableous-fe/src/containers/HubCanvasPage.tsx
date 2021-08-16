@@ -8,6 +8,7 @@ import Canvas from "../components/canvas/Canvas";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
 import { restAPI, wsAPI } from "../Api";
 import FormikTextField from "../components/FormikTextField";
+import useWsConn from "../hooks/useWsConn";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -17,7 +18,7 @@ enum HubState {
 
 export default function HubCanvasPage() {
   const wsRef = useRef<WebSocket>();
-  const [wsConn, setWsConn] = useState<WebSocket | undefined>();
+  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
@@ -62,32 +63,8 @@ export default function HubCanvasPage() {
       }
     };
 
-    setWsConn(newWsConn);
+    setNewWsConn(newWsConn);
   };
-
-  useEffect(() => {
-    if (!wsConn) return () => {};
-
-    let interval: NodeJS.Timeout;
-    const setupPing = () => {
-      interval = setInterval(() => {
-        wsConn.send(JSON.stringify({ type: WSMessageType.Ping }));
-      }, 5000);
-    };
-    const teardownPing = () => {
-      clearInterval(interval);
-    };
-    wsConn.addEventListener("open", setupPing);
-    wsConn.addEventListener("error", teardownPing);
-    wsConn.addEventListener("close", teardownPing);
-    return () => {
-      wsConn.removeEventListener("open", setupPing);
-      wsConn.addEventListener("error", teardownPing);
-      wsConn.addEventListener("close", teardownPing);
-      teardownPing();
-      wsConn.close();
-    };
-  }, [wsConn]);
 
   const formikSession = useFormik({
     initialValues: {
@@ -176,7 +153,7 @@ export default function HubCanvasPage() {
       formikSession.resetForm();
       setCurrentPageIdx(0);
       setStoryPageCnt(0);
-      setWsConn(undefined);
+      closeWsConn();
       setHubState(HubState.SessionForm);
     }
     // do not run when formikSession changes
