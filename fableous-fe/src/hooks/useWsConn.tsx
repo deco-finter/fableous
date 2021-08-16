@@ -25,8 +25,8 @@ export default function useWsConn(): [
     wsConn.addEventListener("close", teardownPing);
     return () => {
       wsConn.removeEventListener("open", setupPing);
-      wsConn.addEventListener("error", teardownPing);
-      wsConn.addEventListener("close", teardownPing);
+      wsConn.removeEventListener("error", teardownPing);
+      wsConn.removeEventListener("close", teardownPing);
       teardownPing();
       wsConn.close();
     };
