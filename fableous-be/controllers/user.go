@@ -32,7 +32,7 @@ func PUTUser(c *gin.Context) {
 		Name:  user.Name,
 		Email: user.Email,
 	}); err != nil {
-		c.JSON(http.StatusNotModified, datatransfers.Response{Error: "failed updating user"})
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "failed updating user"})
 		return
 	}
 	c.JSON(http.StatusOK, datatransfers.Response{})

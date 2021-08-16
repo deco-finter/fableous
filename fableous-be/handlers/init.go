@@ -27,6 +27,11 @@ type HandlerFunc interface {
 	UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error)
 	UserUpdate(userInfo datatransfers.UserInfo) (err error)
 
+	// Classroom
+	ClassroomGetOneByID(id string) (classroomInfo datatransfers.ClassroomInfo, err error)
+	ClassroomGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error)
+	ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err error)
+
 	// Session
 	SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error)
 	SessionInsert(sessionInfo datatransfers.SessionInfo) (sessionID string, err error)
@@ -45,9 +50,10 @@ type module struct {
 }
 
 type dbEntity struct {
-	conn         *gorm.DB
-	userOrmer    models.UserOrmer
-	sessionOrmer models.SessionOrmer
+	conn           *gorm.DB
+	userOrmer      models.UserOrmer
+	classroomOrmer models.ClassroomOrmer
+	sessionOrmer   models.SessionOrmer
 }
 
 type activeSessionsEntity struct {
@@ -71,9 +77,10 @@ func InitializeHandler() (err error) {
 	// Compose handler modules
 	Handler = &module{
 		db: &dbEntity{
-			conn:         db,
-			userOrmer:    models.NewUserOrmer(db),
-			sessionOrmer: models.NewSessionOrmer(db),
+			conn:           db,
+			userOrmer:      models.NewUserOrmer(db),
+			classroomOrmer: models.NewClassroomOrmer(db),
+			sessionOrmer:   models.NewSessionOrmer(db),
 		},
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
