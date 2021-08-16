@@ -17,6 +17,7 @@ enum HubState {
 
 export default function HubCanvasPage() {
   const wsRef = useRef<WebSocket>();
+  const [wsConn, setWsConn] = useState<WebSocket | undefined>();
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
@@ -31,7 +32,6 @@ export default function HubCanvasPage() {
   });
   const [classroomToken, setClassroomToken] = useState("");
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
-  const [ping, setPing] = useState<NodeJS.Timeout>();
   const [joinedControllers, setJoinedControllers] = useState<
     {
       [key in ControllerRole]?: string | null;
@@ -41,21 +41,8 @@ export default function HubCanvasPage() {
   const [storyPageCnt, setStoryPageCnt] = useState(0);
 
   const beginSession = (classroomId: string) => {
-    wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
-    wsRef.current.onopen = () => {
-      const interval = setInterval(
-        () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
-        5000
-      );
-      setPing(interval);
-    };
-    wsRef.current.onclose = () => {
-      if (ping) clearInterval(ping);
-    };
-    wsRef.current.onerror = () => {
-      if (ping) clearInterval(ping);
-    };
-    wsRef.current.onmessage = (ev: MessageEvent) => {
+    const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
+    newWsConn.onmessage = (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
         switch (msg.type) {
@@ -74,7 +61,33 @@ export default function HubCanvasPage() {
         console.error(e);
       }
     };
+
+    setWsConn(newWsConn);
   };
+
+  useEffect(() => {
+    if (!wsConn) return () => {};
+
+    let interval: NodeJS.Timeout;
+    const setupPing = () => {
+      interval = setInterval(() => {
+        wsConn.send(JSON.stringify({ type: WSMessageType.Ping }));
+      }, 5000);
+    };
+    const teardownPing = () => {
+      clearInterval(interval);
+    };
+    wsConn.addEventListener("open", setupPing);
+    wsConn.addEventListener("error", teardownPing);
+    wsConn.addEventListener("close", teardownPing);
+    return () => {
+      wsConn.removeEventListener("open", setupPing);
+      wsConn.addEventListener("error", teardownPing);
+      wsConn.addEventListener("close", teardownPing);
+      teardownPing();
+      wsConn.close();
+    };
+  }, [wsConn]);
 
   const formikSession = useFormik({
     initialValues: {
@@ -144,11 +157,11 @@ export default function HubCanvasPage() {
   };
 
   const onNextPage = () => {
-    wsRef.current?.send(
+    wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
-    // TODO send canvas result to BE now before changing page
-    // canvas will clear when page number changes
+    // TODO send canvas result to BE now before changing page as
+    // canvas will be cleared when page number changes
     setCurrentPageIdx((prev) => prev + 1);
   };
 
@@ -163,21 +176,12 @@ export default function HubCanvasPage() {
       formikSession.resetForm();
       setCurrentPageIdx(0);
       setStoryPageCnt(0);
-      wsRef.current?.close();
+      setWsConn(undefined);
       setHubState(HubState.SessionForm);
     }
     // do not run when formikSession changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPageIdx, storyPageCnt]);
-
-  useEffect(() => {
-    return () => {
-      if (ping) clearInterval(ping);
-      wsRef.current?.close();
-      wsRef.current = undefined;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <>
@@ -242,7 +246,7 @@ export default function HubCanvasPage() {
             <p>joined students:</p>
             <ul>
               {Object.entries(joinedControllers).map(([role, name]) => (
-                <li>
+                <li key={role}>
                   {role} - {name}
                 </li>
               ))}
@@ -268,6 +272,7 @@ export default function HubCanvasPage() {
                 <Canvas
                   ref={storyCanvasRef}
                   wsRef={wsRef}
+                  wsState={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
                   pageNum={currentPageIdx}
@@ -277,6 +282,7 @@ export default function HubCanvasPage() {
                 <Canvas
                   ref={characterCanvasRef}
                   wsRef={wsRef}
+                  wsState={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
                   pageNum={currentPageIdx}
@@ -286,6 +292,7 @@ export default function HubCanvasPage() {
                 <Canvas
                   ref={backgroundCanvasRef}
                   wsRef={wsRef}
+                  wsState={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
                   pageNum={currentPageIdx}

@@ -8,6 +8,7 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  useMemo,
 } from "react";
 import Button from "@material-ui/core/Button";
 import Radio from "@material-ui/core/Radio";
@@ -39,6 +40,7 @@ interface TextShape extends Shape {
 
 interface CanvasProps {
   wsRef: MutableRefObject<WebSocket | undefined>;
+  wsState?: WebSocket;
   role: ControllerRole;
   layer: ControllerRole;
   pageNum: number;
@@ -51,7 +53,12 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, wsRef, pageNum } = props;
+    const { layer, role, pageNum } = props;
+    const wsRef = useMemo(
+      () =>
+        props.wsState !== undefined ? { current: props.wsState } : props.wsRef,
+      [props.wsState, props.wsRef]
+    );
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -720,5 +727,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
   }
 );
+
+Canvas.defaultProps = {
+  wsState: undefined,
+};
 
 export default Canvas;

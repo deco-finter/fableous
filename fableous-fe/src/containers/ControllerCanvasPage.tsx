@@ -20,6 +20,7 @@ export default function ControllerCanvasPage() {
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
 
   const joinSession = () => {
+    // TODO change to using state instead of ref, like in HubCanvasPage
     wsRef.current = new WebSocket(
       wsAPI.controller.main(classroomToken, role, name)
     );
