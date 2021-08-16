@@ -54,6 +54,14 @@ func PUTClassroom(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
 		return
 	}
+	if classroomInfo, err = handlers.Handler.ClassroomGetOneByID(classroomInfo.ID); err != nil {
+		c.JSON(http.StatusNotFound, datatransfers.Response{Error: "cannot find classroom"})
+		return
+	}
+	if classroomInfo.UserID != c.GetString(constants.RouterKeyUserID) {
+		c.JSON(http.StatusForbidden, datatransfers.Response{Error: "user does not own this classroom"})
+		return
+	}
 	classroomInfo.ID = c.Param("classroom_id")
 	if err = handlers.Handler.ClassroomUpdate(classroomInfo); err != nil {
 		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot update classroom"})
