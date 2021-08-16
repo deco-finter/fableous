@@ -14,14 +14,14 @@ type WSMessageData struct {
 }
 
 type WSPaintMessageData struct {
-	X1    string `json:"x1,omitempty"`
-	Y1    string `json:"y1,omitempty"`
-	X2    string `json:"x2,omitempty"`
-	Y2    string `json:"y2,omitempty"`
-	ID    string `json:"id,omitempty"`
-	Text  string `json:"text,omitempty"`
-	Color string `json:"color,omitempty"`
-	Width string `json:"width,omitempty"`
+	X1    float32 `json:"x1,omitempty"`
+	Y1    float32 `json:"y1,omitempty"`
+	X2    float32 `json:"x2,omitempty"`
+	Y2    float32 `json:"y2,omitempty"`
+	ID    int     `json:"id,omitempty"`
+	Text  string  `json:"text,omitempty"`
+	Color string  `json:"color,omitempty"`
+	Width float32 `json:"width,omitempty"`
 }
 
 type WSControlMessageData struct {
