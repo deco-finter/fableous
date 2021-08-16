@@ -21,7 +21,7 @@ func GETClassroom(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: classroomInfo})
 }
 
-func GETClassrooms(c *gin.Context) {
+func GETClassroomList(c *gin.Context) {
 	var err error
 	var classroomInfos []datatransfers.ClassroomInfo
 	userID := c.GetString(constants.RouterKeyUserID)
