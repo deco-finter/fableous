@@ -14,6 +14,7 @@ func (m *module) ClassroomGetOneByID(id string) (classroomInfo datatransfers.Cla
 	}
 	classroomInfo = datatransfers.ClassroomInfo{
 		ID:        classroom.ID,
+		UserID:    classroom.UserID,
 		Name:      classroom.Name,
 		CreatedAt: classroom.CreatedAt,
 	}
@@ -32,9 +33,20 @@ func (m *module) ClassroomGetAllByUserID(userID string) (classroomInfos []datatr
 	for _, classroom := range classrooms {
 		classroomInfos = append(classroomInfos, datatransfers.ClassroomInfo{
 			ID:        classroom.ID,
+			UserID:    classroom.UserID,
 			Name:      classroom.Name,
 			CreatedAt: classroom.CreatedAt,
 		})
+	}
+	return
+}
+
+func (m *module) ClassroomInsert(classroomInfo datatransfers.ClassroomInfo) (classroomID string, err error) {
+	if classroomID, err = m.db.classroomOrmer.Insert(models.Classroom{
+		UserID: classroomInfo.UserID,
+		Name:   classroomInfo.Name,
+	}); err != nil {
+		return "", err
 	}
 	return
 }
