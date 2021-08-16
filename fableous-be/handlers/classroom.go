@@ -29,7 +29,6 @@ func (m *module) ClassroomGetAllByUserID(userID string) (classroomInfos []datatr
 	} else if err != nil {
 		return classroomInfos, err
 	}
-
 	for _, classroom := range classrooms {
 		classroomInfos = append(classroomInfos, datatransfers.ClassroomInfo{
 			ID:        classroom.ID,
