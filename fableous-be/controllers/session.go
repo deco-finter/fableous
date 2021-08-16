@@ -28,7 +28,7 @@ func POSTSession(c *gin.Context) {
 	classroomID := c.Param("classroom_id")
 	// TODO: check classroom ownership
 	if _, err = handlers.Handler.SessionGetOneOngoingByClassroomID(classroomID); err != nil {
-		if err != gorm.ErrRecordNotFound {
+		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusBadRequest, datatransfers.Response{Error: "classroom already has ongoing session"})
 			return
 		} else {
