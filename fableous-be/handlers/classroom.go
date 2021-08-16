@@ -20,7 +20,7 @@ func (m *module) ClassroomGetOneByID(id string) (classroomInfo datatransfers.Cla
 	return
 }
 
-func (m *module) ClassroomsGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error) {
+func (m *module) ClassroomGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error) {
 	var classrooms []models.Classroom
 	classroomInfos = make([]datatransfers.ClassroomInfo, 0)
 	if classrooms, err = m.db.classroomOrmer.GetAllByUserID(userID); err == gorm.ErrRecordNotFound {

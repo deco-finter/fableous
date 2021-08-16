@@ -22,6 +22,7 @@ type HandlerFunc interface {
 	UserUpdate(userInfo datatransfers.UserInfo) (err error)
 
 	ClassroomGetOneByID(id string) (classroomInfo datatransfers.ClassroomInfo, err error)
+	ClassroomGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error)
 	ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err error)
 }
 
