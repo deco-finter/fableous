@@ -24,6 +24,7 @@ import {
   translateXY,
 } from "./helpers";
 import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
+import { Cursor } from "./CursorScreen";
 
 interface Shape {
   x1: number;
@@ -41,11 +42,17 @@ interface CanvasProps {
   wsRef: MutableRefObject<WebSocket | undefined>;
   role: ControllerRole;
   layer: ControllerRole;
+  setCursor: React.Dispatch<Cursor | undefined>;
+}
+
+interface SimplePointerEventData {
+  clientX: number;
+  clientY: number;
 }
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, wsRef } = props;
+    const { layer, role, setCursor, wsRef } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -76,19 +83,32 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         const ctx = canvasRef.current.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
+        const isCoordEq = x1 === x2 && y1 === y2;
+
+        // lay down path
         ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.closePath();
+        // clear overlapped pixels
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = targetWidth - 3; // compensate aliased edges
+        ctx.stroke();
+        // draw new pixels
+        ctx.globalCompositeOperation = "source-over";
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.strokeStyle = targetColor;
         ctx.lineWidth = targetWidth;
         ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        ctx.lineTo(isCoordEq ? x1 + 1 : x2, isCoordEq ? y1 + 1 : y2);
         ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
           const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
-          const [normWidth] = scaleDownXY(canvasRef, targetWidth || 0, 0);
+          const [normWidth] = scaleDownXY(canvasRef, targetWidth, 0);
           wsRef.current?.send(
             JSON.stringify({
               role,
@@ -235,7 +255,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
-      if (!ctx) return;
       const { width, height } = canvasRef.current;
       ctx.clearRect(0, 0, width, height);
       Object.entries(textShapes).forEach(([id, shape]) => {
@@ -336,6 +355,37 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }, [audioMediaRecorder, audioRecording]);
 
+    const placeCursor = useCallback(
+      (
+        normX: number,
+        normY: number,
+        normWidth: number,
+        targetMode: ToolMode
+      ) => {
+        setCursor({
+          normX,
+          normY,
+          normWidth,
+          toolMode: targetMode,
+        } as Cursor);
+        if (role !== ControllerRole.Hub) {
+          wsRef.current?.send(
+            JSON.stringify({
+              role,
+              type: WSMessageType.Cursor,
+              data: {
+                x1: normX,
+                y1: normY,
+                width: normWidth,
+                text: targetMode,
+              },
+            } as WSMessage)
+          );
+        }
+      },
+      [setCursor, role, wsRef]
+    );
+
     const readMessage = useCallback(
       (ev: MessageEvent) => {
         try {
@@ -378,6 +428,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               case WSMessageType.Audio:
                 placeAudio(msg.data.text || "");
                 break;
+              case WSMessageType.Cursor:
+                placeCursor(
+                  msg.data.x1 || 0, // no need to denormalize
+                  msg.data.y1 || 0,
+                  msg.data.width || 0,
+                  msg.data.text as ToolMode.Paint
+                );
+                break;
               default:
             }
           }
@@ -385,13 +443,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           console.error(e);
         }
       },
-      [layer, canvasRef, placePaint, placeFill, placeText]
+      [layer, canvasRef, placePaint, placeFill, placeText, placeCursor]
     );
 
-    function onMouseDown(
-      event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
-    ) {
-      event.preventDefault();
+    function onPointerDown(event: SimplePointerEventData) {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
         case ToolMode.Paint:
@@ -413,13 +468,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }
 
-    function onMouseMove(
-      event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
-    ) {
+    function onPointerMove(event: SimplePointerEventData) {
       if (!allowDrawing) return;
-      event.preventDefault();
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
+      const [normX, normY] = scaleDownXY(canvasRef, x, y);
+      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
+      placeCursor(normX, normY, normWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
           if (!dragging) return;
@@ -441,13 +496,27 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setLastPos([x, y]);
     }
 
-    function onMouseUp(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    function onPointerUp(_event: SimplePointerEventData) {
       if (!allowDrawing) return;
-      event.preventDefault();
       if (dragging) setEditingTextId(0);
       setDragging(false);
       setHasLifted(true);
     }
+
+    const wrapMouseHandler =
+      (handler: (event: SimplePointerEventData) => void) =>
+      (event: React.MouseEvent<HTMLCanvasElement>) => {
+        handler({ clientX: event.clientX, clientY: event.clientY });
+      };
+
+    const wrapTouchHandler =
+      (handler: (event: SimplePointerEventData) => void) =>
+      (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (event.targetTouches.length > 0) {
+          const firstTouch = event.targetTouches[0];
+          handler({ clientX: firstTouch.clientX, clientY: firstTouch.clientY });
+        }
+      };
 
     const onKeyDown = useCallback(
       (event: KeyboardEvent) => {
@@ -479,7 +548,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     // setup on component mount
     useEffect(() => {
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
       canvas.width = canvas.offsetWidth * SCALE;
       canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
       setAllowDrawing(role !== ControllerRole.Hub);
@@ -497,6 +565,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         default:
           setToolMode(ToolMode.None);
       }
+      const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -532,12 +601,36 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       <>
         <canvas
           ref={canvasRef}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
+          onMouseDown={wrapMouseHandler(onPointerDown)}
+          onMouseMove={wrapMouseHandler(onPointerMove)}
+          onMouseUp={wrapMouseHandler(onPointerUp)}
+          onMouseLeave={() => {
+            setCursor(undefined);
+            wrapMouseHandler(onPointerUp);
+          }}
+          onTouchStart={wrapTouchHandler(onPointerDown)}
+          onTouchMove={wrapTouchHandler(onPointerMove)}
+          onTouchEnd={wrapTouchHandler(onPointerUp)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           style={{
             borderWidth: 4,
             width: "100%",
+            // allows onPointerMove to be fired continuously on touch,
+            // else will be treated as pan gesture leading to short strokes
+            touchAction: "none",
+            msTouchAction: "none",
+            msTouchSelect: "none",
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            userSelect: "none",
+            cursor:
+              role === ControllerRole.Hub || toolMode === ToolMode.Audio
+                ? "auto"
+                : "none",
           }}
         />
         {role === ControllerRole.Hub &&
@@ -591,20 +684,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             on text again to edit text.
           </div>
         )}
-        {toolMode === ToolMode.Paint && (
-          <div>
-            <Slider
-              defaultValue={8}
-              valueLabelDisplay="auto"
-              value={toolWidth}
-              onChange={(e, width) => setToolWidth(width as number)}
-              step={4 * SCALE}
-              marks
-              min={4 * SCALE}
-              max={32 * SCALE}
-            />
-          </div>
-        )}
+        <div>
+          <Slider
+            disabled={toolMode !== ToolMode.Paint}
+            defaultValue={8}
+            valueLabelDisplay="auto"
+            value={toolWidth}
+            onChange={(e, width) => setToolWidth(width as number)}
+            step={4 * SCALE}
+            marks
+            min={4 * SCALE}
+            max={32 * SCALE}
+          />
+        </div>
         {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
           <div>
             <FormControl component="fieldset">
@@ -624,9 +716,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                   label="Red"
                 />
                 <FormControlLabel
+                  value="#ffff00ff"
+                  control={<Radio />}
+                  label="Yellow"
+                />
+                <FormControlLabel
                   value="#00ff00ff"
                   control={<Radio />}
                   label="Green"
+                />
+                <FormControlLabel
+                  value="#00ffffff"
+                  control={<Radio />}
+                  label="Cyan"
                 />
                 <FormControlLabel
                   value="#0000ffff"

@@ -15,11 +15,13 @@ import (
 )
 
 func AuthMiddleware(c *gin.Context) {
-	token := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
-	if token == "" {
-		c.Set(constants.RouterKeyIsAuthenticated, false)
-		c.Next()
-		return
+	var token string
+	if token = strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer "); token == "" {
+		if token = c.Request.URL.Query().Get("token"); token == "" {
+			c.Set(constants.RouterKeyIsAuthenticated, false)
+			c.Next()
+			return
+		}
 	}
 	var err error
 	var claims datatransfers.JWTClaims

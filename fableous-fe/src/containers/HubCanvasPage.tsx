@@ -4,6 +4,7 @@ import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import Canvas from "../components/canvas/Canvas";
+import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { ControllerRole, WSMessage, WSMessageType } from "../Data";
 import { wsAPI } from "../Api";
 
@@ -18,6 +19,11 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
+  const [storyCursor, setStoryCursor] = useState<Cursor | undefined>();
+  const [characterCursor, setCharacterCursor] = useState<Cursor | undefined>();
+  const [backgroundCursor, setBackgroundCursor] = useState<
+    Cursor | undefined
+  >();
   const [classroomId, setClassroomId] = useState("");
   const [classroomToken, setClassroomToken] = useState("");
   const [hubReady, setHubReady] = useState(false);
@@ -111,12 +117,43 @@ export default function HubCanvasPage() {
           <>
             Hub {classroomToken}
             <div style={{ display: "grid" }}>
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 15,
+                  pointerEvents: "none",
+                }}
+              >
+                <CursorScreen cursor={storyCursor} name="Story" />
+              </div>
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 14,
+                  pointerEvents: "none",
+                }}
+              >
+                <CursorScreen cursor={characterCursor} name="Character" />
+              </div>
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 13,
+                  pointerEvents: "none",
+                }}
+              >
+                <CursorScreen cursor={backgroundCursor} name="Background" />
+              </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
                 <Canvas
                   ref={storyCanvasRef}
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
+                  setCursor={setStoryCursor}
                 />
               </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
@@ -125,6 +162,7 @@ export default function HubCanvasPage() {
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
+                  setCursor={setCharacterCursor}
                 />
               </div>
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
@@ -133,6 +171,7 @@ export default function HubCanvasPage() {
                   wsRef={wsRef}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
+                  setCursor={setBackgroundCursor}
                 />
               </div>
             </div>

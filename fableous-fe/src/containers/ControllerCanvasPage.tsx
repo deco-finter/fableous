@@ -9,10 +9,12 @@ import TextField from "@material-ui/core/TextField";
 import Canvas from "../components/canvas/Canvas";
 import { ControllerRole, WSMessageType } from "../Data";
 import { wsAPI } from "../Api";
+import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 
 export default function ControllerCanvasPage() {
   const wsRef = useRef<WebSocket>();
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
+  const [cursor, setCursor] = useState<Cursor | undefined>();
   const [controllerReady, setControllerReady] = useState(false);
   const [classroomToken, setClassroomToken] = useState("");
   const [name, setName] = useState("");
@@ -51,50 +53,84 @@ export default function ControllerCanvasPage() {
   return (
     <>
       <Grid item xs={12}>
-        {!controllerReady ? (
-          <>
-            <FormControl component="fieldset">
-              <TextField
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Name"
-              />
-              <TextField
-                value={classroomToken}
-                onChange={(e) =>
-                  setClassroomToken(e.target.value.toUpperCase())
-                }
-                placeholder="Token"
-              />
-              <RadioGroup
-                value={role}
-                onChange={(e) => setRole(e.target.value as ControllerRole)}
-              >
-                <FormControlLabel
-                  value={ControllerRole.Story}
-                  control={<Radio />}
-                  label="Story"
+        <div
+          style={{
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none",
+          }}
+        >
+          {!controllerReady ? (
+            <>
+              <FormControl component="fieldset">
+                <TextField
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Name"
                 />
-                <FormControlLabel
-                  value={ControllerRole.Character}
-                  control={<Radio />}
-                  label="Character"
+                <TextField
+                  value={classroomToken}
+                  onChange={(e) =>
+                    setClassroomToken(e.target.value.toUpperCase())
+                  }
+                  placeholder="Token"
                 />
-                <FormControlLabel
-                  value={ControllerRole.Background}
-                  control={<Radio />}
-                  label="Background"
-                />
-              </RadioGroup>
-              <Button onClick={joinSession}>Join Session</Button>
-            </FormControl>
-          </>
-        ) : (
-          <>
-            {role}
-            <Canvas ref={canvasRef} wsRef={wsRef} role={role} layer={role} />
-          </>
-        )}
+                <RadioGroup
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as ControllerRole)}
+                >
+                  <FormControlLabel
+                    value={ControllerRole.Story}
+                    control={<Radio />}
+                    label="Story"
+                  />
+                  <FormControlLabel
+                    value={ControllerRole.Character}
+                    control={<Radio />}
+                    label="Character"
+                  />
+                  <FormControlLabel
+                    value={ControllerRole.Background}
+                    control={<Radio />}
+                    label="Background"
+                  />
+                </RadioGroup>
+                <Button onClick={joinSession}>Join Session</Button>
+              </FormControl>
+            </>
+          ) : (
+            <>
+              {role}
+              <div style={{ display: "grid" }}>
+                <div
+                  style={{
+                    gridRowStart: 1,
+                    gridColumnStart: 1,
+                    zIndex: 11,
+                    pointerEvents: "none", // forwards pointer events to next layer
+                  }}
+                >
+                  <CursorScreen cursor={cursor} name="" />
+                </div>
+                <div
+                  style={{
+                    gridRowStart: 1,
+                    gridColumnStart: 1,
+                    zIndex: 10,
+                  }}
+                >
+                  <Canvas
+                    ref={canvasRef}
+                    wsRef={wsRef}
+                    role={role}
+                    layer={role}
+                    setCursor={setCursor}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </Grid>
     </>
   );

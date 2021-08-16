@@ -22,7 +22,8 @@ func POSTLogin(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, datatransfers.Response{Error: "incorrect username or password"})
 		return
 	}
-	c.JSON(http.StatusOK, datatransfers.Response{Data: fmt.Sprintf("Bearer %s", token)})
+	c.Header("Authorization", fmt.Sprintf("Bearer %s", token))
+	c.JSON(http.StatusOK, datatransfers.Response{})
 }
 
 func POSTRegister(c *gin.Context) {
