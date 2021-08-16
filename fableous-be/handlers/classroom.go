@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
@@ -14,6 +16,25 @@ func (m *module) ClassroomGetOneByID(id string) (classroomInfo datatransfers.Cla
 		ID:        classroom.ID,
 		Name:      classroom.Name,
 		CreatedAt: classroom.CreatedAt,
+	}
+	return
+}
+
+func (m *module) ClassroomsGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error) {
+	var classrooms []models.Classroom
+	classroomInfos = make([]datatransfers.ClassroomInfo, 0)
+	if classrooms, err = m.db.classroomOrmer.GetAllByUserID(userID); err == gorm.ErrRecordNotFound {
+		return classroomInfos, nil
+	} else if err != nil {
+		return classroomInfos, err
+	}
+
+	for _, classroom := range classrooms {
+		classroomInfos = append(classroomInfos, datatransfers.ClassroomInfo{
+			ID:        classroom.ID,
+			Name:      classroom.Name,
+			CreatedAt: classroom.CreatedAt,
+		})
 	}
 	return
 }
