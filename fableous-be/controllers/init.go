@@ -25,8 +25,16 @@ func InitializeRouter() (router *gin.Engine) {
 		}
 		user := api.Group("/user")
 		{
-			user.GET("/:id", utils.AuthOnly, GETUser)
+			user.GET("/", utils.AuthOnly, GETUser)
 			user.PUT("/", utils.AuthOnly, PUTUser)
+		}
+		classroom := api.Group("/classroom")
+		{
+			session := classroom.Group("/:classroom_id/session")
+			{
+				session.GET("/", GETSession)
+				session.POST("/", utils.AuthOnly, POSTSession)
+			}
 		}
 		gallery := api.Group("/gallery")
 		{
