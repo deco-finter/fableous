@@ -118,7 +118,6 @@ const CursorScreen = (props: CursorScreenProps) => {
           MozUserSelect: "none",
           msUserSelect: "none",
           userSelect: "none",
-          // cursor: "none",
         }}
       />
     </>
