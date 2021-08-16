@@ -89,17 +89,21 @@ func (m *module) SessionDelete(sessionID string) (err error) {
 			},
 		},
 	})
-	if hubConn := m.GetActiveSessionController(sess, constants.ControllerRoleStory); hubConn != nil {
-		_ = hubConn.Close()
+	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleStory); conn != nil {
+		log.Println("kicking story")
+		_ = conn.Close()
 	}
-	if hubConn := m.GetActiveSessionController(sess, constants.ControllerRoleCharacter); hubConn != nil {
-		_ = hubConn.Close()
+	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleCharacter); conn != nil {
+		log.Println("kicking char")
+		_ = conn.Close()
 	}
-	if hubConn := m.GetActiveSessionController(sess, constants.ControllerRoleBackground); hubConn != nil {
-		_ = hubConn.Close()
+	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleBackground); conn != nil {
+		log.Println("kicking bg")
+		_ = conn.Close()
 	}
-	if hubConn := m.GetActiveSessionController(sess, constants.ControllerRoleHub); hubConn != nil {
-		_ = hubConn.Close()
+	if conn := sess.hubConn; conn != nil {
+		log.Println("kicking hub")
+		_ = conn.Close()
 	}
 	return
 }
