@@ -40,6 +40,7 @@ func InitializeRouter() (router *gin.Engine) {
 				session.GET("/", utils.AuthOnly, GETSessionList)
 				session.GET("/ongoing", GETOngoingSession)
 				session.POST("/", utils.AuthOnly, POSTSession)
+				session.PUT("/:session_id", utils.AuthOnly, PUTSession)
 				session.DELETE("/:session_id", utils.AuthOnly, DELETESession)
 			}
 		}
