@@ -38,3 +38,15 @@ export enum ControllerRole {
   Story = "STORY",
   Hub = "HUB",
 }
+
+export interface APIResponse<T> {
+  code?: number;
+  data?: T;
+  error?: string;
+}
+
+export interface Classroom {
+  id: number;
+  name: string;
+  createdAt: string;
+}
