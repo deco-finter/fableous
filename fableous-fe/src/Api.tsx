@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { configure } from "axios-hooks";
-import auth from "./Auth";
+import useAuth from "./Auth";
 
 const baseAPI =
   process.env.NODE_ENV === "development"
@@ -12,26 +12,19 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
-axios.interceptors.request.use();
 axios.defaults.baseURL = baseAPI;
-const onIntercept = (req: any) => {
-  console.log("intercepted");
-
-  if (auth.isAuthenticated()) {
-    req.headers.Authorization = auth.getToken();
+axios.interceptors.request.use((req: any) => {
+  const [isAuthenticated, token, saveToken] = useAuth();
+  if (isAuthenticated) {
+    req.headers.Authorization = token;
   } else {
-    auth.clearToken();
+    saveToken("");
   }
-
   return req;
-};
-
-axios.interceptors.request.use(onIntercept, Promise.reject);
-const apiClient = axios.create();
-apiClient.interceptors.request.use(onIntercept, Promise.reject);
+}, Promise.reject);
 
 configure({
-  axios: apiClient,
+  axios: axios.create(),
 });
 
 // endpoints modelled as a two-level-depth dictionary for organization
