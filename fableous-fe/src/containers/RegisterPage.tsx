@@ -1,48 +1,47 @@
-import CardContent from "@material-ui/core/CardContent";
-import Card from "@material-ui/core/Card";
-import { makeStyles } from "@material-ui/core/styles";
-import { Button, TextField, FormControl, Grid } from "@material-ui/core";
-
+import {
+  Button,
+  Card,
+  CardContent,
+  FormControl,
+  Grid,
+  TextField,
+  Typography,
+  makeStyles,
+} from "@material-ui/core";
+import Alert from "@material-ui/lab/Alert";
 import { useState } from "react";
-import axios from "axios";
+import useAxios from "axios-hooks";
 import { restAPI } from "../Api";
 
 const useStyles = makeStyles({
   root: {
     minWidth: 275,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
   },
-  bullet: {
-    display: "inline-block",
-    margin: "0 2px",
-    transform: "scale(0.8)",
-  },
-  title: {
-    fontSize: 14,
-  },
-  pos: {
-    marginBottom: 12,
+  form: {
+    width: "100%",
   },
 });
 
 export default function RegisterPage() {
-  const [userName, setUsername] = useState("");
-  const [eMail, setEmail] = useState("");
-  const [passWord, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [{ loading }, executeRegister] = useAxios(restAPI.auth.register(), {
+    manual: true,
+  });
 
   const postRegister = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    axios
-      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-      .post(restAPI.auth.postRegister().url!, {
-        name: userName,
-        email: eMail,
-        password: passWord,
-      })
-      .then((response) => {
-        console.log(response);
+    executeRegister({
+      data: {
+        name,
+        email,
+        password,
+      },
+    })
+      .then(() => {
+        setSuccess(true);
       })
       .catch((error) => {
         console.error(error);
@@ -52,52 +51,72 @@ export default function RegisterPage() {
   const classes = useStyles();
 
   return (
-    <Grid
-      container
-      justifyContent="center"
-      alignItems="center"
-      style={{ height: "80vh" }}
-    >
-      <Card className={classes.root}>
-        <CardContent>
-          <form onSubmit={postRegister}>
-            <FormControl>
-              <TextField
-                id="username"
-                value={userName}
-                onChange={(e) => setUsername(e.target.value)}
-                name="username"
-                label="Username"
-                type="text"
-              />
-              <TextField
-                id="email"
-                value={eMail}
-                onChange={(e) => setEmail(e.target.value)}
-                name="email"
-                label="Email"
-                type="email"
-              />
-              <TextField
-                id="password"
-                value={passWord}
-                onChange={(e) => setPassword(e.target.value)}
-                name="password"
-                label="Password"
-                type="password"
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                className="mt-5"
-              >
-                Register
-              </Button>
-            </FormControl>
-          </form>
-        </CardContent>
-      </Card>
+    <Grid container xs={12}>
+      <Grid
+        container
+        justifyContent="center"
+        alignItems="center"
+        style={{ height: "80vh" }}
+      >
+        <div>
+          <Typography variant="h2" className="mb-4 text-center">
+            Register
+          </Typography>
+          <Card className={classes.root}>
+            <CardContent>
+              {success ? (
+                <Alert severity="success">Account successfully created!</Alert>
+              ) : (
+                <form onSubmit={postRegister}>
+                  <FormControl className={classes.form}>
+                    <TextField
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      name="name"
+                      label="Name"
+                      type="text"
+                      variant="outlined"
+                      disabled={loading}
+                      className="mb-4"
+                    />
+                    <TextField
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      name="email"
+                      label="Email"
+                      type="email"
+                      variant="outlined"
+                      disabled={loading}
+                      className="mb-4"
+                    />
+                    <TextField
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      name="password"
+                      label="Password"
+                      type="password"
+                      variant="outlined"
+                      disabled={loading}
+                      className="mb-4"
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      type="submit"
+                      disabled={loading}
+                    >
+                      Register
+                    </Button>
+                  </FormControl>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </Grid>
     </Grid>
   );
 }
