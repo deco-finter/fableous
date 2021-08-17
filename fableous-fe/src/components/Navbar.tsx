@@ -6,10 +6,11 @@ import { Link, useHistory } from "react-router-dom";
 import useAuth from "../Auth";
 
 export default function Navbar() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const history = useHistory();
-  const auth = useAuth();
-  const logout = () => {
-    auth.logout();
+  const [isAuthenticated, , setToken] = useAuth();
+  const onLogout = () => {
+    setToken("");
     history.push("/");
   };
   return (
@@ -21,9 +22,9 @@ export default function Navbar() {
               <Link to="/">Fableous</Link>
             </Typography>
           </Button>
-          {auth.isAuthenticated() ? (
+          {isAuthenticated ? (
             <>
-              <Button className="mr-4" onClick={logout}>
+              <Button className="mr-4" onClick={onLogout}>
                 <Typography variant="h6" className="text-white capitalize">
                   Logout
                 </Typography>

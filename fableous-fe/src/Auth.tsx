@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 const TOKEN_KEY = "token";
 
@@ -17,35 +17,15 @@ const TOKEN_KEY = "token";
 //   },
 // };
 
-interface Auth {
-  isAuthenticated: () => boolean;
-  getToken: () => string;
-  setToken: React.Dispatch<React.SetStateAction<string>>;
-  logout: () => void;
-}
-
-export default function useAuth(): Auth {
+export default function useAuth(): [boolean, string, (token: string) => void] {
   const [token, setToken] = useState<string>(
     localStorage.getItem(TOKEN_KEY) || ""
   );
 
-  const isAuthenticated = useCallback(() => token !== "", [token]);
-
-  const getToken = useCallback(() => token, [token]);
-
-  const logout = () => {
-    setToken("");
-    localStorage.removeItem(TOKEN_KEY);
+  const saveToken = (t: string) => {
+    localStorage.setItem(TOKEN_KEY, t);
+    setToken(t);
   };
 
-  useEffect(() => {
-    localStorage.setItem(TOKEN_KEY, token);
-  }, [token]);
-
-  return {
-    isAuthenticated,
-    getToken,
-    setToken,
-    logout,
-  };
+  return [token !== "", token, saveToken];
 }

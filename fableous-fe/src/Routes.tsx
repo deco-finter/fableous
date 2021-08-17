@@ -10,17 +10,13 @@ import ClassroomListPage from "./containers/ClassroomListPage";
 import useAuth from "./Auth";
 
 const PrivateRoute = ({ ...routeProps }: RouteProps) => {
-  const auth = useAuth();
-  return auth.isAuthenticated() ? (
-    <Route {...routeProps} />
-  ) : (
-    <Redirect to="/login" />
-  );
+  const [isAuthenticated] = useAuth();
+  return isAuthenticated ? <Route {...routeProps} /> : <Redirect to="/login" />;
 };
 
 const PublicRoute = ({ ...routeProps }: RouteProps) => {
-  const auth = useAuth();
-  return auth.isAuthenticated() ? (
+  const [isAuthenticated] = useAuth();
+  return isAuthenticated ? (
     <Redirect to="/classroom" />
   ) : (
     <Route {...routeProps} />

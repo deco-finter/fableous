@@ -32,7 +32,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const history = useHistory();
-  const auth = useAuth();
+  const [, , setToken] = useAuth();
 
   const postLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,8 +43,8 @@ export default function LoginPage() {
         password,
       })
       .then((response) => {
-        auth.setToken(response.headers.authorization);
-        history.push("/classroom");
+        setToken(response.headers.authorization);
+        history.push("/");
       })
       .catch((error) => {
         console.error(error);
