@@ -61,8 +61,20 @@ func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (sessionID
 	return
 }
 
-func (m *module) SessionDelete(sessionID string) (err error) {
-	if err = m.db.sessionOrmer.Delete(sessionID); err != nil {
+func (m *module) SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err error) {
+	if err = m.db.sessionOrmer.Update(models.Session{
+		ID:          sessionUpdate.ID,
+		ClassroomID: sessionUpdate.ClassroomID,
+		Title:       sessionUpdate.Title,
+		Description: sessionUpdate.Description,
+	}); err != nil {
+		return err
+	}
+	return
+}
+
+func (m *module) SessionDelete(classroomID, sessionID string) (err error) {
+	if err = m.db.sessionOrmer.Delete(classroomID, sessionID); err != nil {
 		return err
 	}
 	log.Println(m.sessions.keys)

@@ -112,7 +112,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					},
 				},
 			})
-			_ = m.db.sessionOrmer.Delete(sess.sessionID)
+			_ = m.db.sessionOrmer.Delete(sess.classroomID, sess.sessionID)
 			// TODO: cleanup static dir
 			break
 		}
