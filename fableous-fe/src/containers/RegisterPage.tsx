@@ -72,6 +72,7 @@ export default function RegisterPage() {
                     <TextField
                       id="name"
                       value={name}
+                      required
                       onChange={(e) => setName(e.target.value)}
                       name="name"
                       label="Name"
@@ -83,6 +84,7 @@ export default function RegisterPage() {
                     <TextField
                       id="email"
                       value={email}
+                      required
                       onChange={(e) => setEmail(e.target.value)}
                       name="email"
                       label="Email"
@@ -94,6 +96,7 @@ export default function RegisterPage() {
                     <TextField
                       id="password"
                       value={password}
+                      required
                       onChange={(e) => setPassword(e.target.value)}
                       name="password"
                       label="Password"
