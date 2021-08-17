@@ -1,30 +1,25 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import CardContent from "@material-ui/core/CardContent";
 import Card from "@material-ui/core/Card";
 import { makeStyles } from "@material-ui/core/styles";
-import { Button, TextField, FormControl, Grid } from "@material-ui/core";
-import axios from "axios";
+import {
+  Button,
+  TextField,
+  Grid,
+  FormControl,
+  Typography,
+} from "@material-ui/core";
+import useAxios from "axios-hooks";
 import { useHistory } from "react-router-dom";
 import { restAPI } from "../Api";
-import useAuth from "../Auth";
+import { AuthContext } from "../components/AuthProvider";
 
 const useStyles = makeStyles({
   root: {
     minWidth: 275,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
   },
-  bullet: {
-    display: "inline-block",
-    margin: "0 2px",
-    transform: "scale(0.8)",
-  },
-  title: {
-    fontSize: 14,
-  },
-  pos: {
-    marginBottom: 12,
+  form: {
+    width: "100%",
   },
 });
 
@@ -52,45 +47,59 @@ export default function LoginPage() {
   const classes = useStyles();
 
   return (
-    <Grid
-      container
-      justifyContent="center"
-      alignItems="center"
-      style={{ height: "80vh" }}
-    >
-      <Card className={classes.root}>
-        <CardContent>
-          <form onSubmit={postLogin}>
-            <FormControl>
-              <TextField
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                name="email"
-                label="Email"
-                type="email"
-                variant="outlined"
-              />
-              <TextField
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                name="password"
-                label="Password"
-                type="password"
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                className="mt-5"
-              >
-                Login
-              </Button>
-            </FormControl>
-          </form>
-        </CardContent>
-      </Card>
+    <Grid container xs={12}>
+      <Grid
+        container
+        justifyContent="center"
+        alignItems="center"
+        style={{ height: "80vh" }}
+      >
+        <div>
+          <Typography variant="h2" className="mb-4 text-center">
+            Login
+          </Typography>
+          <Card className={classes.root}>
+            <CardContent>
+              <form onSubmit={postLogin}>
+                <FormControl className={classes.form}>
+                  <TextField
+                    id="email"
+                    value={email}
+                    required
+                    onChange={(e) => setEmail(e.target.value)}
+                    name="email"
+                    label="Email"
+                    type="email"
+                    variant="outlined"
+                    disabled={loading}
+                    className="mb-4"
+                  />
+                  <TextField
+                    id="password"
+                    value={password}
+                    required
+                    onChange={(e) => setPassword(e.target.value)}
+                    name="password"
+                    label="Password"
+                    type="password"
+                    variant="outlined"
+                    disabled={loading}
+                    className="mb-4"
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    Login
+                  </Button>
+                </FormControl>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </Grid>
     </Grid>
   );
 }
