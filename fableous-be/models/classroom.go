@@ -24,6 +24,7 @@ type ClassroomOrmer interface {
 	GetAllByUserID(userID string) (classrooms []Classroom, err error)
 	Insert(classroom Classroom) (id string, err error)
 	Update(classroom Classroom) (err error)
+	Delete(classroomID string) (err error)
 }
 
 func NewClassroomOrmer(db *gorm.DB) ClassroomOrmer {
@@ -49,5 +50,10 @@ func (o *classroomOrm) Insert(classroom Classroom) (id string, err error) {
 func (o *classroomOrm) Update(classroom Classroom) (err error) {
 	// By default, only non-empty fields are updated. See https://gorm.io/docs/update.html#Updates-multiple-columns
 	result := o.db.Model(&Classroom{}).Model(&classroom).Updates(&classroom)
+	return result.Error
+}
+
+func (o *classroomOrm) Delete(id string) (err error) {
+	result := o.db.Model(&Classroom{}).Delete(&Classroom{ID: id})
 	return result.Error
 }
