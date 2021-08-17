@@ -7,9 +7,10 @@ import LoginPage from "./containers/LoginPage";
 import RegisterPage from "./containers/RegisterPage";
 import ClassroomDetailPage from "./containers/ClassroomDetailPage";
 import ClassroomListPage from "./containers/ClassroomListPage";
-import auth from "./Auth";
+import useAuth from "./Auth";
 
 const PrivateRoute = ({ ...routeProps }: RouteProps) => {
+  const auth = useAuth();
   return auth.isAuthenticated() ? (
     <Route {...routeProps} />
   ) : (
@@ -18,6 +19,7 @@ const PrivateRoute = ({ ...routeProps }: RouteProps) => {
 };
 
 const PublicRoute = ({ ...routeProps }: RouteProps) => {
+  const auth = useAuth();
   return auth.isAuthenticated() ? (
     <Redirect to="/classroom" />
   ) : (

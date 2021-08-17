@@ -1,11 +1,12 @@
+import { useState } from "react";
 import CardContent from "@material-ui/core/CardContent";
 import Card from "@material-ui/core/Card";
 import { makeStyles } from "@material-ui/core/styles";
 import { Button, TextField, FormControl, Grid } from "@material-ui/core";
-import { useState } from "react";
 import axios from "axios";
+import { useHistory } from "react-router-dom";
 import { restAPI } from "../Api";
-import auth from "../Auth";
+import useAuth from "../Auth";
 
 const useStyles = makeStyles({
   root: {
@@ -30,6 +31,8 @@ const useStyles = makeStyles({
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const history = useHistory();
+  const auth = useAuth();
 
   const postLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,7 +43,8 @@ export default function LoginPage() {
         password,
       })
       .then((response) => {
-        auth.saveToken(response);
+        auth.setToken(response.headers.authorization);
+        history.push("/classroom");
       })
       .catch((error) => {
         console.error(error);
