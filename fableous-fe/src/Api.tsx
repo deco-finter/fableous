@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { configure } from "axios-hooks";
-import useAuth from "./Auth";
+import { TOKEN_KEY } from "./Auth";
+// import { TOKEN_KEY } from "./Auth";
 
 const baseAPI =
   process.env.NODE_ENV === "development"
@@ -12,19 +13,19 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
-axios.defaults.baseURL = baseAPI;
-axios.interceptors.request.use((req: any) => {
-  const [isAuthenticated, token, saveToken] = useAuth();
-  if (isAuthenticated) {
-    req.headers.Authorization = token;
-  } else {
-    saveToken("");
-  }
+const onIntercept = (req: AxiosRequestConfig) => {
+  req.headers = {
+    authorization: localStorage.getItem(TOKEN_KEY),
+  };
   return req;
-}, Promise.reject);
+};
+
+const apiClient = axios.create();
+apiClient.defaults.baseURL = baseAPI;
+apiClient.interceptors.request.use(onIntercept, Promise.reject);
 
 configure({
-  axios: axios.create(),
+  axios: apiClient,
 });
 
 // endpoints modelled as a two-level-depth dictionary for organization
@@ -51,6 +52,12 @@ export const restAPI = {
     postLogin: () => ({
       url: "/api/auth/login",
       method: "post",
+    }),
+  },
+  classroom: {
+    getList: () => ({
+      url: "/api/classroom",
+      method: "get",
     }),
   },
 } as ApiEndpoints;
