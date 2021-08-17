@@ -1,4 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
+import { useContext } from "react";
 import { Redirect, Route, RouteProps, Switch } from "react-router-dom";
 import ControllerCanvasPage from "./containers/ControllerCanvasPage";
 import HubCanvasPage from "./containers/HubCanvasPage";
@@ -7,15 +8,15 @@ import LoginPage from "./containers/LoginPage";
 import RegisterPage from "./containers/RegisterPage";
 import ClassroomDetailPage from "./containers/ClassroomDetailPage";
 import ClassroomListPage from "./containers/ClassroomListPage";
-import useAuth from "./Auth";
+import { AuthContext } from "./components/AuthProvider";
 
 const PrivateRoute = ({ ...routeProps }: RouteProps) => {
-  const [isAuthenticated] = useAuth();
+  const [, isAuthenticated] = useContext(AuthContext);
   return isAuthenticated ? <Route {...routeProps} /> : <Redirect to="/login" />;
 };
 
 const PublicRoute = ({ ...routeProps }: RouteProps) => {
-  const [isAuthenticated] = useAuth();
+  const [, isAuthenticated] = useContext(AuthContext);
   return isAuthenticated ? (
     <Redirect to="/classroom" />
   ) : (

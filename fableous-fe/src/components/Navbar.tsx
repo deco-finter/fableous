@@ -3,14 +3,15 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import { Link, useHistory } from "react-router-dom";
-import useAuth from "../Auth";
+import { useContext } from "react";
+import { AuthContext } from "./AuthProvider";
 
 export default function Navbar() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const history = useHistory();
-  const [isAuthenticated, , setToken] = useAuth();
+  const [, isAuthenticated, , clearToken] = useContext(AuthContext);
   const onLogout = () => {
-    setToken("");
+    clearToken();
     history.push("/");
   };
   return (

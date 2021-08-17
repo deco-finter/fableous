@@ -1,7 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { configure } from "axios-hooks";
-import { TOKEN_KEY } from "./Auth";
-// import { TOKEN_KEY } from "./Auth";
+import { TOKEN_KEY } from "./components/AuthProvider";
 
 const baseAPI =
   process.env.NODE_ENV === "development"
@@ -15,7 +14,7 @@ const baseWS =
 
 const onIntercept = (req: AxiosRequestConfig) => {
   req.headers = {
-    authorization: localStorage.getItem(TOKEN_KEY),
+    authorization: localStorage.getItem(TOKEN_KEY) || "",
   };
   return req;
 };
@@ -45,11 +44,11 @@ export const restAPI = {
     }),
   },
   auth: {
-    postRegister: () => ({
+    register: () => ({
       url: "/api/auth/register",
       method: "post",
     }),
-    postLogin: () => ({
+    login: () => ({
       url: "/api/auth/login",
       method: "post",
     }),
@@ -58,6 +57,22 @@ export const restAPI = {
     getList: () => ({
       url: "/api/classroom",
       method: "get",
+    }),
+    get: (id: string) => ({
+      url: `/api/classroom/${id}`,
+      method: "get",
+    }),
+    create: () => ({
+      url: "/api/classroom",
+      method: "post",
+    }),
+    update: (id: string) => ({
+      url: `/api/classroom/${id}`,
+      method: "put",
+    }),
+    delete: (id: string) => ({
+      url: `/api/classroom/${id}`,
+      method: "delete",
     }),
   },
 } as ApiEndpoints;
