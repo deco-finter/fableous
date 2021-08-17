@@ -50,17 +50,16 @@ func POSTClassroom(c *gin.Context) {
 func PUTClassroom(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
-	if err = c.ShouldBind(&classroomInfo); err != nil {
-		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
-		return
-	}
-	classroomInfo.ID = c.Param("classroom_id")
-	if classroomInfo, err = handlers.Handler.ClassroomGetOneByID(classroomInfo.ID); err != nil {
+	if classroomInfo, err = handlers.Handler.ClassroomGetOneByID(c.Param("classroom_id")); err != nil {
 		c.JSON(http.StatusNotFound, datatransfers.Response{Error: "cannot find classroom"})
 		return
 	}
 	if classroomInfo.UserID != c.GetString(constants.RouterKeyUserID) {
 		c.JSON(http.StatusForbidden, datatransfers.Response{Error: "user does not own this classroom"})
+		return
+	}
+	if err = c.ShouldBind(&classroomInfo); err != nil {
+		c.JSON(http.StatusBadRequest, datatransfers.Response{Error: err.Error()})
 		return
 	}
 	if err = handlers.Handler.ClassroomUpdate(classroomInfo); err != nil {
