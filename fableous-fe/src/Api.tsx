@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { configure } from "axios-hooks";
+import auth from "./Auth";
 
 const baseAPI =
   process.env.NODE_ENV === "development"
@@ -11,8 +12,23 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
+axios.interceptors.request.use();
 axios.defaults.baseURL = baseAPI;
+const onIntercept = (req: any) => {
+  console.log("intercepted");
+
+  if (auth.isAuthenticated()) {
+    req.headers.Authorization = auth.getToken();
+  } else {
+    auth.clearToken();
+  }
+
+  return req;
+};
+
+axios.interceptors.request.use(onIntercept, Promise.reject);
 const apiClient = axios.create();
+apiClient.interceptors.request.use(onIntercept, Promise.reject);
 
 configure({
   axios: apiClient,
