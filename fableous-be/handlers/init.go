@@ -32,6 +32,7 @@ type HandlerFunc interface {
 	ClassroomGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error)
 	ClassroomInsert(classroomInfo datatransfers.ClassroomInfo) (classroomID string, err error)
 	ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err error)
+	ClassroomDelete(classroomID string) (err error)
 
 	// Session
 	SessionGetAllByClassroomID(classroomID string) (sessionInfos []datatransfers.SessionInfo, err error)
