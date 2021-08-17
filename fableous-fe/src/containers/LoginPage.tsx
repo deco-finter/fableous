@@ -29,25 +29,23 @@ const useStyles = makeStyles({
 });
 
 export default function LoginPage() {
+  const history = useHistory();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const history = useHistory();
-  const [, , setToken] = useAuth();
+  const [{ loading }, executeLogin] = useAxios(restAPI.auth.login(), {
+    manual: true,
+  });
+  const [, , setToken] = useContext(AuthContext);
 
   const postLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    axios
-      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-      .post(restAPI.auth.postLogin().url!, {
-        email,
-        password,
-      })
+    executeLogin({ data: { email, password } })
       .then((response) => {
         setToken(response.headers.authorization);
         history.push("/");
       })
-      .catch((error) => {
-        console.error(error);
+      .catch((err) => {
+        console.error(err);
       });
   };
 
