@@ -38,7 +38,7 @@ func (o *classroomOrm) GetOneByID(id string) (classroom Classroom, err error) {
 }
 
 func (o *classroomOrm) GetAllByUserID(userID string) (classrooms []Classroom, err error) {
-	result := o.db.Model(&Classroom{}).Where("user_id = ?", userID).Order("created_at DESC").Find(&classrooms)
+	result := o.db.Model(&Classroom{}).Where("user_id = ?", userID).Order("created_at ASC").Find(&classrooms)
 	return classrooms, result.Error
 }
 

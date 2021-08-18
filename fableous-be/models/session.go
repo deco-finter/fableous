@@ -48,12 +48,12 @@ func (o *sessionOrm) GetOneOngoingByClassroomID(classroomID string) (session Ses
 }
 
 func (o *sessionOrm) GetAllByClassroomID(classroomID string) (sessions []Session, err error) {
-	result := o.db.Model(&Session{}).Where("classroom_id = ?", classroomID).Order("created_at DESC").Find(&sessions)
+	result := o.db.Model(&Session{}).Where("classroom_id = ?", classroomID).Order("created_at ASC").Find(&sessions)
 	return sessions, result.Error
 }
 
 func (o *sessionOrm) GetAllCompletedByClassroomID(classroomID string) (sessions []Session, err error) {
-	result := o.db.Model(&Session{}).Where("classroom_id = ? AND completed = ?", classroomID, true).Order("created_at DESC").Find(&sessions)
+	result := o.db.Model(&Session{}).Where("classroom_id = ? AND completed = ?", classroomID, true).Order("created_at ASC").Find(&sessions)
 	return sessions, result.Error
 }
 
