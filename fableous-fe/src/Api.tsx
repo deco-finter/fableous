@@ -13,9 +13,12 @@ const baseWS =
     : `wss://${window.location.hostname}`;
 
 const onIntercept = (req: AxiosRequestConfig) => {
-  req.headers = {
-    authorization: localStorage.getItem(TOKEN_KEY) || "",
-  };
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    req.headers = {
+      authorization: `Bearer ${token}`,
+    };
+  }
   return req;
 };
 
