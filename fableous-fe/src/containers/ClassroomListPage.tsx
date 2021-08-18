@@ -7,19 +7,20 @@ import {
   Grid,
   Icon,
   IconButton,
-  TextField,
   Typography,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import useAxios from "axios-hooks";
+import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import * as yup from "yup";
 import { restAPI } from "../Api";
+import FormikTextField from "../components/FormikTextField";
 import { APIResponse, Classroom } from "../Data";
 
 export default function ClassroomListPage() {
   const [creating, setCreating] = useState(false);
-  const [newClassroom, setNewClassroom] = useState<Classroom>({} as Classroom);
   const [
     { data: classrooms, loading: getLoading, error: getError },
     executeGet,
@@ -34,29 +35,25 @@ export default function ClassroomListPage() {
     manual: true,
   });
 
-  const handleCreate = () => {
-    if (creating) {
-      // TODO: validate
-      executePost({
-        data: {
-          name: newClassroom?.name,
-        },
+  const handleCreateSubmit = (classroom: Classroom) => {
+    executePost({
+      data: classroom,
+    })
+      .then((resp) => {
+        // eslint-disable-next-line no-param-reassign
+        classroom.id = resp.data.data || "";
+        classrooms?.data?.push(classroom);
+        setCreating(false);
       })
-        .then((resp) => {
-          newClassroom.id = resp.data.data || "";
-          classrooms?.data?.push(newClassroom);
-          setCreating(false);
-        })
-        .catch((error) => console.error(error));
-    } else {
-      setCreating(true);
-      setNewClassroom({} as Classroom);
-    }
+      .catch((error) => console.error(error));
+  };
+
+  const handleCreate = () => {
+    setCreating(true);
   };
 
   const handleCancel = () => {
     setCreating(false);
-    setNewClassroom({} as Classroom);
   };
 
   useEffect(() => {
@@ -99,37 +96,57 @@ export default function ClassroomListPage() {
           {creating ? (
             <Grid item xs={12} sm={6} md={4}>
               <Card className="flex flex-col h-full">
-                <CardContent className="flex-grow">
-                  <TextField
-                    autoFocus
-                    placeholder="Classroom name"
-                    value={newClassroom?.name}
-                    required
-                    disabled={postLoading}
-                    onChange={(e) =>
-                      setNewClassroom({
-                        ...newClassroom,
-                        name: e.target.value,
-                      } as Classroom)
-                    }
-                  />
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    disabled={postLoading}
-                    onClick={handleCreate}
-                  >
-                    Create
-                  </Button>
-                  <Button
-                    size="small"
-                    disabled={postLoading}
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </Button>
-                </CardActions>
+                <Formik
+                  initialValues={
+                    {
+                      name: "",
+                    } as Classroom
+                  }
+                  validationSchema={yup.object().shape({
+                    name: yup
+                      .string()
+                      .test(
+                        "len",
+                        "Name too long",
+                        (val) => (val || "").length <= 32
+                      )
+                      .required("Name is required"),
+                  })}
+                  onSubmit={handleCreateSubmit}
+                >
+                  {(formik) => (
+                    <>
+                      <CardContent className="flex-grow">
+                        <FormikTextField
+                          formik={formik}
+                          name="name"
+                          label="Name"
+                          overrides={{
+                            autoComplete: "off",
+                            autoFocus: true,
+                            disabled: postLoading,
+                          }}
+                        />
+                      </CardContent>
+                      <CardActions>
+                        <Button
+                          size="small"
+                          disabled={postLoading}
+                          onClick={formik.submitForm}
+                        >
+                          Create
+                        </Button>
+                        <Button
+                          size="small"
+                          disabled={postLoading}
+                          onClick={handleCancel}
+                        >
+                          Cancel
+                        </Button>
+                      </CardActions>
+                    </>
+                  )}
+                </Formik>
               </Card>
             </Grid>
           ) : (
