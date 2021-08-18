@@ -113,7 +113,7 @@ export default function ClassroomListPage() {
     <Grid container>
       <Grid container>
         <Button
-          onClick={() => history.push("/classrooms")}
+          onClick={() => history.goBack()}
           disabled={editing}
           startIcon={<Icon>arrow_backward</Icon>}
         >
