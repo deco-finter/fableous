@@ -46,7 +46,7 @@ export interface APIResponse<T> {
 }
 
 export interface Classroom {
-  id: number;
+  id: string;
   name: string;
   createdAt: string;
 }

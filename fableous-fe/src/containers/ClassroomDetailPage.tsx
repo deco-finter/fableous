@@ -21,9 +21,9 @@ export default function ClassroomListPage() {
   const [classroomCopy, setClassroomCopy] = useState<Classroom>();
   const [{ loading: getLoading, error: getError }, get] = useAxios<
     APIResponse<Classroom>,
-    string
-  >(restAPI.classroom.get(classroomId), { manual: true });
-  const [, put] = useAxios<APIResponse<Classroom>, string>(
+    APIResponse<undefined>
+  >(restAPI.classroom.getOne(classroomId), { manual: true });
+  const [, put] = useAxios<APIResponse<Classroom>, APIResponse<undefined>>(
     restAPI.classroom.update(classroomId),
     { manual: true }
   );

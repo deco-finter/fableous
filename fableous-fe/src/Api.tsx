@@ -58,7 +58,7 @@ export const restAPI = {
       url: "/api/classroom",
       method: "get",
     }),
-    get: (id: string) => ({
+    getOne: (id: string) => ({
       url: `/api/classroom/${id}`,
       method: "get",
     }),
