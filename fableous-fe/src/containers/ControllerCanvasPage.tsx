@@ -79,6 +79,8 @@ export default function ControllerCanvasPage() {
                   })
                   .catch((err) => {
                     console.error(err);
+                    // TODO better way to inform error
+                    // eslint-disable-next-line no-alert
                     alert("get on going session failed");
                   });
               }

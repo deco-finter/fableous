@@ -79,18 +79,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
 
-    // TODO remove this useEffect to bottom
-    useEffect(() => {
-      const ctx = canvasRef.current.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-      const { width, height } = canvasRef.current;
-      ctx.clearRect(0, 0, width, height);
-      setAudioB64Strings([]);
-      setTextShapes({});
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pageNum]);
-
     const placePaint = useCallback(
       (
         x1: number,
@@ -554,6 +542,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       // only trigger once during componentMount
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, wsRef]);
+
+    // cleanup before moving to next page
+    useEffect(() => {
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      setAudioB64Strings([]);
+      setTextShapes({});
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageNum]);
 
     // temporary workaround to recalculate width when canvas appears or becomes hidden
     useEffect(() => {

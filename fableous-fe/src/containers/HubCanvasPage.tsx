@@ -35,10 +35,12 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
-  // TODO once flow with classroom is done, classroomId could be determined here
-  const [, executePostSession] = useAxios(restAPI.hub.postSessionInfo(""), {
-    manual: true,
-  });
+  const [, executePostSession] = useAxios(
+    restAPI.classroom.postSessionInfo(classroomId),
+    {
+      manual: true,
+    }
+  );
   const [classroomToken, setClassroomToken] = useState("");
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   // TODO clear joined controllers when websocket change
@@ -114,7 +116,6 @@ export default function HubCanvasPage() {
     onSubmit: (values) => {
       // TODO remove this workaround when flow with classroom is done
       executePostSession({
-        ...restAPI.hub.postSessionInfo(classroomId),
         data: {
           title: values.title,
           description: values.description,
@@ -130,7 +131,7 @@ export default function HubCanvasPage() {
         .catch((err: any) => {
           console.error(err);
           // TODO better way to inform error
-          // eslint-disable-next-line
+          // eslint-disable-next-line no-alert
           alert("post session info failed");
         });
     },

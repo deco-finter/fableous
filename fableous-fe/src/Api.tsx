@@ -34,14 +34,11 @@ interface ApiEndpoints {
 }
 
 export const restAPI = {
-  // TODO move to classroom category
-  hub: {
+  classroom: {
     postSessionInfo: (classroomId: string) => ({
       url: `/api/classroom/${classroomId}/session`,
       method: "post",
     }),
-  },
-  classroom: {
     getOnGoingSession: (classroomId: string) => ({
       url: `/api/classroom/${classroomId}/session/ongoing`,
       method: "get",
