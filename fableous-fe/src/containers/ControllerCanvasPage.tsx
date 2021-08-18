@@ -34,7 +34,10 @@ export default function ControllerCanvasPage() {
   );
   // TODO when url is /join/:token, auto populate this
   // TODO change to use formik and yup
+  // TODO consider how to reduce no of states
   const [classroomToken, setClassroomToken] = useState("");
+  const [classroomId, setClassroomId] = useState("");
+  const [sessionId, setSessionId] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [storyTitle, setStoryTitle] = useState("");
@@ -66,13 +69,14 @@ export default function ControllerCanvasPage() {
 
                   return prev + 1;
                 });
-              } else if (msgData.classroomId) {
+              } else if (msgData.classroomId && msgData.sessionId) {
                 // TODO perform get reqrestAPI.classroom.getOnGoingSession()
+                setClassroomId(msgData.classroomId);
+                setSessionId(msgData.sessionId);
                 execGetOnGoingSession(
                   restAPI.classroom.getOnGoingSession(msgData.classroomId)
                 )
                   .then(({ data: resp }) => {
-                    console.log("get res", resp);
                     setStoryTitle(resp.data.title);
                     setStoryDesc(resp.data.description);
                     setStoryPageCnt(resp.data.pages);
@@ -103,6 +107,8 @@ export default function ControllerCanvasPage() {
       setCurrentPageIdx(0);
       setStoryPageCnt(0);
       setClassroomToken("");
+      setClassroomId("");
+      setSessionId("");
     }
   }, [controllerState]);
 
@@ -189,7 +195,7 @@ export default function ControllerCanvasPage() {
                 <Button
                   variant="contained"
                   component={Link}
-                  to="/gallery/:classroom_id/:session_id"
+                  to={`/gallery/${classroomId}/${sessionId}`}
                 >
                   View completed story in gallery
                 </Button>
