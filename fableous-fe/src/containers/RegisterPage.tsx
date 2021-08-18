@@ -4,14 +4,17 @@ import {
   CardContent,
   FormControl,
   Grid,
-  TextField,
   Typography,
   makeStyles,
 } from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
+import { Formik } from "formik";
 import { useState } from "react";
 import useAxios from "axios-hooks";
+import * as yup from "yup";
 import { restAPI } from "../Api";
+import FormikTextField from "../components/FormikTextField";
+import { Register } from "../Data";
 
 const useStyles = makeStyles({
   root: {
@@ -23,21 +26,17 @@ const useStyles = makeStyles({
 });
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [success, setSuccess] = useState(false);
   const [{ loading }, executeRegister] = useAxios(restAPI.auth.register(), {
     manual: true,
   });
 
-  const postRegister = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleRegisterSubmit = (register: Register) => {
     executeRegister({
       data: {
-        name,
-        email,
-        password,
+        name: register.name.trim(),
+        email: register.email.trim(),
+        password: register.password,
       },
     })
       .then(() => {
@@ -67,54 +66,107 @@ export default function RegisterPage() {
               {success ? (
                 <Alert severity="success">Account successfully created!</Alert>
               ) : (
-                <form onSubmit={postRegister}>
-                  <FormControl className={classes.form}>
-                    <TextField
-                      id="name"
-                      value={name}
-                      required
-                      onChange={(e) => setName(e.target.value)}
-                      name="name"
-                      label="Name"
-                      type="text"
-                      variant="outlined"
-                      disabled={loading}
-                      className="mb-4"
-                    />
-                    <TextField
-                      id="email"
-                      value={email}
-                      required
-                      onChange={(e) => setEmail(e.target.value)}
-                      name="email"
-                      label="Email"
-                      type="email"
-                      variant="outlined"
-                      disabled={loading}
-                      className="mb-4"
-                    />
-                    <TextField
-                      id="password"
-                      value={password}
-                      required
-                      onChange={(e) => setPassword(e.target.value)}
-                      name="password"
-                      label="Password"
-                      type="password"
-                      variant="outlined"
-                      disabled={loading}
-                      className="mb-4"
-                    />
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      type="submit"
-                      disabled={loading}
-                    >
-                      Register
-                    </Button>
-                  </FormControl>
-                </form>
+                <Formik
+                  initialValues={
+                    {
+                      name: "",
+                      email: "",
+                      password: "",
+                      password2: "",
+                    } as Register
+                  }
+                  validationSchema={yup.object().shape({
+                    name: yup
+                      .string()
+                      .trim()
+                      .required("Name is required")
+                      .test(
+                        "len",
+                        "Name too long",
+                        (val) => (val || "").length <= 32
+                      ),
+                    email: yup
+                      .string()
+                      .trim()
+                      .email("Email invalid")
+                      .required("Email is required"),
+                    password: yup
+                      .string()
+                      .required("Password is required")
+                      .test(
+                        "len",
+                        "Password too short",
+                        (val) => (val || "").length >= 8
+                      ),
+                    password2: yup
+                      .string()
+                      .required("Re-enter your password")
+                      .oneOf(
+                        [yup.ref("password"), null],
+                        "Passwords must match"
+                      ),
+                  })}
+                  onSubmit={handleRegisterSubmit}
+                >
+                  {(formik) => (
+                    <form onSubmit={formik.handleSubmit} autoComplete="off">
+                      <FormControl className={classes.form}>
+                        <FormikTextField
+                          formik={formik}
+                          name="name"
+                          label="Name"
+                          overrides={{
+                            variant: "outlined",
+                            disabled: loading,
+                            className: "mb-4",
+                            type: "text",
+                          }}
+                        />
+                        <FormikTextField
+                          formik={formik}
+                          name="email"
+                          label="Email"
+                          overrides={{
+                            variant: "outlined",
+                            disabled: loading,
+                            className: "mb-4",
+                            type: "email",
+                          }}
+                        />
+                        <FormikTextField
+                          formik={formik}
+                          name="password"
+                          label="Password"
+                          overrides={{
+                            variant: "outlined",
+                            disabled: loading,
+                            className: "mb-4",
+                            type: "password",
+                          }}
+                        />
+                        <FormikTextField
+                          formik={formik}
+                          name="password2"
+                          label="Confirm password"
+                          overrides={{
+                            variant: "outlined",
+                            disabled: loading,
+                            className: "mb-4",
+                            type: "password",
+                          }}
+                        />
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          disabled={loading}
+                          type="submit"
+                        >
+                          Register
+                        </Button>
+                      </FormControl>
+                    </form>
+                  )}
+                </Formik>
               )}
             </CardContent>
           </Card>

@@ -37,7 +37,9 @@ export default function ClassroomListPage() {
 
   const handleCreateSubmit = (classroom: Classroom) => {
     executePost({
-      data: classroom,
+      data: {
+        name: classroom.name.trim(),
+      },
     })
       .then((resp) => {
         // eslint-disable-next-line no-param-reassign
@@ -105,12 +107,13 @@ export default function ClassroomListPage() {
                   validationSchema={yup.object().shape({
                     name: yup
                       .string()
+                      .trim()
+                      .required("Name is required")
                       .test(
                         "len",
                         "Name too long",
                         (val) => (val || "").length <= 32
-                      )
-                      .required("Name is required"),
+                      ),
                   })}
                   onSubmit={handleCreateSubmit}
                 >

@@ -50,7 +50,7 @@ export default function ClassroomListPage() {
   const handleEditSubmit = (newClassroom: Classroom) => {
     executePut({
       data: {
-        name: newClassroom.name,
+        name: newClassroom.name.trim(),
       },
     })
       .then(() => {
@@ -137,12 +137,13 @@ export default function ClassroomListPage() {
                 validationSchema={yup.object().shape({
                   name: yup
                     .string()
+                    .trim()
+                    .required("Name is required")
                     .test(
                       "len",
                       "Name too long",
                       (val) => (val || "").length <= 32
-                    )
-                    .required("Name is required"),
+                    ),
                 })}
                 validateOnMount
                 onSubmit={handleEditSubmit}

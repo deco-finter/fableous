@@ -45,6 +45,18 @@ export interface APIResponse<T> {
   error?: string;
 }
 
+export interface Login {
+  email: string;
+  password: string;
+}
+
+export interface Register {
+  name: string;
+  email: string;
+  password: string;
+  password2: string;
+}
+
 export interface Classroom {
   id: string;
   name: string;
