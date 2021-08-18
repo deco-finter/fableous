@@ -112,7 +112,10 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					},
 				},
 			})
-			_ = m.db.sessionOrmer.Delete(sess.classroomID, sess.sessionID)
+			var session models.Session
+			if session, err = m.db.sessionOrmer.GetOneByID(sess.sessionID); !session.Completed {
+				_ = m.db.sessionOrmer.Delete(sess.classroomID, sess.sessionID)
+			}
 			// TODO: cleanup static dir
 			break
 		}
