@@ -5,7 +5,13 @@ import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { useFormik } from "formik";
 import Canvas from "../components/canvas/Canvas";
-import { ControllerRole, WSMessage, WSMessageType } from "../Data";
+import {
+  ControllerRole,
+  WSControlMessageData,
+  WSJoinMessageData,
+  WSMessage,
+  WSMessageType,
+} from "../Data";
 import { restAPI, wsAPI } from "../Api";
 import FormikTextField from "../components/FormikTextField";
 import useWsConn from "../hooks/useWsConn";
@@ -17,7 +23,6 @@ enum HubState {
 }
 
 export default function HubCanvasPage() {
-  const wsRef = useRef<WebSocket>();
   const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
@@ -28,7 +33,8 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
-  const [, executePostSession] = useAxios(restAPI.hub.postSessionInfo(), {
+  // TODO once flow with classroom is done, classroomId could be determined here
+  const [, executePostSession] = useAxios(restAPI.hub.postSessionInfo(""), {
     manual: true,
   });
   const [classroomToken, setClassroomToken] = useState("");
@@ -43,18 +49,41 @@ export default function HubCanvasPage() {
 
   const beginSession = (classroomId: string) => {
     const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
+    // TODO onclose, redirect to session form
     newWsConn.onmessage = (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
         switch (msg.type) {
           case WSMessageType.Control:
-            setClassroomToken(msg.data as string);
+            {
+              const { classroomToken: classroomTokenFromWs } =
+                msg.data as WSControlMessageData;
+              if (classroomTokenFromWs) {
+                setClassroomToken(classroomTokenFromWs);
+              }
+            }
             break;
           case WSMessageType.Join:
-            setJoinedControllers((prev) => ({
-              ...prev,
-              [msg.role]: msg.data as string,
-            }));
+            {
+              const { role, name, joining } = msg.data as WSJoinMessageData;
+              if (role === ControllerRole.Hub) {
+                break;
+              }
+
+              if (joining && name) {
+                setJoinedControllers((prev) => ({
+                  ...prev,
+                  [role]: name,
+                }));
+              } else if (!joining) {
+                setJoinedControllers((prev) => {
+                  const prevCopy = { ...prev };
+                  delete prevCopy[role];
+
+                  return prevCopy;
+                });
+              }
+            }
             break;
           default:
         }
@@ -82,11 +111,13 @@ export default function HubCanvasPage() {
       pages: yup.number().positive("must be positive"),
     }),
     onSubmit: (values) => {
+      // TODO remove this workaround when flow with classroom is done
       executePostSession({
+        ...restAPI.hub.postSessionInfo(values.classroomId),
         data: {
           title: values.title,
           description: values.description,
-          page: values.pages,
+          pages: values.pages,
         },
       })
         .then(() => {
@@ -248,7 +279,6 @@ export default function HubCanvasPage() {
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
                 <Canvas
                   ref={storyCanvasRef}
-                  wsRef={wsRef}
                   wsState={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
@@ -258,7 +288,6 @@ export default function HubCanvasPage() {
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
                 <Canvas
                   ref={characterCanvasRef}
-                  wsRef={wsRef}
                   wsState={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
@@ -268,7 +297,6 @@ export default function HubCanvasPage() {
               <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
                 <Canvas
                   ref={backgroundCanvasRef}
-                  wsRef={wsRef}
                   wsState={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}

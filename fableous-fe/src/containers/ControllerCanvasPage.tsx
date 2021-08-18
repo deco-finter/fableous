@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -7,47 +7,27 @@ import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import Canvas from "../components/canvas/Canvas";
-import { ControllerRole, WSMessageType } from "../Data";
+import { ControllerRole } from "../Data";
 import { wsAPI } from "../Api";
+import useWsConn from "../hooks/useWsConn";
 
 export default function ControllerCanvasPage() {
-  const wsRef = useRef<WebSocket>();
+  const [wsConn, setNewWsConn] = useWsConn();
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [controllerReady, setControllerReady] = useState(false);
   const [classroomToken, setClassroomToken] = useState("");
   const [name, setName] = useState("");
-  const [ping, setPing] = useState<NodeJS.Timeout>();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
 
   const joinSession = () => {
-    // TODO change to using state instead of ref, like in HubCanvasPage
-    wsRef.current = new WebSocket(
+    const newWsConn = new WebSocket(
       wsAPI.controller.main(classroomToken, role, name)
     );
-    wsRef.current.onopen = () => {
+    newWsConn.onopen = () => {
       setControllerReady(true);
-      const interval = setInterval(
-        () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
-        5000
-      );
-      setPing(interval);
     };
-    wsRef.current.onclose = () => {
-      if (ping) clearInterval(ping);
-    };
-    wsRef.current.onerror = () => {
-      if (ping) clearInterval(ping);
-    };
+    setNewWsConn(newWsConn);
   };
-
-  useEffect(() => {
-    return () => {
-      if (ping) clearInterval(ping);
-      wsRef.current?.close();
-      wsRef.current = undefined;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <>
@@ -102,7 +82,7 @@ export default function ControllerCanvasPage() {
               {role}
               <Canvas
                 ref={canvasRef}
-                wsRef={wsRef}
+                wsState={wsConn}
                 role={role}
                 layer={role}
                 pageNum={0}

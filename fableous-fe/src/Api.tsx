@@ -14,6 +14,11 @@ const baseWS =
 const apiClient = axios.create({
   baseURL: baseAPI,
 });
+apiClient.interceptors.request.use((req: AxiosRequestConfig) => {
+  // TODO change this to func from Auth.tsx
+  req.headers.Authorization = `Bearer ${localStorage.getItem("authorization")}`;
+  return req;
+}, Promise.reject);
 
 configure({
   axios: apiClient,
@@ -29,16 +34,9 @@ interface ApiEndpoints {
 }
 
 export const restAPI = {
-  canvas: {
-    getRandomTheme: () => ({
-      url: "/random/theme",
-      method: "get",
-    }),
-  },
   hub: {
-    // TODO ensure url is correct
-    postSessionInfo: () => ({
-      url: "/session",
+    postSessionInfo: (classroomId: string) => ({
+      url: `/api/classroom/${classroomId}/session`,
       method: "post",
     }),
   },
@@ -47,6 +45,7 @@ export const restAPI = {
 export const wsAPI = {
   hub: {
     main: (classroomId: string) => {
+      // TODO change this to func from Auth.tsx
       const token = localStorage.getItem("authorization");
       return `${baseWS}/ws/hub?token=${token}&classroom_id=${classroomId}`;
     },

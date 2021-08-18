@@ -39,7 +39,6 @@ interface TextShape extends Shape {
 }
 
 interface CanvasProps {
-  wsRef: MutableRefObject<WebSocket | undefined>;
   wsState?: WebSocket;
   role: ControllerRole;
   layer: ControllerRole;
@@ -54,10 +53,12 @@ interface SimplePointerEventData {
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
     const { layer, role, pageNum } = props;
-    const wsRef = useMemo(
-      () =>
-        props.wsState !== undefined ? { current: props.wsState } : props.wsRef,
-      [props.wsState, props.wsRef]
+    // TODO modify to use wsConn as state
+    const wsRef: { current?: WebSocket } = useMemo(
+      () => ({
+        current: props.wsState,
+      }),
+      [props.wsState]
     );
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);

@@ -1,6 +1,7 @@
 export interface WSMessage {
   role: ControllerRole;
   type: WSMessageType;
+  // TODO change type of data to all possible message data types
   data: {
     x1?: number;
     y1?: number;
@@ -13,11 +14,19 @@ export interface WSMessage {
   };
 }
 
+// for WSMessageType.Control
 export interface WSControlMessageData {
   classroomToken?: string;
   classroomId?: string;
   sessionId?: string;
   nextPage?: boolean;
+}
+
+// for WSMessageType.Join
+export interface WSJoinMessageData {
+  role: ControllerRole;
+  name?: string;
+  joining: boolean;
 }
 
 export enum WSMessageType {
