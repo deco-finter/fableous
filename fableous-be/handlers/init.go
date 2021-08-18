@@ -36,10 +36,11 @@ type HandlerFunc interface {
 
 	// Session
 	SessionGetAllByClassroomID(classroomID string) (sessionInfos []datatransfers.SessionInfo, err error)
+	SessionGetOneByIDByClassroomID(id, classroomID string) (sessionInfo datatransfers.SessionInfo, err error)
 	SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error)
-	SessionInsert(sessionInfo datatransfers.SessionInfo) (sessionID string, err error)
+	SessionInsert(sessionInfo datatransfers.SessionInfo) (id string, err error)
 	SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err error)
-	SessionDelete(classroomID, sessionID string) (err error)
+	SessionDelete(id, classroomID string) (err error)
 
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)

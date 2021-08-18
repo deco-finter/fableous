@@ -32,6 +32,22 @@ func (m *module) SessionGetAllByClassroomID(classroomID string) (sessionInfos []
 	return
 }
 
+func (m *module) SessionGetOneByIDByClassroomID(id, classroomID string) (sessionInfo datatransfers.SessionInfo, err error) {
+	var session models.Session
+	if session, err = m.db.sessionOrmer.GetOneByIDByClassroomID(id, classroomID); err != nil {
+		return
+	}
+	sessionInfo = datatransfers.SessionInfo{
+		ID:          session.ID,
+		Title:       session.Title,
+		Description: session.Description,
+		Pages:       session.Pages,
+		Completed:   session.Completed,
+		CreatedAt:   session.CreatedAt,
+	}
+	return
+}
+
 func (m *module) SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error) {
 	var session models.Session
 	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
@@ -48,8 +64,8 @@ func (m *module) SessionGetOneOngoingByClassroomID(classroomID string) (sessionI
 	return
 }
 
-func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (sessionID string, err error) {
-	if sessionID, err = m.db.sessionOrmer.Insert(models.Session{
+func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (id string, err error) {
+	if id, err = m.db.sessionOrmer.Insert(models.Session{
 		ClassroomID: sessionInfo.ClassroomID,
 		Title:       sessionInfo.Title,
 		Description: sessionInfo.Description,
@@ -73,15 +89,15 @@ func (m *module) SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err e
 	return
 }
 
-func (m *module) SessionDelete(classroomID, sessionID string) (err error) {
-	if err = m.db.sessionOrmer.Delete(classroomID, sessionID); err != nil {
+func (m *module) SessionDelete(id, classroomID string) (err error) {
+	if err = m.db.sessionOrmer.Delete(classroomID, id); err != nil {
 		return err
 	}
 	log.Println(m.sessions.keys)
 	m.sessions.mutex.Lock()
 	var sess *activeSession
 	for classroomToken, selected := range m.sessions.keys {
-		if selected.sessionID == sessionID {
+		if selected.sessionID == id {
 			sess = selected
 			delete(m.sessions.keys, classroomToken)
 			break

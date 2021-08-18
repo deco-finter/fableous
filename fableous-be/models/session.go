@@ -23,7 +23,7 @@ type Session struct {
 }
 
 type SessionOrmer interface {
-	GetOneByID(id string) (session Session, err error)
+	GetOneByIDByClassroomID(id, classroomID string) (session Session, err error)
 	GetOneOngoingByClassroomID(classroomID string) (session Session, err error)
 	GetAllByClassroomID(classroomID string) (sessions []Session, err error)
 	GetAllCompletedByClassroomID(classroomID string) (sessions []Session, err error)
@@ -37,8 +37,8 @@ func NewSessionOrmer(db *gorm.DB) SessionOrmer {
 	return &sessionOrm{db}
 }
 
-func (o *sessionOrm) GetOneByID(id string) (session Session, err error) {
-	result := o.db.Model(&Session{}).Where("id = ?", id).First(&session)
+func (o *sessionOrm) GetOneByIDByClassroomID(id, classroomID string) (session Session, err error) {
+	result := o.db.Model(&Session{}).Where("id = ? AND classroom_id", id, classroomID).First(&session)
 	return session, result.Error
 }
 
