@@ -37,7 +37,8 @@ func InitializeRouter() (router *gin.Engine) {
 			classroom.DELETE("/:classroom_id", utils.AuthOnly, DELETEClassroom)
 			session := classroom.Group("/:classroom_id/session")
 			{
-				session.GET("/", utils.AuthOnly, GETSessionList)
+				session.GET("/", GETSessionList)
+				session.GET("/:session_id", GETSession)
 				session.GET("/ongoing", GETOngoingSession)
 				session.POST("/", utils.AuthOnly, POSTSession)
 				session.PUT("/:session_id", utils.AuthOnly, PUTSession)

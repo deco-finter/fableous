@@ -11,19 +11,6 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
-func GETOngoingSession(c *gin.Context) {
-	var err error
-	var sessionInfo datatransfers.SessionInfo
-	if sessionInfo, err = handlers.Handler.SessionGetOneOngoingByClassroomID(c.Param("classroom_id")); err == gorm.ErrRecordNotFound {
-		c.JSON(http.StatusNotFound, datatransfers.Response{})
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get ongoing session detail"})
-		return
-	}
-	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo})
-}
-
 func GETSessionList(c *gin.Context) {
 	var err error
 	var sessionInfos []datatransfers.SessionInfo
@@ -35,6 +22,32 @@ func GETSessionList(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfos})
+}
+
+func GETSession(c *gin.Context) {
+	var err error
+	var sessionInfo datatransfers.SessionInfo
+	if sessionInfo, err = handlers.Handler.SessionGetOneByIDByClassroomID(c.Param("session_id"), c.Param("classroom_id")); err == gorm.ErrRecordNotFound {
+		c.JSON(http.StatusNotFound, datatransfers.Response{})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get session detail"})
+		return
+	}
+	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo})
+}
+
+func GETOngoingSession(c *gin.Context) {
+	var err error
+	var sessionInfo datatransfers.SessionInfo
+	if sessionInfo, err = handlers.Handler.SessionGetOneOngoingByClassroomID(c.Param("classroom_id")); err == gorm.ErrRecordNotFound {
+		c.JSON(http.StatusNotFound, datatransfers.Response{})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot get ongoing session detail"})
+		return
+	}
+	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo})
 }
 
 func POSTSession(c *gin.Context) {
