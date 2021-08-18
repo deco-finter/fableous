@@ -7,7 +7,11 @@ export default function Routes() {
   return (
     <Switch>
       <Route path="/" exact component={HomePage} />
-      <Route path="/canvas" exact component={HubCanvasPage} />
+      <Route
+        path="/classroom/:classroomId/hub"
+        component={HubCanvasPage}
+        exact
+      />
       <Route path="/join" exact component={ControllerCanvasPage} />
     </Switch>
   );

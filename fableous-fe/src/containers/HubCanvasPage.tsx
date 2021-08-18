@@ -4,6 +4,7 @@ import Grid from "@material-ui/core/Grid";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { useFormik } from "formik";
+import { useParams } from "react-router-dom";
 import Canvas from "../components/canvas/Canvas";
 import {
   ControllerRole,
@@ -23,6 +24,7 @@ enum HubState {
 }
 
 export default function HubCanvasPage() {
+  const { classroomId } = useParams<{ classroomId: string }>();
   const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
@@ -47,7 +49,7 @@ export default function HubCanvasPage() {
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [storyPageCnt, setStoryPageCnt] = useState(0);
 
-  const beginSession = (classroomId: string) => {
+  const beginSession = () => {
     const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
     // TODO onclose, redirect to session form
     newWsConn.onmessage = (ev: MessageEvent) => {
@@ -97,7 +99,6 @@ export default function HubCanvasPage() {
 
   const formikSession = useFormik({
     initialValues: {
-      classroomId: "",
       title: "",
       description: "",
       pages: 1,
@@ -105,7 +106,6 @@ export default function HubCanvasPage() {
       authToken: localStorage.getItem("authorization") || "",
     },
     validationSchema: yup.object({
-      classroomId: yup.string().required("required"),
       title: yup.string().required("required"),
       description: yup.string().required("required"),
       pages: yup.number().positive("must be positive"),
@@ -113,7 +113,7 @@ export default function HubCanvasPage() {
     onSubmit: (values) => {
       // TODO remove this workaround when flow with classroom is done
       executePostSession({
-        ...restAPI.hub.postSessionInfo(values.classroomId),
+        ...restAPI.hub.postSessionInfo(classroomId),
         data: {
           title: values.title,
           description: values.description,
@@ -121,7 +121,7 @@ export default function HubCanvasPage() {
         },
       })
         .then(() => {
-          beginSession(values.classroomId);
+          beginSession();
           setCurrentPageIdx(0);
           setStoryPageCnt(values.pages);
           setHubState(HubState.WaitingRoom);
@@ -207,13 +207,6 @@ export default function HubCanvasPage() {
                     localStorage.setItem("authorization", e.target.value);
                   },
                 }}
-              />
-            </div>
-            <div>
-              <FormikTextField
-                formik={formikSession}
-                name="classroomId"
-                label="Classroom ID"
               />
             </div>
             <div>
