@@ -50,3 +50,12 @@ export interface Classroom {
   name: string;
   createdAt: string;
 }
+
+export interface Session {
+  id: string;
+  title: string;
+  description: string;
+  pages: number;
+  completed: boolean;
+  createdAt: string;
+}

@@ -75,6 +75,16 @@ export const restAPI = {
       method: "delete",
     }),
   },
+  session: {
+    getOngoing: (classroomId: string) => ({
+      url: `/api/classroom/${classroomId}/session/ongoing`,
+      method: "get",
+    }),
+    delete: (classroomId: string, sessionId: string) => ({
+      url: `/api/classroom/${classroomId}/session/${sessionId}`,
+      method: "delete",
+    }),
+  },
 } as ApiEndpoints;
 
 export const wsAPI = {
