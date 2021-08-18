@@ -1,17 +1,19 @@
-import { useEffect, useState } from "react";
 import {
   Button,
   CircularProgress,
   Grid,
   Icon,
   IconButton,
-  TextField,
   Typography,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import useAxios from "axios-hooks";
+import { Formik } from "formik";
+import { useEffect, useState } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
+import * as yup from "yup";
 import { restAPI } from "../Api";
+import FormikTextField from "../components/FormikTextField";
 import { APIResponse, Classroom, Session } from "../Data";
 
 export default function ClassroomListPage() {
@@ -19,13 +21,12 @@ export default function ClassroomListPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const [editing, setEditing] = useState<boolean>(false);
   const [classroom, setClassroom] = useState<Classroom>();
-  const [classroomCopy, setClassroomCopy] = useState<Classroom>();
   const [ongoingSession, setOngoingSession] = useState<Session>();
   const [{ loading: getLoading, error: getError }, executeGet] = useAxios<
     APIResponse<Classroom>,
     APIResponse<undefined>
   >(restAPI.classroom.getOne(classroomId), { manual: true });
-  const [, executePut] = useAxios<
+  const [{ loading: putLoading }, executePut] = useAxios<
     APIResponse<Classroom>,
     APIResponse<undefined>
   >(restAPI.classroom.update(classroomId), { manual: true });
@@ -46,25 +47,25 @@ export default function ClassroomListPage() {
     { manual: true }
   );
 
-  const handleEdit = () => {
-    if (editing) {
-      // TODO: validate
-      executePut({
-        data: {
-          name: classroom?.name,
-        },
+  const handleEditSubmit = (newClassroom: Classroom) => {
+    executePut({
+      data: {
+        name: newClassroom.name,
+      },
+    })
+      .then(() => {
+        setEditing(false);
+        setClassroom(newClassroom);
       })
-        .then(() => setEditing(false))
-        .catch((error) => console.error(error));
-    } else {
-      setEditing(true);
-      setClassroomCopy(classroom);
-    }
+      .catch((error) => console.error(error));
+  };
+
+  const handleEdit = () => {
+    setEditing(true);
   };
 
   const handleCancel = () => {
     setEditing(false);
-    setClassroom(classroomCopy);
   };
 
   const handleDelete = () => {
@@ -131,31 +132,48 @@ export default function ClassroomListPage() {
         <>
           <Grid item xs={12} className="mb-4">
             {editing ? (
-              <TextField
-                value={classroom?.name}
-                required
-                onChange={(e) =>
-                  setClassroom({
-                    ...classroom,
-                    name: e.target.value,
-                  } as Classroom)
-                }
-              />
+              <Formik
+                initialValues={classroom as Classroom}
+                validationSchema={yup.object().shape({
+                  name: yup
+                    .string()
+                    .test(
+                      "len",
+                      "Name too long",
+                      (val) => (val || "").length <= 32
+                    )
+                    .required("Name is required"),
+                })}
+                validateOnMount
+                onSubmit={handleEditSubmit}
+              >
+                {(formik) => (
+                  <>
+                    <FormikTextField
+                      formik={formik}
+                      name="name"
+                      label="Name"
+                      overrides={{
+                        autoComplete: "off",
+                        autoFocus: true,
+                        disabled: putLoading,
+                      }}
+                    />
+                    <IconButton
+                      disabled={putLoading}
+                      onClick={formik.submitForm}
+                    >
+                      <Icon>save</Icon>
+                    </IconButton>
+                    <IconButton disabled={putLoading} onClick={handleCancel}>
+                      <Icon>cancel</Icon>
+                    </IconButton>
+                  </>
+                )}
+              </Formik>
             ) : (
-              <Typography variant="h2">{classroom?.name}</Typography>
-            )}
-
-            {editing ? (
               <>
-                <IconButton onClick={handleEdit}>
-                  <Icon>save</Icon>
-                </IconButton>
-                <IconButton onClick={handleCancel}>
-                  <Icon>cancel</Icon>
-                </IconButton>
-              </>
-            ) : (
-              <>
+                <Typography variant="h2">{classroom?.name}</Typography>
                 <IconButton onClick={handleEdit}>
                   <Icon>edit</Icon>
                 </IconButton>
@@ -166,19 +184,27 @@ export default function ClassroomListPage() {
             {!getOngoingSessionLoading &&
               (ongoingSession ? (
                 <Button
-                  disabled={deleteOngoingSessionLoading}
+                  disabled={deleteOngoingSessionLoading || editing}
                   onClick={handleDeleteOngoingSession}
                 >
                   Stop Ongoing Session
                 </Button>
               ) : (
-                <Button component={Link} to={`/classroom/${classroomId}/hub`}>
+                <Button
+                  disabled={editing}
+                  component={Link}
+                  to={`/classroom/${classroomId}/hub`}
+                >
                   Start New Session
                 </Button>
               ))}
           </Grid>
           <Grid item xs={12}>
-            <Button disabled={deleteLoading || editing} onClick={handleDelete}>
+            <Button
+              disabled={deleteLoading || editing}
+              onClick={handleDelete}
+              className="text-red-500"
+            >
               Delete Classroom
             </Button>
           </Grid>
