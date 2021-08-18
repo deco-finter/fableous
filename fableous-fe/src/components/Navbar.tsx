@@ -28,7 +28,7 @@ export default function Navbar() {
             <>
               <Button
                 variant="outlined"
-                className="mr-4 text-white"
+                className="text-white"
                 onClick={onLogout}
               >
                 Logout
@@ -38,7 +38,7 @@ export default function Navbar() {
             <>
               <Button
                 variant="outlined"
-                className="mr-4 text-white"
+                className="text-white"
                 component={Link}
                 to="/login"
               >
@@ -46,7 +46,7 @@ export default function Navbar() {
               </Button>
               <Button
                 variant="outlined"
-                className="mr-4 text-white"
+                className="ml-4 text-white"
                 component={Link}
                 to="/register"
               >
