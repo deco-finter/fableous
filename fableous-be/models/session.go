@@ -38,7 +38,7 @@ func NewSessionOrmer(db *gorm.DB) SessionOrmer {
 }
 
 func (o *sessionOrm) GetOneByIDByClassroomID(id, classroomID string) (session Session, err error) {
-	result := o.db.Model(&Session{}).Where("id = ? AND classroom_id", id, classroomID).First(&session)
+	result := o.db.Model(&Session{}).Where("id = ? AND classroom_id = ?", id, classroomID).First(&session)
 	return session, result.Error
 }
 
