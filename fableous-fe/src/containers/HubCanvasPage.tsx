@@ -1,14 +1,13 @@
+import { Button, Grid, Icon, Typography } from "@material-ui/core";
 import { useRef, useEffect, useState } from "react";
-import FormControl from "@material-ui/core/FormControl";
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
+import { useHistory, useParams } from "react-router-dom";
 import Canvas from "../components/canvas/Canvas";
-import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
-import { ControllerRole, WSMessage, WSMessageType } from "../Data";
 import { wsAPI } from "../Api";
+import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
+import { ControllerRole, WSMessageType } from "../Data";
 
 export default function HubCanvasPage() {
+  const history = useHistory();
   const wsRef = useRef<WebSocket>();
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
@@ -24,13 +23,10 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
-  const [classroomId, setClassroomId] = useState("");
+  const { classroomId } = useParams<{ classroomId: string }>();
   const [classroomToken, setClassroomToken] = useState("");
   const [hubReady, setHubReady] = useState(false);
   const [ping, setPing] = useState<NodeJS.Timeout>();
-  const [token, setToken] = useState(
-    localStorage.getItem("authorization") || ""
-  );
 
   const beginSession = () => {
     wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
@@ -50,10 +46,10 @@ export default function HubCanvasPage() {
     };
     wsRef.current.onmessage = (ev: MessageEvent) => {
       try {
-        const msg: WSMessage = JSON.parse(ev.data);
+        const msg = JSON.parse(ev.data);
         switch (msg.type) {
           case WSMessageType.Control:
-            setClassroomToken(msg.data as string);
+            setClassroomToken(msg.data.classroomToken as string);
             break;
           default:
         }
@@ -94,91 +90,87 @@ export default function HubCanvasPage() {
   }, []);
 
   return (
-    <>
-      <Grid item xs={12}>
-        {!hubReady ? (
-          <FormControl component="fieldset">
-            <TextField
-              value={token}
-              onChange={(e) => {
-                setToken(e.target.value);
-                localStorage.setItem("authorization", e.target.value);
+    <Grid container>
+      {!hubReady ? (
+        <>
+          <Grid container>
+            <Button
+              onClick={() => history.goBack()}
+              startIcon={<Icon>arrow_backward</Icon>}
+            >
+              Back
+            </Button>
+          </Grid>
+          <Grid item xs={12} className="mb-4">
+            <Typography variant="h2">Lobby</Typography>
+          </Grid>
+          <Button onClick={beginSession}>Start Session</Button>
+        </>
+      ) : (
+        <>
+          Hub {classroomToken}
+          <div style={{ display: "grid" }}>
+            <div
+              style={{
+                gridRowStart: 1,
+                gridColumnStart: 1,
+                zIndex: 15,
+                pointerEvents: "none",
               }}
-              placeholder="Auth Token"
-            />
-            <TextField
-              value={classroomId}
-              onChange={(e) => setClassroomId(e.target.value)}
-              placeholder="Classroom ID"
-            />
-            <Button onClick={beginSession}>Start Session</Button>
-          </FormControl>
-        ) : (
-          <>
-            Hub {classroomToken}
-            <div style={{ display: "grid" }}>
-              <div
-                style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 15,
-                  pointerEvents: "none",
-                }}
-              >
-                <CursorScreen cursor={storyCursor} name="Story" />
-              </div>
-              <div
-                style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 14,
-                  pointerEvents: "none",
-                }}
-              >
-                <CursorScreen cursor={characterCursor} name="Character" />
-              </div>
-              <div
-                style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 13,
-                  pointerEvents: "none",
-                }}
-              >
-                <CursorScreen cursor={backgroundCursor} name="Background" />
-              </div>
-              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
-                <Canvas
-                  ref={storyCanvasRef}
-                  wsRef={wsRef}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Story}
-                  setCursor={setStoryCursor}
-                />
-              </div>
-              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
-                <Canvas
-                  ref={characterCanvasRef}
-                  wsRef={wsRef}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Character}
-                  setCursor={setCharacterCursor}
-                />
-              </div>
-              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
-                <Canvas
-                  ref={backgroundCanvasRef}
-                  wsRef={wsRef}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Background}
-                  setCursor={setBackgroundCursor}
-                />
-              </div>
+            >
+              <CursorScreen cursor={storyCursor} name="Story" />
             </div>
-            <Button onClick={() => exportCanvas()}>Export</Button>
-          </>
-        )}
-      </Grid>
-    </>
+            <div
+              style={{
+                gridRowStart: 1,
+                gridColumnStart: 1,
+                zIndex: 14,
+                pointerEvents: "none",
+              }}
+            >
+              <CursorScreen cursor={characterCursor} name="Character" />
+            </div>
+            <div
+              style={{
+                gridRowStart: 1,
+                gridColumnStart: 1,
+                zIndex: 13,
+                pointerEvents: "none",
+              }}
+            >
+              <CursorScreen cursor={backgroundCursor} name="Background" />
+            </div>
+            <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
+              <Canvas
+                ref={storyCanvasRef}
+                wsRef={wsRef}
+                role={ControllerRole.Hub}
+                layer={ControllerRole.Story}
+                setCursor={setStoryCursor}
+              />
+            </div>
+            <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
+              <Canvas
+                ref={characterCanvasRef}
+                wsRef={wsRef}
+                role={ControllerRole.Hub}
+                layer={ControllerRole.Character}
+                setCursor={setCharacterCursor}
+              />
+            </div>
+            <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
+              <Canvas
+                ref={backgroundCanvasRef}
+                wsRef={wsRef}
+                role={ControllerRole.Hub}
+                layer={ControllerRole.Background}
+                setCursor={setBackgroundCursor}
+              />
+            </div>
+          </div>
+          <Button onClick={() => exportCanvas()}>Export</Button>
+        </>
+      )}
+    </Grid>
   );
 }

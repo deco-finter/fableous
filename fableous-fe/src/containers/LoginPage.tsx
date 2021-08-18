@@ -1,49 +1,51 @@
-import CardContent from "@material-ui/core/CardContent";
-import Card from "@material-ui/core/Card";
-import { makeStyles } from "@material-ui/core/styles";
-import { Button, TextField, FormControl, Grid } from "@material-ui/core";
-import { useState } from "react";
-import axios from "axios";
+import {
+  Button,
+  Card,
+  CardContent,
+  FormControl,
+  Grid,
+  Typography,
+  makeStyles,
+} from "@material-ui/core";
+import useAxios from "axios-hooks";
+import { Formik } from "formik";
+import { useContext } from "react";
+import { useHistory } from "react-router-dom";
+import * as yup from "yup";
 import { restAPI } from "../Api";
-import auth from "../Auth";
+import { AuthContext } from "../components/AuthProvider";
+import FormikTextField from "../components/FormikTextField";
+import { Login } from "../Data";
 
 const useStyles = makeStyles({
   root: {
     minWidth: 275,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
   },
-  bullet: {
-    display: "inline-block",
-    margin: "0 2px",
-    transform: "scale(0.8)",
-  },
-  title: {
-    fontSize: 14,
-  },
-  pos: {
-    marginBottom: 12,
+  form: {
+    width: "100%",
   },
 });
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const history = useHistory();
+  const [{ loading }, executeLogin] = useAxios(restAPI.auth.login(), {
+    manual: true,
+  });
+  const [, , setToken] = useContext(AuthContext);
 
-  const postLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    axios
-      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-      .post(restAPI.auth.postLogin().url!, {
-        email,
-        password,
-      })
+  const handleLoginSubmit = (login: Login) => {
+    executeLogin({
+      data: {
+        email: login.email,
+        password: login.password,
+      },
+    })
       .then((response) => {
-        auth.saveToken(response);
+        setToken(response.headers.authorization.slice(7));
+        history.push("/");
       })
-      .catch((error) => {
-        console.error(error);
+      .catch((err) => {
+        console.error(err);
       });
   };
 
@@ -56,39 +58,65 @@ export default function LoginPage() {
       alignItems="center"
       style={{ height: "80vh" }}
     >
-      <Card className={classes.root}>
-        <CardContent>
-          <form onSubmit={postLogin}>
-            <FormControl>
-              <TextField
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                name="email"
-                label="Email"
-                type="email"
-                variant="outlined"
-              />
-              <TextField
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                name="password"
-                label="Password"
-                type="password"
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                className="mt-5"
-              >
-                Login
-              </Button>
-            </FormControl>
-          </form>
-        </CardContent>
-      </Card>
+      <div>
+        <Typography variant="h2" className="mb-4 text-center">
+          Login
+        </Typography>
+        <Card className={classes.root}>
+          <Formik
+            initialValues={
+              {
+                email: "",
+                password: "",
+              } as Login
+            }
+            validationSchema={yup.object().shape({
+              email: yup.string().required("Email is required"),
+              password: yup.string().required("Password is required"),
+            })}
+            onSubmit={handleLoginSubmit}
+          >
+            {(formik) => (
+              <form onSubmit={formik.handleSubmit}>
+                <CardContent>
+                  <FormControl className={classes.form}>
+                    <FormikTextField
+                      formik={formik}
+                      name="email"
+                      label="Email"
+                      overrides={{
+                        variant: "outlined",
+                        disabled: loading,
+                        className: "mb-4",
+                        type: "email",
+                      }}
+                    />
+                    <FormikTextField
+                      formik={formik}
+                      name="password"
+                      label="Password"
+                      overrides={{
+                        variant: "outlined",
+                        disabled: loading,
+                        className: "mb-4",
+                        type: "password",
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={loading}
+                      type="submit"
+                    >
+                      Login
+                    </Button>
+                  </FormControl>
+                </CardContent>
+              </form>
+            )}
+          </Formik>
+        </Card>
+      </div>
     </Grid>
   );
 }

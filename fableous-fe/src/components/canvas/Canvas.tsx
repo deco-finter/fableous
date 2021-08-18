@@ -252,6 +252,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
 
     const refreshText = useCallback(() => {
+      if (!canvasRef.current) return;
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;

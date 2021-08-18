@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { configure } from "axios-hooks";
-import auth from "./Auth";
+import { TOKEN_KEY } from "./components/AuthProvider";
 
 const baseAPI =
   process.env.NODE_ENV === "development"
@@ -12,22 +12,18 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
-axios.interceptors.request.use();
-axios.defaults.baseURL = baseAPI;
-const onIntercept = (req: any) => {
-  console.log("intercepted");
-
-  if (auth.isAuthenticated()) {
-    req.headers.Authorization = auth.getToken();
-  } else {
-    auth.clearToken();
+const onIntercept = (req: AxiosRequestConfig) => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    req.headers = {
+      authorization: `Bearer ${token}`,
+    };
   }
-
   return req;
 };
 
-axios.interceptors.request.use(onIntercept, Promise.reject);
 const apiClient = axios.create();
+apiClient.defaults.baseURL = baseAPI;
 apiClient.interceptors.request.use(onIntercept, Promise.reject);
 
 configure({
@@ -51,13 +47,45 @@ export const restAPI = {
     }),
   },
   auth: {
-    postRegister: () => ({
+    register: () => ({
       url: "/api/auth/register",
       method: "post",
     }),
-    postLogin: () => ({
+    login: () => ({
       url: "/api/auth/login",
       method: "post",
+    }),
+  },
+  classroom: {
+    getList: () => ({
+      url: "/api/classroom",
+      method: "get",
+    }),
+    getOne: (id: string) => ({
+      url: `/api/classroom/${id}`,
+      method: "get",
+    }),
+    create: () => ({
+      url: "/api/classroom",
+      method: "post",
+    }),
+    update: (id: string) => ({
+      url: `/api/classroom/${id}`,
+      method: "put",
+    }),
+    delete: (id: string) => ({
+      url: `/api/classroom/${id}`,
+      method: "delete",
+    }),
+  },
+  session: {
+    getOngoing: (classroomId: string) => ({
+      url: `/api/classroom/${classroomId}/session/ongoing`,
+      method: "get",
+    }),
+    delete: (classroomId: string, sessionId: string) => ({
+      url: `/api/classroom/${classroomId}/session/${sessionId}`,
+      method: "delete",
     }),
   },
 } as ApiEndpoints;
@@ -65,7 +93,7 @@ export const restAPI = {
 export const wsAPI = {
   hub: {
     main: (classroomId: string) => {
-      const token = localStorage.getItem("authorization");
+      const token = localStorage.getItem(TOKEN_KEY);
       return `${baseWS}/ws/hub?token=${token}&classroom_id=${classroomId}`;
     },
   },
