@@ -43,6 +43,7 @@ interface CanvasProps {
   role: ControllerRole;
   layer: ControllerRole;
   pageNum: number;
+  isShown?: boolean;
 }
 
 interface SimplePointerEventData {
@@ -52,7 +53,7 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, pageNum } = props;
+    const { layer, role, pageNum, isShown } = props;
     // TODO modify to use wsConn as state
     const wsRef: { current?: WebSocket } = useMemo(
       () => ({
@@ -78,6 +79,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
 
+    // TODO remove this useEffect to bottom
     useEffect(() => {
       const ctx = canvasRef.current.getContext(
         "2d"
@@ -556,6 +558,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, wsRef]);
 
+    // temporary workaround to recalculate width when canvas appears or becomes hidden
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      canvas.width = canvas.offsetWidth * SCALE;
+      canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canvasRef, isShown]);
+
     // initialize keyboard listener
     useEffect(() => {
       if (layer === ControllerRole.Story) {
@@ -731,6 +741,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
 Canvas.defaultProps = {
   wsState: undefined,
+  isShown: true,
 };
 
 export default Canvas;
