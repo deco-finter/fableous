@@ -18,35 +18,40 @@ export default function Navbar() {
     <div className="flex-grow">
       <AppBar position="static">
         <Toolbar>
-          <Button className="mr-8">
-            <Typography variant="h4" className="text-white capitalize">
-              <Link to="/">Fableous</Link>
+          <Link to="/">
+            <Typography variant="h5" className="text-white">
+              Fableous
             </Typography>
-          </Button>
+          </Link>
+          <div className="flex-grow" /> {/* spacer */}
           {isAuthenticated ? (
             <>
-              <Button className="mr-4" onClick={onLogout}>
-                <Typography variant="h6" className="text-white capitalize">
-                  Logout
-                </Typography>
+              <Button
+                variant="outlined"
+                className="mr-4 text-white"
+                onClick={onLogout}
+              >
+                Logout
               </Button>
             </>
           ) : (
             <>
-              <Link to="/login">
-                <Button className="mr-4">
-                  <Typography variant="h6" className="text-white capitalize">
-                    Login
-                  </Typography>
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button className="mr-4">
-                  <Typography variant="h6" className="text-white capitalize">
-                    Register
-                  </Typography>
-                </Button>
-              </Link>
+              <Button
+                variant="outlined"
+                className="mr-4 text-white"
+                component={Link}
+                to="/login"
+              >
+                Login
+              </Button>
+              <Button
+                variant="outlined"
+                className="mr-4 text-white"
+                component={Link}
+                to="/register"
+              >
+                Register
+              </Button>
             </>
           )}
         </Toolbar>
