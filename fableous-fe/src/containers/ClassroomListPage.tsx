@@ -63,12 +63,12 @@ export default function ClassroomListPage() {
   }, [executeGet]);
 
   return (
-    <Grid container xs={12}>
+    <Grid container>
       <Grid item xs={12} className="mb-4">
         <Typography variant="h2">Classrooms</Typography>
       </Grid>
       {getLoading && (
-        <Grid container justify="center">
+        <Grid container justifyContent="center">
           <CircularProgress />
         </Grid>
       )}
@@ -76,7 +76,7 @@ export default function ClassroomListPage() {
       {!getLoading && !getError && (
         <Grid container spacing={2}>
           {classrooms?.data?.map((classroom) => (
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4} key={classroom.id}>
               <Card className="flex flex-col h-full">
                 <CardContent className="flex-grow">
                   <Typography variant="h5" component="h2">
@@ -161,10 +161,8 @@ export default function ClassroomListPage() {
               justifyContent="center"
               alignItems="center"
             >
-              <IconButton>
-                <Icon fontSize="large" onClick={handleCreate}>
-                  add
-                </Icon>
+              <IconButton onClick={handleCreate}>
+                <Icon fontSize="large">add</Icon>
               </IconButton>
             </Grid>
           )}

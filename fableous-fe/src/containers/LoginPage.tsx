@@ -52,73 +52,71 @@ export default function LoginPage() {
   const classes = useStyles();
 
   return (
-    <Grid container>
-      <Grid
-        container
-        justifyContent="center"
-        alignItems="center"
-        style={{ height: "80vh" }}
-      >
-        <div>
-          <Typography variant="h2" className="mb-4 text-center">
-            Login
-          </Typography>
-          <Card className={classes.root}>
-            <Formik
-              initialValues={
-                {
-                  email: "",
-                  password: "",
-                } as Login
-              }
-              validationSchema={yup.object().shape({
-                email: yup.string().required("Email is required"),
-                password: yup.string().required("Password is required"),
-              })}
-              onSubmit={handleLoginSubmit}
-            >
-              {(formik) => (
-                <form onSubmit={formik.handleSubmit}>
-                  <CardContent>
-                    <FormControl className={classes.form}>
-                      <FormikTextField
-                        formik={formik}
-                        name="email"
-                        label="Email"
-                        overrides={{
-                          variant: "outlined",
-                          disabled: loading,
-                          className: "mb-4",
-                          type: "email",
-                        }}
-                      />
-                      <FormikTextField
-                        formik={formik}
-                        name="password"
-                        label="Password"
-                        overrides={{
-                          variant: "outlined",
-                          disabled: loading,
-                          className: "mb-4",
-                          type: "password",
-                        }}
-                      />
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        disabled={loading}
-                        type="submit"
-                      >
-                        Login
-                      </Button>
-                    </FormControl>
-                  </CardContent>
-                </form>
-              )}
-            </Formik>
-          </Card>
-        </div>
-      </Grid>
+    <Grid
+      container
+      justifyContent="center"
+      alignItems="center"
+      style={{ height: "80vh" }}
+    >
+      <div>
+        <Typography variant="h2" className="mb-4 text-center">
+          Login
+        </Typography>
+        <Card className={classes.root}>
+          <Formik
+            initialValues={
+              {
+                email: "",
+                password: "",
+              } as Login
+            }
+            validationSchema={yup.object().shape({
+              email: yup.string().required("Email is required"),
+              password: yup.string().required("Password is required"),
+            })}
+            onSubmit={handleLoginSubmit}
+          >
+            {(formik) => (
+              <form onSubmit={formik.handleSubmit}>
+                <CardContent>
+                  <FormControl className={classes.form}>
+                    <FormikTextField
+                      formik={formik}
+                      name="email"
+                      label="Email"
+                      overrides={{
+                        variant: "outlined",
+                        disabled: loading,
+                        className: "mb-4",
+                        type: "email",
+                      }}
+                    />
+                    <FormikTextField
+                      formik={formik}
+                      name="password"
+                      label="Password"
+                      overrides={{
+                        variant: "outlined",
+                        disabled: loading,
+                        className: "mb-4",
+                        type: "password",
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={loading}
+                      type="submit"
+                    >
+                      Login
+                    </Button>
+                  </FormControl>
+                </CardContent>
+              </form>
+            )}
+          </Formik>
+        </Card>
+      </div>
     </Grid>
   );
 }

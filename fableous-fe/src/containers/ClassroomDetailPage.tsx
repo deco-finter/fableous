@@ -110,7 +110,7 @@ export default function ClassroomListPage() {
   }, [executeGet, executeGetOngoingSession, history]);
 
   return (
-    <Grid container xs={12}>
+    <Grid container>
       <Grid container>
         <Button
           onClick={() => history.push("/classrooms")}
@@ -121,7 +121,7 @@ export default function ClassroomListPage() {
         </Button>
       </Grid>
       {getLoading && (
-        <Grid container justify="center">
+        <Grid container justifyContent="center">
           <CircularProgress />
         </Grid>
       )}
