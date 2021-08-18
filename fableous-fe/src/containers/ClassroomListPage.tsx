@@ -12,7 +12,7 @@ import {
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import useAxios from "axios-hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { restAPI } from "../Api";
 import { APIResponse, Classroom } from "../Data";
@@ -20,11 +20,14 @@ import { APIResponse, Classroom } from "../Data";
 export default function ClassroomListPage() {
   const [creating, setCreating] = useState(false);
   const [newClassroom, setNewClassroom] = useState<Classroom>({} as Classroom);
-  const [{ data: classrooms, loading: getLoading, error: getError }] = useAxios<
-    APIResponse<Classroom[]>,
-    APIResponse<undefined>
-  >(restAPI.classroom.getList());
-  const [{ loading: postLoading }, post] = useAxios<
+  const [
+    { data: classrooms, loading: getLoading, error: getError },
+    executeGet,
+  ] = useAxios<APIResponse<Classroom[]>, APIResponse<undefined>>(
+    restAPI.classroom.getList(),
+    { manual: true }
+  );
+  const [{ loading: postLoading }, executePost] = useAxios<
     APIResponse<string>,
     APIResponse<undefined>
   >(restAPI.classroom.create(), {
@@ -34,7 +37,7 @@ export default function ClassroomListPage() {
   const handleCreate = () => {
     if (creating) {
       // TODO: validate
-      post({
+      executePost({
         data: {
           name: newClassroom?.name,
         },
@@ -56,11 +59,15 @@ export default function ClassroomListPage() {
     setNewClassroom({} as Classroom);
   };
 
+  useEffect(() => {
+    executeGet();
+  }, [executeGet]);
+
   return (
-    <Grid item xs={12}>
-      <Typography variant="h2" className="mb-4">
-        Classrooms
-      </Typography>
+    <Grid container xs={12}>
+      <Grid item xs={12} className="mb-4">
+        <Typography variant="h2">Classrooms</Typography>
+      </Grid>
       {getLoading && (
         <Grid container justify="center">
           <CircularProgress />
