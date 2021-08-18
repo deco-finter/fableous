@@ -24,6 +24,7 @@ const CursorScreen = (props: CursorScreenProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
 
   const refreshCursor = useCallback(() => {
+    if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
     const { width, height } = canvasRef.current;
     ctx.clearRect(0, 0, width, height);

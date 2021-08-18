@@ -93,7 +93,7 @@ export const restAPI = {
 export const wsAPI = {
   hub: {
     main: (classroomId: string) => {
-      const token = localStorage.getItem("authorization");
+      const token = localStorage.getItem(TOKEN_KEY);
       return `${baseWS}/ws/hub?token=${token}&classroom_id=${classroomId}`;
     },
   },
