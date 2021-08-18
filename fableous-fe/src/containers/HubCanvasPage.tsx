@@ -180,6 +180,11 @@ export default function HubCanvasPage() {
     setHubState(HubState.DrawingSession);
   };
 
+  // clear joined students when story finished and session created
+  useEffect(() => {
+    setJoinedControllers({});
+  }, [wsConn]);
+
   // go back to session form once all pages in story completed
   useEffect(() => {
     if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
