@@ -149,27 +149,23 @@ export default function ClassroomListPage() {
                 onSubmit={handleEditSubmit}
               >
                 {(formik) => (
-                  <>
+                  <form onSubmit={formik.handleSubmit} autoComplete="off">
                     <FormikTextField
                       formik={formik}
                       name="name"
                       label="Name"
                       overrides={{
-                        autoComplete: "off",
                         autoFocus: true,
                         disabled: putLoading,
                       }}
                     />
-                    <IconButton
-                      disabled={putLoading}
-                      onClick={formik.submitForm}
-                    >
+                    <IconButton disabled={putLoading} type="submit">
                       <Icon>save</Icon>
                     </IconButton>
                     <IconButton disabled={putLoading} onClick={handleCancel}>
                       <Icon>cancel</Icon>
                     </IconButton>
-                  </>
+                  </form>
                 )}
               </Formik>
             ) : (

@@ -118,14 +118,13 @@ export default function ClassroomListPage() {
                   onSubmit={handleCreateSubmit}
                 >
                   {(formik) => (
-                    <>
+                    <form onSubmit={formik.handleSubmit} autoComplete="off">
                       <CardContent className="flex-grow">
                         <FormikTextField
                           formik={formik}
                           name="name"
                           label="Name"
                           overrides={{
-                            autoComplete: "off",
                             autoFocus: true,
                             disabled: postLoading,
                           }}
@@ -135,7 +134,7 @@ export default function ClassroomListPage() {
                         <Button
                           size="small"
                           disabled={postLoading}
-                          onClick={formik.submitForm}
+                          type="submit"
                         >
                           Create
                         </Button>
@@ -147,7 +146,7 @@ export default function ClassroomListPage() {
                           Cancel
                         </Button>
                       </CardActions>
-                    </>
+                    </form>
                   )}
                 </Formik>
               </Card>
