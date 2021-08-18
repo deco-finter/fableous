@@ -278,6 +278,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       if (!ctx) return;
       const { width, height } = canvasRef.current;
       ctx.clearRect(0, 0, width, height);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       Object.entries(textShapes).forEach(([id, shape]) => {
         ctx.font = `${shape.fontSize * SCALE}px Arial`;
         ctx.fillText(
@@ -527,7 +529,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     // setup on component mount
     useEffect(() => {
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
       canvas.width = canvas.offsetWidth * SCALE;
       canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
       setAllowDrawing(role !== ControllerRole.Hub);
@@ -544,10 +545,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           break;
         default:
           setToolMode(ToolMode.None);
-      }
-      if (ctx) {
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
       }
       const ws = wsRef.current;
       ws?.addEventListener("message", readMessage);
