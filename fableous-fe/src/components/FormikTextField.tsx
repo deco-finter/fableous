@@ -1,8 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { TextField } from "@material-ui/core";
+import { FormikProps } from "formik";
 
 export default function FormikTextField(props: {
-  formik: any;
+  formik: FormikProps<any>;
   name: string;
   label: string;
   overrides?: { [propName: string]: any };
@@ -14,7 +15,8 @@ export default function FormikTextField(props: {
       label={label}
       value={formik.values[name]}
       onChange={formik.handleChange}
-      error={formik.touched[name] && Boolean(formik.errors[name])}
+      onBlur={formik.handleBlur}
+      error={formik.touched[name] && !!formik.errors[name]}
       helperText={formik.touched[name] && formik.errors[name]}
       {...overrides}
     />
