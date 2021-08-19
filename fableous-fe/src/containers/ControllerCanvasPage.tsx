@@ -11,7 +11,9 @@ import useAxios from "axios-hooks";
 import { Typography } from "@material-ui/core";
 import Canvas from "../components/canvas/Canvas";
 import {
+  APIResponse,
   ControllerRole,
+  Session,
   WSControlMessageData,
   WSMessage,
   WSMessageType,
@@ -35,23 +37,24 @@ export default function ControllerCanvasPage() {
   const [name, setName] = useState("");
   const [classroomToken, setClassroomToken] = useState("");
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
-
   // TODO when url is /join/:token, auto populate this
   // TODO change to use formik and yup
-  // TODO consider how to reduce no of states
-  const [classroomId, setClassroomId] = useState("");
-  const [sessionId, setSessionId] = useState("");
-  const [storyTitle, setStoryTitle] = useState("");
-  const [storyDesc, setStoryDesc] = useState("");
+  const [sessionInfo, setSessionInfo] = useState<
+    WSControlMessageData | undefined
+  >();
+  const [storyDetails, setStoryDetails] = useState<Session | undefined>();
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
-  const [storyPageCnt, setStoryPageCnt] = useState(0);
 
-  const [, execGetOnGoingSession] = useAxios({});
+  const [, execGetOnGoingSession] = useAxios<
+    APIResponse<Session>,
+    APIResponse<undefined>
+  >({});
 
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
   const joinSession = () => {
+    // TODO on error e.g. when token invalid, give feedback to user?
     const newWsConn = new WebSocket(
       wsAPI.controller.main(classroomToken, role, name)
     );
@@ -74,15 +77,12 @@ export default function ControllerCanvasPage() {
                   return prev + 1;
                 });
               } else if (msgData.classroomId && msgData.sessionId) {
-                setClassroomId(msgData.classroomId);
-                setSessionId(msgData.sessionId);
+                setSessionInfo(msgData);
                 execGetOnGoingSession(
                   restAPI.session.getOngoing(msgData.classroomId)
                 )
-                  .then(({ data: resp }) => {
-                    setStoryTitle(resp.data.title);
-                    setStoryDesc(resp.data.description);
-                    setStoryPageCnt(resp.data.pages);
+                  .then((response) => {
+                    setStoryDetails(response.data.data);
                   })
                   .catch((err) => {
                     console.error(err);
@@ -102,25 +102,22 @@ export default function ControllerCanvasPage() {
     setNewWsConn(newWsConn);
   };
 
+  // reset states when in join form state
   useEffect(() => {
     if (controllerState === ControllerState.JoinForm) {
-      console.log("in form again");
-      setStoryTitle("");
-      setStoryDesc("");
-      setCurrentPageIdx(0);
-      setStoryPageCnt(0);
+      setSessionInfo(undefined);
+      setStoryDetails(undefined);
       setClassroomToken("");
-      setClassroomId("");
-      setSessionId("");
+      setCurrentPageIdx(0);
     }
   }, [controllerState]);
 
+  // go to finish state after all story pages done
   useEffect(() => {
-    if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
-      console.log("finished story");
+    if (currentPageIdx && storyDetails && currentPageIdx > storyDetails.pages) {
       setControllerState(ControllerState.StoryFinished);
     }
-  }, [currentPageIdx, storyPageCnt]);
+  }, [currentPageIdx, storyDetails]);
 
   return (
     <>
@@ -177,8 +174,8 @@ export default function ControllerCanvasPage() {
             }
           >
             <p>Role: {role}</p>
-            <p>Title: {storyTitle}</p>
-            <p>Description {storyDesc}</p>
+            <p>Title: {storyDetails?.title}</p>
+            <p>Description {storyDetails?.description}</p>
             {controllerState === ControllerState.WaitingRoom && (
               <Typography variant="h4" component="p">
                 waiting for hub to start
@@ -197,7 +194,7 @@ export default function ControllerCanvasPage() {
                 <Button
                   variant="contained"
                   component={Link}
-                  to={`/gallery/${classroomId}/${sessionId}`}
+                  to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
                 >
                   View completed story in gallery
                 </Button>

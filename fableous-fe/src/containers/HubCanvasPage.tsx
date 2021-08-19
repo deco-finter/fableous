@@ -111,6 +111,7 @@ export default function HubCanvasPage() {
     setNewWsConn(newWsConn);
   };
 
+  // TODO move to <Formik /> element
   const formikSession = useFormik({
     initialValues: {
       title: "",
