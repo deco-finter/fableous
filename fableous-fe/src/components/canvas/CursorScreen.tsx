@@ -15,12 +15,13 @@ export interface Cursor {
 }
 
 interface CursorScreenProps {
+  targetCanvasRef?: React.RefObject<HTMLCanvasElement>;
   cursor: Cursor | undefined;
-  name: string;
+  name?: string;
 }
 
 const CursorScreen = (props: CursorScreenProps) => {
-  const { cursor, name } = props;
+  const { targetCanvasRef, cursor, name } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
 
   const refreshCursor = useCallback(() => {
@@ -88,8 +89,12 @@ const CursorScreen = (props: CursorScreenProps) => {
   // setup on component mount
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.offsetWidth * SCALE;
-    canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
+    canvas.width =
+      (targetCanvasRef && targetCanvasRef.current
+        ? targetCanvasRef.current
+        : canvas
+      ).offsetWidth * SCALE;
+    canvas.height = canvas.width * ASPECT_RATIO;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
@@ -123,6 +128,11 @@ const CursorScreen = (props: CursorScreenProps) => {
       />
     </>
   );
+};
+
+CursorScreen.defaultProps = {
+  targetCanvasRef: null,
+  name: "",
 };
 
 export default CursorScreen;

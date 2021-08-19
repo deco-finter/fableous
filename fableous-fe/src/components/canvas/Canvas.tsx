@@ -550,7 +550,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       const canvas = canvasRef.current;
       canvas.width = canvas.offsetWidth * SCALE;
-      canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
+      canvas.height = canvas.width * ASPECT_RATIO;
       setAllowDrawing(role !== ControllerRole.Hub);
       switch (role) {
         case ControllerRole.Story:
