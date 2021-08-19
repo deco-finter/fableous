@@ -327,7 +327,7 @@ export default function HubCanvasPage() {
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
               <Canvas
                 ref={storyCanvasRef}
-                wsState={wsConn}
+                wsConn={wsConn}
                 role={ControllerRole.Hub}
                 layer={ControllerRole.Story}
                 pageNum={currentPageIdx}
@@ -337,7 +337,7 @@ export default function HubCanvasPage() {
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
               <Canvas
                 ref={characterCanvasRef}
-                wsState={wsConn}
+                wsConn={wsConn}
                 role={ControllerRole.Hub}
                 layer={ControllerRole.Character}
                 pageNum={currentPageIdx}
@@ -347,7 +347,7 @@ export default function HubCanvasPage() {
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
               <Canvas
                 ref={backgroundCanvasRef}
-                wsState={wsConn}
+                wsConn={wsConn}
                 role={ControllerRole.Hub}
                 layer={ControllerRole.Background}
                 pageNum={currentPageIdx}

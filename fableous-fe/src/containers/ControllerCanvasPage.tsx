@@ -226,7 +226,7 @@ export default function ControllerCanvasPage() {
               >
                 <Canvas
                   ref={canvasRef}
-                  wsState={wsConn}
+                  wsConn={wsConn}
                   role={role}
                   layer={role}
                   pageNum={currentPageIdx}

@@ -8,7 +8,6 @@ import React, {
   useCallback,
   useEffect,
   useState,
-  useMemo,
 } from "react";
 import Button from "@material-ui/core/Button";
 import Radio from "@material-ui/core/Radio";
@@ -40,7 +39,7 @@ interface TextShape extends Shape {
 }
 
 interface CanvasProps {
-  wsState?: WebSocket;
+  wsConn: WebSocket | undefined;
   role: ControllerRole;
   layer: ControllerRole;
   pageNum: number;
@@ -55,14 +54,7 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, pageNum, isShown, setCursor } = props;
-    // TODO modify to use wsConn as state
-    const wsRef: { current?: WebSocket } = useMemo(
-      () => ({
-        current: props.wsState,
-      }),
-      [props.wsState]
-    );
+    const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -119,7 +111,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
           const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
           const [normWidth] = scaleDownXY(canvasRef, targetWidth, 0);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Paint,
@@ -135,7 +127,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const placeFill = useCallback(
@@ -210,7 +202,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.putImageData(image, 0, 0);
         if (role !== ControllerRole.Hub) {
           const [normX, normY] = scaleDownXY(canvasRef, startX, startY);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Fill,
@@ -219,7 +211,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const placeText = useCallback(
@@ -243,7 +235,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (role !== ControllerRole.Hub) {
           const [normX, normY] = scaleDownXY(canvasRef, x, y);
           const [normFontSize] = scaleDownXY(canvasRef, fontSize, 0);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Text,
@@ -258,7 +250,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const refreshText = useCallback(() => {
@@ -340,7 +332,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               new Blob([data], { type: "audio/ogg;codecs=opus" })
             );
             reader.onloadend = () => {
-              wsRef.current?.send(
+              wsConn?.send(
                 JSON.stringify({
                   role,
                   type: WSMessageType.Audio,
@@ -382,7 +374,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           toolMode: targetMode,
         } as Cursor);
         if (role !== ControllerRole.Hub) {
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Cursor,
@@ -396,7 +388,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [setCursor, role, wsRef]
+      [setCursor, role, wsConn]
     );
 
     const readMessage = useCallback(
@@ -578,14 +570,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         default:
           setToolMode(ToolMode.None);
       }
-      const ws = wsRef.current;
-      ws?.addEventListener("message", readMessage);
+      wsConn?.addEventListener("message", readMessage);
       return () => {
-        ws?.removeEventListener("message", readMessage);
+        wsConn?.removeEventListener("message", readMessage);
       };
-      // only trigger once during componentMount
+      // only trigger on new websocket connection
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [role, wsRef]);
+    }, [role, wsConn]);
 
     // cleanup before moving to next page
     useEffect(() => {
@@ -603,7 +594,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       const canvas = canvasRef.current;
       canvas.width = canvas.offsetWidth * SCALE;
-      canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
+      canvas.height = canvas.width * ASPECT_RATIO;
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasRef, isShown]);
 
@@ -789,7 +780,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 );
 
 Canvas.defaultProps = {
-  wsState: undefined,
   isShown: true,
 };
 
