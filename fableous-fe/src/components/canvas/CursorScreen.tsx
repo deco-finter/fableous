@@ -23,6 +23,7 @@ interface CursorScreenProps {
 const CursorScreen = (props: CursorScreenProps) => {
   const { targetCanvasRef, cursor, name } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
+  const resizeTrigger = targetCanvasRef?.current?.offsetWidth;
 
   const refreshCursor = useCallback(() => {
     if (!canvasRef.current) return;
@@ -95,12 +96,17 @@ const CursorScreen = (props: CursorScreenProps) => {
         : canvas
       ).offsetWidth * SCALE;
     canvas.height = canvas.width * ASPECT_RATIO;
+    if (targetCanvasRef && targetCanvasRef.current) {
+      console.log(name, "FROM CANVAS", canvas.width);
+    } else {
+      console.log(name, "FROM SELF", canvas.width);
+    }
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
     }
-    // only trigger during componentMount or targetCanvasRef change
-  }, [targetCanvasRef]);
+    // only trigger during componentMount, targetCanvasRef change, or dimension change on targerCanvasRef
+  }, [name, targetCanvasRef, resizeTrigger]);
 
   // start cursor layer animation
   useEffect(() => {
