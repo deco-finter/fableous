@@ -74,7 +74,7 @@ export default function ControllerCanvasPage() {
                 setClassroomId(msgData.classroomId);
                 setSessionId(msgData.sessionId);
                 execGetOnGoingSession(
-                  restAPI.classroom.getOnGoingSession(msgData.classroomId)
+                  restAPI.session.getOngoing(msgData.classroomId)
                 )
                   .then(({ data: resp }) => {
                     setStoryTitle(resp.data.title);

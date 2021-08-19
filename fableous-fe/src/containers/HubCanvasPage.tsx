@@ -38,12 +38,9 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
-  const [, executePostSession] = useAxios(
-    restAPI.classroom.postSessionInfo(classroomId),
-    {
-      manual: true,
-    }
-  );
+  const [, executePostSession] = useAxios(restAPI.session.create(classroomId), {
+    manual: true,
+  });
   const [classroomToken, setClassroomToken] = useState("");
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   const [joinedControllers, setJoinedControllers] = useState<
