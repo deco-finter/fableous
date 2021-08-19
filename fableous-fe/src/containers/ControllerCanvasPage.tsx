@@ -18,6 +18,7 @@ import {
 } from "../Data";
 import { restAPI, wsAPI } from "../Api";
 import useWsConn from "../hooks/useWsConn";
+import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -32,6 +33,7 @@ export default function ControllerCanvasPage() {
   const [controllerState, setControllerState] = useState<ControllerState>(
     ControllerState.JoinForm
   );
+  const [cursor, setCursor] = useState<Cursor | undefined>();
   // TODO when url is /join/:token, auto populate this
   // TODO change to use formik and yup
   // TODO consider how to reduce no of states
@@ -201,18 +203,37 @@ export default function ControllerCanvasPage() {
             <div
               className={
                 controllerState === ControllerState.DrawingSession
-                  ? "block"
+                  ? "grid"
                   : "hidden"
               }
             >
-              <Canvas
-                ref={canvasRef}
-                wsState={wsConn}
-                role={role}
-                layer={role}
-                pageNum={currentPageIdx}
-                isShown={controllerState === ControllerState.DrawingSession}
-              />
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 20,
+                  pointerEvents: "none", // forwards pointer events to next layer
+                }}
+              >
+                <CursorScreen targetCanvasRef={canvasRef} cursor={cursor} />
+              </div>
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 10,
+                }}
+              >
+                <Canvas
+                  ref={canvasRef}
+                  wsState={wsConn}
+                  role={role}
+                  layer={role}
+                  pageNum={currentPageIdx}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                  setCursor={setCursor}
+                />
+              </div>
             </div>
           </div>
         </div>

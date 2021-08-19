@@ -25,6 +25,7 @@ import {
   translateXY,
 } from "./helpers";
 import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
+import { Cursor } from "./CursorScreen";
 
 interface Shape {
   x1: number;
@@ -44,6 +45,7 @@ interface CanvasProps {
   layer: ControllerRole;
   pageNum: number;
   isShown?: boolean;
+  setCursor: React.Dispatch<Cursor | undefined>;
 }
 
 interface SimplePointerEventData {
@@ -53,7 +55,7 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, pageNum, isShown } = props;
+    const { layer, role, pageNum, isShown, setCursor } = props;
     // TODO modify to use wsConn as state
     const wsRef: { current?: WebSocket } = useMemo(
       () => ({
@@ -116,7 +118,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (role !== ControllerRole.Hub) {
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
           const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
-          const [normWidth] = scaleDownXY(canvasRef, targetWidth || 0, 0);
+          const [normWidth] = scaleDownXY(canvasRef, targetWidth, 0);
           wsRef.current?.send(
             JSON.stringify({
               role,
@@ -260,10 +262,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
 
     const refreshText = useCallback(() => {
+      if (!canvasRef.current) return;
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
-      if (!ctx) return;
       const { width, height } = canvasRef.current;
       ctx.clearRect(0, 0, width, height);
       ctx.textAlign = "center";
@@ -366,6 +368,37 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }, [audioMediaRecorder, audioRecording]);
 
+    const placeCursor = useCallback(
+      (
+        normX: number,
+        normY: number,
+        normWidth: number,
+        targetMode: ToolMode
+      ) => {
+        setCursor({
+          normX,
+          normY,
+          normWidth,
+          toolMode: targetMode,
+        } as Cursor);
+        if (role !== ControllerRole.Hub) {
+          wsRef.current?.send(
+            JSON.stringify({
+              role,
+              type: WSMessageType.Cursor,
+              data: {
+                x1: normX,
+                y1: normY,
+                width: normWidth,
+                text: targetMode,
+              },
+            } as WSMessage)
+          );
+        }
+      },
+      [setCursor, role, wsRef]
+    );
+
     const readMessage = useCallback(
       (ev: MessageEvent) => {
         try {
@@ -408,6 +441,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               case WSMessageType.Audio:
                 placeAudio(msg.data.text || "");
                 break;
+              case WSMessageType.Cursor:
+                placeCursor(
+                  msg.data.x1 || 0, // no need to denormalize
+                  msg.data.y1 || 0,
+                  msg.data.width || 0,
+                  msg.data.text as ToolMode.Paint
+                );
+                break;
               default:
             }
           }
@@ -415,7 +456,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           console.error(e);
         }
       },
-      [layer, canvasRef, placePaint, placeFill, placeText]
+      [layer, canvasRef, placePaint, placeFill, placeText, placeCursor]
     );
 
     function onPointerDown(event: SimplePointerEventData) {
@@ -444,6 +485,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       if (!allowDrawing) return;
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
+      const [normX, normY] = scaleDownXY(canvasRef, x, y);
+      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
+      placeCursor(normX, normY, normWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
           if (!dragging) return;
@@ -518,7 +562,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       const canvas = canvasRef.current;
       canvas.width = canvas.offsetWidth * SCALE;
-      canvas.height = canvas.offsetWidth * ASPECT_RATIO * SCALE;
+      canvas.height = canvas.width * ASPECT_RATIO;
       setAllowDrawing(role !== ControllerRole.Hub);
       switch (role) {
         case ControllerRole.Story:
@@ -588,6 +632,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           onMouseDown={wrapMouseHandler(onPointerDown)}
           onMouseMove={wrapMouseHandler(onPointerMove)}
           onMouseUp={wrapMouseHandler(onPointerUp)}
+          onMouseLeave={() => {
+            setCursor(undefined);
+            wrapMouseHandler(onPointerUp);
+          }}
           onTouchStart={wrapTouchHandler(onPointerDown)}
           onTouchMove={wrapTouchHandler(onPointerMove)}
           onTouchEnd={wrapTouchHandler(onPointerUp)}
@@ -607,6 +655,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             MozUserSelect: "none",
             msUserSelect: "none",
             userSelect: "none",
+            cursor:
+              role === ControllerRole.Hub || toolMode === ToolMode.Audio
+                ? "auto"
+                : "none",
           }}
         />
         {role === ControllerRole.Hub &&

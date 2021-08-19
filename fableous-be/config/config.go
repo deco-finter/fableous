@@ -21,11 +21,6 @@ type Config struct {
 	DBUsername string
 	DBPassword string
 
-	RedisHost     string
-	RedisPort     int
-	RedisDatabase string
-	RedisPassword string
-
 	JWTSecret string
 }
 
@@ -51,12 +46,7 @@ func InitializeAppConfig() {
 	AppConfig.DBUsername = viper.GetString("DB_USERNAME")
 	AppConfig.DBPassword = viper.GetString("DB_PASSWORD")
 
-	AppConfig.RedisHost = viper.GetString("REDIS_HOSTNAME")
-	AppConfig.RedisPort = viper.GetInt("REDIS_PORT")
-	AppConfig.RedisDatabase = viper.GetString("REDIS_DATABASE")
-	AppConfig.RedisPassword = viper.GetString("REDIS_PASSWORD")
-
 	AppConfig.JWTSecret = viper.GetString("JWT_SECRET")
 
-	log.Println("[INIT] Configuration loaded")
+	log.Println("[INIT] configuration loaded")
 }

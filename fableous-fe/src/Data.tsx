@@ -34,6 +34,7 @@ export enum WSMessageType {
   Fill = "FILL",
   Text = "TEXT",
   Audio = "AUDIO",
+  Cursor = "CURSOR",
   Connect = "CONNECT",
   Join = "JOIN",
   Control = "CONTROL",
@@ -53,4 +54,37 @@ export enum ControllerRole {
   Background = "BACKGROUND",
   Story = "STORY",
   Hub = "HUB",
+}
+
+export interface APIResponse<T> {
+  code?: number;
+  data?: T;
+  error?: string;
+}
+
+export interface Login {
+  email: string;
+  password: string;
+}
+
+export interface Register {
+  name: string;
+  email: string;
+  password: string;
+  password2: string;
+}
+
+export interface Classroom {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface Session {
+  id: string;
+  title: string;
+  description: string;
+  pages: number;
+  completed: boolean;
+  createdAt: string;
 }

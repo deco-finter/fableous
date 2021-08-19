@@ -2,33 +2,57 @@ import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
-import { Link } from "react-router-dom";
-
-interface NavbarLinkInfo {
-  to: string;
-  text: string;
-}
+import { Link, useHistory } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "./AuthProvider";
 
 export default function Navbar() {
-  const title = "fableous";
-  const links: NavbarLinkInfo[] = [{ to: "/join", text: "join" }];
-
+  const history = useHistory();
+  const [, isAuthenticated, , clearToken] = useContext(AuthContext);
+  const onLogout = () => {
+    clearToken();
+    history.push("/");
+  };
   return (
     <div className="flex-grow">
       <AppBar position="static">
         <Toolbar>
-          <Button className="mr-8">
-            <Typography variant="h4" className="text-white capitalize">
-              <Link to="/">{title}</Link>
+          <Link to="/">
+            <Typography variant="h5" className="text-white">
+              Fableous
             </Typography>
-          </Button>
-          {links.map((link) => (
-            <Button className="mr-4" key={link.to}>
-              <Typography variant="h6" className="text-white capitalize">
-                <Link to={link.to}>{link.text}</Link>
-              </Typography>
-            </Button>
-          ))}
+          </Link>
+          <div className="flex-grow" /> {/* spacer */}
+          {isAuthenticated ? (
+            <>
+              <Button
+                variant="outlined"
+                className="text-white"
+                onClick={onLogout}
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outlined"
+                className="text-white"
+                component={Link}
+                to="/login"
+              >
+                Login
+              </Button>
+              <Button
+                variant="outlined"
+                className="ml-4 text-white"
+                component={Link}
+                to="/register"
+              >
+                Register
+              </Button>
+            </>
+          )}
         </Toolbar>
       </AppBar>
     </div>
