@@ -40,12 +40,6 @@ interface ApiEndpoints {
 }
 
 export const restAPI = {
-  canvas: {
-    getRandomTheme: () => ({
-      url: "/random/theme",
-      method: "get",
-    }),
-  },
   auth: {
     register: () => ({
       url: "/api/auth/register",
@@ -58,7 +52,7 @@ export const restAPI = {
   },
   classroom: {
     getList: () => ({
-      url: "/api/classroom",
+      url: "/api/classroom/",
       method: "get",
     }),
     getOne: (id: string) => ({
@@ -66,7 +60,7 @@ export const restAPI = {
       method: "get",
     }),
     create: () => ({
-      url: "/api/classroom",
+      url: "/api/classroom/",
       method: "post",
     }),
     update: (id: string) => ({
