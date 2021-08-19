@@ -114,8 +114,6 @@ export default function HubCanvasPage() {
       title: "",
       description: "",
       pages: 1,
-      // TODO remove once login implemented
-      authToken: localStorage.getItem("authorization") || "",
     },
     validationSchema: yup.object({
       title: yup.string().required("required"),
@@ -208,7 +206,7 @@ export default function HubCanvasPage() {
   }, [currentPageIdx, storyPageCnt]);
 
   return (
-    <Grid container item xs={12}>
+    <>
       {hubState === HubState.SessionForm && (
         <>
           <Grid item xs={12}>
@@ -223,19 +221,6 @@ export default function HubCanvasPage() {
             <Typography variant="h2">Lobby</Typography>
           </Grid>
           <form onSubmit={formikSession.handleSubmit}>
-            <div>
-              <FormikTextField
-                formik={formikSession}
-                name="authToken"
-                label="Auth Token"
-                overrides={{
-                  onChange: (e: any) => {
-                    formikSession.handleChange(e);
-                    localStorage.setItem("authorization", e.target.value);
-                  },
-                }}
-              />
-            </div>
             <div>
               <FormikTextField
                 formik={formikSession}
@@ -261,13 +246,13 @@ export default function HubCanvasPage() {
               />
             </div>
             <div>
-              <Button type="submit">Start Session</Button>
+              <Button type="submit">create story</Button>
             </div>
           </form>
         </>
       )}
       {hubState === HubState.WaitingRoom && (
-        <>
+        <Grid item xs={12}>
           <h1>waiting room</h1>
           <p>
             code to join: <span>{classroomToken || "-"}</span>
@@ -286,9 +271,9 @@ export default function HubCanvasPage() {
             onClick={onBeginDrawing}
             disabled={!isAllControllersJoined()}
           >
-            start
+            begin drawing
           </Button>
-        </>
+        </Grid>
       )}
       {hubState === HubState.DrawingSession && (
         <>
@@ -376,6 +361,6 @@ export default function HubCanvasPage() {
           </Button>
         </>
       )}
-    </Grid>
+    </>
   );
 }
