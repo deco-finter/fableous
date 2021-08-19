@@ -2,16 +2,17 @@ import { useRef, useState, useEffect } from "react";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
 import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
 import { Typography } from "@material-ui/core";
+import * as yup from "yup";
+import { Formik, FormikHelpers } from "formik";
 import Canvas from "../components/canvas/Canvas";
 import {
   APIResponse,
+  ControllerJoin,
   ControllerRole,
   Session,
   WSControlMessageData,
@@ -21,6 +22,7 @@ import {
 import { restAPI, wsAPI } from "../Api";
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
+import FormikTextField from "../components/FormikTextField";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -34,11 +36,8 @@ export default function ControllerCanvasPage() {
     ControllerState.JoinForm
   );
   const [wsConn, setNewWsConn] = useWsConn();
-  const [name, setName] = useState("");
-  const [classroomToken, setClassroomToken] = useState("");
-  const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   // TODO when url is /join/:token, auto populate this
-  // TODO change to use formik and yup
+  const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [sessionInfo, setSessionInfo] = useState<
     WSControlMessageData | undefined
   >();
@@ -53,10 +52,14 @@ export default function ControllerCanvasPage() {
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
-  const joinSession = () => {
+  const handleJoinSession = (
+    values: ControllerJoin,
+    actions: FormikHelpers<ControllerJoin>
+  ) => {
+    setRole(values.role);
     // TODO on error e.g. when token invalid, give feedback to user?
     const newWsConn = new WebSocket(
-      wsAPI.controller.main(classroomToken, role, name)
+      wsAPI.controller.main(values.token, values.role, values.name)
     );
     newWsConn.onopen = () => {
       setControllerState(ControllerState.WaitingRoom);
@@ -100,6 +103,7 @@ export default function ControllerCanvasPage() {
       }
     };
     setNewWsConn(newWsConn);
+    actions.resetForm();
   };
 
   // reset states when in join form state
@@ -107,7 +111,6 @@ export default function ControllerCanvasPage() {
     if (controllerState === ControllerState.JoinForm) {
       setSessionInfo(undefined);
       setStoryDetails(undefined);
-      setClassroomToken("");
       setCurrentPageIdx(0);
     }
   }, [controllerState]);
@@ -130,43 +133,66 @@ export default function ControllerCanvasPage() {
           }}
         >
           {controllerState === ControllerState.JoinForm && (
-            <>
-              <FormControl component="fieldset">
-                <TextField
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Name"
-                />
-                <TextField
-                  value={classroomToken}
-                  onChange={(e) =>
-                    setClassroomToken(e.target.value.toUpperCase())
-                  }
-                  placeholder="Token"
-                />
-                <RadioGroup
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as ControllerRole)}
-                >
-                  <FormControlLabel
-                    value={ControllerRole.Story}
-                    control={<Radio />}
-                    label="Story"
-                  />
-                  <FormControlLabel
-                    value={ControllerRole.Character}
-                    control={<Radio />}
-                    label="Character"
-                  />
-                  <FormControlLabel
-                    value={ControllerRole.Background}
-                    control={<Radio />}
-                    label="Background"
-                  />
-                </RadioGroup>
-                <Button onClick={joinSession}>Join Session</Button>
-              </FormControl>
-            </>
+            <Formik
+              initialValues={
+                {
+                  name: "",
+                  token: "",
+                  role: ControllerRole.Story,
+                } as ControllerJoin
+              }
+              validationSchema={yup.object().shape({
+                name: yup.string().required("required"),
+                token: yup.string().required("required"),
+              })}
+              onSubmit={handleJoinSession}
+            >
+              {(formik) => (
+                <form onSubmit={formik.handleSubmit}>
+                  <div>
+                    <FormikTextField
+                      formik={formik}
+                      name="name"
+                      label="Name"
+                      overrides={{
+                        autoFocus: true,
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <FormikTextField
+                      formik={formik}
+                      name="token"
+                      label="Token"
+                    />
+                  </div>
+
+                  <RadioGroup
+                    name="role"
+                    value={formik.values.role}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                  >
+                    <FormControlLabel
+                      value={ControllerRole.Story}
+                      control={<Radio />}
+                      label="Story"
+                    />
+                    <FormControlLabel
+                      value={ControllerRole.Character}
+                      control={<Radio />}
+                      label="Character"
+                    />
+                    <FormControlLabel
+                      value={ControllerRole.Background}
+                      control={<Radio />}
+                      label="Background"
+                    />
+                  </RadioGroup>
+                  <Button type="submit">Join Session</Button>
+                </form>
+              )}
+            </Formik>
           )}
           <div
             className={

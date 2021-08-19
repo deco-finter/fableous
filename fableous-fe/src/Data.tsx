@@ -88,3 +88,9 @@ export interface Session {
   completed: boolean;
   createdAt: string;
 }
+
+export interface ControllerJoin {
+  name: string;
+  token: string;
+  role: ControllerRole;
+}
