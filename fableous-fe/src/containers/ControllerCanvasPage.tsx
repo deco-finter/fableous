@@ -60,7 +60,6 @@ export default function ControllerCanvasPage() {
           case WSMessageType.Control:
             {
               const msgData = msg.data as WSControlMessageData;
-              // TODO handle when last page drawing finished
               if (msgData.nextPage) {
                 setCurrentPageIdx((prev) => {
                   if (prev === 0) {
@@ -70,7 +69,6 @@ export default function ControllerCanvasPage() {
                   return prev + 1;
                 });
               } else if (msgData.classroomId && msgData.sessionId) {
-                // TODO perform get reqrestAPI.classroom.getOnGoingSession()
                 setClassroomId(msgData.classroomId);
                 setSessionId(msgData.sessionId);
                 execGetOnGoingSession(
@@ -115,7 +113,6 @@ export default function ControllerCanvasPage() {
   useEffect(() => {
     if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
       console.log("finished story");
-      // TODO tell user drawing session has finished, maybe show button to continue?
       setControllerState(ControllerState.StoryFinished);
     }
   }, [currentPageIdx, storyPageCnt]);

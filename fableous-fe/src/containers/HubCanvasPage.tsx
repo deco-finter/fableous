@@ -43,7 +43,6 @@ export default function HubCanvasPage() {
   );
   const [classroomToken, setClassroomToken] = useState("");
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
-  // TODO clear joined controllers when websocket change
   const [joinedControllers, setJoinedControllers] = useState<
     {
       [key in ControllerRole]?: string | null;
@@ -54,7 +53,12 @@ export default function HubCanvasPage() {
 
   const beginSession = () => {
     const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
-    // TODO onclose, redirect to session form
+    newWsConn.addEventListener("error", () => {
+      setHubState(HubState.SessionForm);
+      // TODO better way to inform user
+      // eslint-disable-next-line no-alert
+      alert("hub got disconnected, please create a new session");
+    });
     newWsConn.onmessage = (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
@@ -269,8 +273,6 @@ export default function HubCanvasPage() {
             </Button>
           </>
         )}
-        {/* TODO set canvas to be invisible instead of not rendered */}
-        {/* TODO show connected members? */}
         {hubState === HubState.DrawingSession && (
           <>
             <h1>Hub {classroomToken}</h1>
