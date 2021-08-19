@@ -99,9 +99,8 @@ const CursorScreen = (props: CursorScreenProps) => {
     if (ctx) {
       ctx.textBaseline = "middle";
     }
-    // only trigger once during componentMount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // only trigger during componentMount or targetCanvasRef change
+  }, [targetCanvasRef]);
 
   // start cursor layer animation
   useEffect(() => {
