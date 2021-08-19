@@ -124,7 +124,6 @@ export default function HubCanvasPage() {
       pages: yup.number().positive("must be positive"),
     }),
     onSubmit: (values) => {
-      // TODO remove this workaround when flow with classroom is done
       executePostSession({
         data: {
           title: values.title,
