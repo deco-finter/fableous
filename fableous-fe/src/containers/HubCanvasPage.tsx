@@ -114,31 +114,43 @@ export default function HubCanvasPage() {
               style={{
                 gridRowStart: 1,
                 gridColumnStart: 1,
-                zIndex: 15,
+                zIndex: 22,
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen cursor={storyCursor} name="Story" />
+              <CursorScreen
+                targetCanvasRef={storyCanvasRef}
+                cursor={storyCursor}
+                name="Story"
+              />
             </div>
             <div
               style={{
                 gridRowStart: 1,
                 gridColumnStart: 1,
-                zIndex: 14,
+                zIndex: 21,
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen cursor={characterCursor} name="Character" />
+              <CursorScreen
+                targetCanvasRef={characterCanvasRef}
+                cursor={characterCursor}
+                name="Character"
+              />
             </div>
             <div
               style={{
                 gridRowStart: 1,
                 gridColumnStart: 1,
-                zIndex: 13,
+                zIndex: 20,
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen cursor={backgroundCursor} name="Background" />
+              <CursorScreen
+                targetCanvasRef={backgroundCanvasRef}
+                cursor={backgroundCursor}
+                name="Background"
+              />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
               <Canvas

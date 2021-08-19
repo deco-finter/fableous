@@ -106,11 +106,11 @@ export default function ControllerCanvasPage() {
                   style={{
                     gridRowStart: 1,
                     gridColumnStart: 1,
-                    zIndex: 11,
+                    zIndex: 20,
                     pointerEvents: "none", // forwards pointer events to next layer
                   }}
                 >
-                  <CursorScreen cursor={cursor} name="" />
+                  <CursorScreen targetCanvasRef={canvasRef} cursor={cursor} />
                 </div>
                 <div
                   style={{
