@@ -96,17 +96,12 @@ const CursorScreen = (props: CursorScreenProps) => {
         : canvas
       ).offsetWidth * SCALE;
     canvas.height = canvas.width * ASPECT_RATIO;
-    if (targetCanvasRef && targetCanvasRef.current) {
-      console.log(name, "FROM CANVAS", canvas.width);
-    } else {
-      console.log(name, "FROM SELF", canvas.width);
-    }
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
     }
     // only trigger during componentMount, targetCanvasRef change, or dimension change on targerCanvasRef
-  }, [name, targetCanvasRef, resizeTrigger]);
+  }, [targetCanvasRef, resizeTrigger]);
 
   // start cursor layer animation
   useEffect(() => {
