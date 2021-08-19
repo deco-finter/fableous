@@ -84,11 +84,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           "2d"
         ) as CanvasRenderingContext2D;
         const isCoordEq = x1 === x2 && y1 === y2;
-
         // lay down path
         ctx.beginPath();
         ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        ctx.lineTo(isCoordEq ? x1 + 0.1 : x2, isCoordEq ? y1 + 0.1 : y2);
         ctx.closePath();
         // clear overlapped pixels
         ctx.globalCompositeOperation = "destination-out";
@@ -102,7 +101,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.strokeStyle = targetColor;
         ctx.lineWidth = targetWidth;
         ctx.moveTo(x1, y1);
-        ctx.lineTo(isCoordEq ? x1 + 1 : x2, isCoordEq ? y1 + 1 : y2);
+        ctx.lineTo(isCoordEq ? x1 + 0.1 : x2, isCoordEq ? y1 + 0.1 : y2);
         ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
@@ -449,6 +448,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     function onPointerDown(event: SimplePointerEventData) {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
+      const [normX, normY] = scaleDownXY(canvasRef, x, y);
+      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
+      placeCursor(normX, normY, normWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
           setDragging(true);
