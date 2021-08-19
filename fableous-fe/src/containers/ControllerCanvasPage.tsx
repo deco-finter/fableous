@@ -28,25 +28,28 @@ enum ControllerState {
 }
 
 export default function ControllerCanvasPage() {
-  const [wsConn, setNewWsConn] = useWsConn();
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [controllerState, setControllerState] = useState<ControllerState>(
     ControllerState.JoinForm
   );
-  const [cursor, setCursor] = useState<Cursor | undefined>();
+  const [wsConn, setNewWsConn] = useWsConn();
+  const [name, setName] = useState("");
+  const [classroomToken, setClassroomToken] = useState("");
+  const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
+
   // TODO when url is /join/:token, auto populate this
   // TODO change to use formik and yup
   // TODO consider how to reduce no of states
-  const [classroomToken, setClassroomToken] = useState("");
   const [classroomId, setClassroomId] = useState("");
   const [sessionId, setSessionId] = useState("");
-  const [name, setName] = useState("");
-  const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [storyTitle, setStoryTitle] = useState("");
   const [storyDesc, setStoryDesc] = useState("");
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [storyPageCnt, setStoryPageCnt] = useState(0);
+
   const [, execGetOnGoingSession] = useAxios({});
+
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
+  const [cursor, setCursor] = useState<Cursor | undefined>();
 
   const joinSession = () => {
     const newWsConn = new WebSocket(

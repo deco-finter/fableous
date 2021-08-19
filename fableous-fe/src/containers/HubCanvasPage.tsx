@@ -27,8 +27,22 @@ enum HubState {
 
 export default function HubCanvasPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
-  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
   const history = useHistory();
+  const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
+  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
+  const [classroomToken, setClassroomToken] = useState("");
+  const [joinedControllers, setJoinedControllers] = useState<
+    {
+      [key in ControllerRole]?: string | null;
+    }
+  >({});
+  const [currentPageIdx, setCurrentPageIdx] = useState(0);
+  const [storyPageCnt, setStoryPageCnt] = useState(0);
+
+  const [, executePostSession] = useAxios(restAPI.session.create(classroomId), {
+    manual: true,
+  });
+
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
@@ -38,18 +52,6 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
-  const [, executePostSession] = useAxios(restAPI.session.create(classroomId), {
-    manual: true,
-  });
-  const [classroomToken, setClassroomToken] = useState("");
-  const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
-  const [joinedControllers, setJoinedControllers] = useState<
-    {
-      [key in ControllerRole]?: string | null;
-    }
-  >({});
-  const [currentPageIdx, setCurrentPageIdx] = useState(0);
-  const [storyPageCnt, setStoryPageCnt] = useState(0);
   const [storyCursor, setStoryCursor] = useState<Cursor | undefined>();
   const [characterCursor, setCharacterCursor] = useState<Cursor | undefined>();
   const [backgroundCursor, setBackgroundCursor] = useState<
