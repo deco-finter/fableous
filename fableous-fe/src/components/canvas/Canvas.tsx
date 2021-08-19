@@ -507,14 +507,16 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const wrapMouseHandler =
       (handler: (event: SimplePointerEventData) => void) =>
       (event: React.MouseEvent<HTMLCanvasElement>) => {
+        event.preventDefault();
         handler({ clientX: event.clientX, clientY: event.clientY });
       };
 
     const wrapTouchHandler =
       (handler: (event: SimplePointerEventData) => void) =>
       (event: React.TouchEvent<HTMLCanvasElement>) => {
-        if (event.targetTouches.length > 0) {
-          const firstTouch = event.targetTouches[0];
+        event.preventDefault();
+        if (event.touches.length > 0) {
+          const firstTouch = event.touches[0];
           handler({ clientX: firstTouch.clientX, clientY: firstTouch.clientY });
         }
       };
