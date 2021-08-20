@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"os"
 
 	"gorm.io/gorm"
@@ -95,8 +96,9 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 	}
 	m.sessions.mutex.Lock()
 	var sess *activeSession
+	log.Println(m.sessions.keys)
 	for classroomToken, selected := range m.sessions.keys {
-		if selected.sessionID == id {
+		if selected.sessionID == id && selected.classroomID == classroomID {
 			sess = selected
 			delete(m.sessions.keys, classroomToken)
 			break
