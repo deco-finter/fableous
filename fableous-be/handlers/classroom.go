@@ -1,8 +1,12 @@
 package handlers
 
 import (
+	"fmt"
+	"os"
+
 	"gorm.io/gorm"
 
+	"github.com/deco-finter/fableous/fableous-be/config"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
@@ -61,9 +65,15 @@ func (m *module) ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err
 }
 
 func (m *module) ClassroomDeleteByID(classroomID string) (err error) {
+	for classroomToken, sess := range m.sessions.keys {
+		if sess.classroomID == classroomID {
+			delete(m.sessions.keys, classroomToken)
+			go m.SessionCleanUp(sess)
+		}
+	}
+	_ = os.RemoveAll(fmt.Sprintf("%s/%s", config.AppConfig.StaticDir, classroomID))
 	if err = m.db.classroomOrmer.DeleteByID(classroomID); err != nil {
 		return err
 	}
-	// TODO: clean up session static files
 	return
 }
