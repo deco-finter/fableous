@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"os"
 
 	"gorm.io/gorm"
 
@@ -93,7 +93,6 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 	if err = m.db.sessionOrmer.DeleteByIDByClassroomID(id, classroomID); err != nil {
 		return err
 	}
-	log.Println(m.sessions.keys)
 	m.sessions.mutex.Lock()
 	var sess *activeSession
 	for classroomToken, selected := range m.sessions.keys {
@@ -104,10 +103,13 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 		}
 	}
 	m.sessions.mutex.Unlock()
-	if sess == nil {
-		log.Println("no active sess to remove")
-		return
+	if sess != nil {
+		go m.SessionCleanUp(sess)
 	}
+	return
+}
+
+func (m *module) SessionCleanUp(sess *activeSession) {
 	_ = sess.BroadcastJSON(datatransfers.WSMessage{
 		Type: constants.WSMessageTypeJoin,
 		Data: datatransfers.WSMessageData{
@@ -118,20 +120,20 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 		},
 	})
 	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleStory); conn != nil {
-		log.Println("kicking story")
 		_ = conn.Close()
 	}
 	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleCharacter); conn != nil {
-		log.Println("kicking char")
 		_ = conn.Close()
 	}
 	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleBackground); conn != nil {
-		log.Println("kicking bg")
 		_ = conn.Close()
 	}
 	if conn := sess.hubConn; conn != nil {
-		log.Println("kicking hub")
 		_ = conn.Close()
 	}
-	return
+	go m.sessionClearStaticByIDByClassroomID(sess.sessionID, sess.classroomID)
+}
+
+func (m *module) sessionClearStaticByIDByClassroomID(id, classroomID string) {
+	_ = os.RemoveAll(utils.GetSessionStaticDir(id, classroomID))
 }

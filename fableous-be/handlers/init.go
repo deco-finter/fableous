@@ -41,6 +41,7 @@ type HandlerFunc interface {
 	SessionInsert(sessionInfo datatransfers.SessionInfo) (id string, err error)
 	SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err error)
 	SessionDeleteByIDByClassroomID(id, classroomID string) (err error)
+	SessionCleanUp(sess *activeSession)
 
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
