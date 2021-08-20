@@ -30,7 +30,7 @@ jobs:
       - name: Provide Env File
         run: |
           echo "${{ secrets.FE_ENV_FILE }}" > ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
-          echo "REACT_APP_VERSION=${{ env.RELEASE_VERSION }}:${GITHUB_SHA}" >> ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
+          echo "REACT_APP_VERSION=${{ env.RELEASE_VERSION }}:${GITHUB_REF#refs/heads/}@${GITHUB_SHA}" >> ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
       - name: Build and Push Image
         uses: docker/build-push-action@v2
         with:
