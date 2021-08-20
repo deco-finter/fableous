@@ -329,11 +329,7 @@ export default function HubCanvasPage() {
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen
-                targetCanvasRef={storyCanvasRef}
-                cursor={storyCursor}
-                name="Story"
-              />
+              <CursorScreen cursor={storyCursor} name="Story" />
             </div>
             <div
               style={{
@@ -343,11 +339,7 @@ export default function HubCanvasPage() {
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen
-                targetCanvasRef={characterCanvasRef}
-                cursor={characterCursor}
-                name="Character"
-              />
+              <CursorScreen cursor={characterCursor} name="Character" />
             </div>
             <div
               style={{
@@ -357,11 +349,7 @@ export default function HubCanvasPage() {
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen
-                targetCanvasRef={backgroundCanvasRef}
-                cursor={backgroundCursor}
-                name="Background"
-              />
+              <CursorScreen cursor={backgroundCursor} name="Background" />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
               <Canvas

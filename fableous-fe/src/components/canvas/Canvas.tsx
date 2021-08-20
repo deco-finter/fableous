@@ -598,7 +598,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
 
-    // temporary workaround to recalculate width when canvas appears or becomes hidden
+    // workaround to recalculate width when canvas appears or becomes hidden
     useEffect(() => {
       adjustCanvasSize();
       // eslint-disable-next-line react-hooks/exhaustive-deps

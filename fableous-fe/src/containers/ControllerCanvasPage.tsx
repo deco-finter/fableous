@@ -267,7 +267,10 @@ export default function ControllerCanvasPage() {
                   pointerEvents: "none", // forwards pointer events to next layer
                 }}
               >
-                <CursorScreen targetCanvasRef={canvasRef} cursor={cursor} />
+                <CursorScreen
+                  cursor={cursor}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                />
               </div>
               <div
                 style={{
