@@ -7,6 +7,7 @@ import * as yup from "yup";
 import { useFormik } from "formik";
 import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
+import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
 import {
   ControllerRole,
@@ -28,6 +29,7 @@ enum HubState {
 export default function HubCanvasPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const history = useHistory();
+  const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
   const [classroomToken, setClassroomToken] = useState("");
@@ -62,12 +64,11 @@ export default function HubCanvasPage() {
   >();
 
   const beginSession = () => {
+    // refactor this to useEffect?
     const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
-    newWsConn.addEventListener("error", () => {
-      setHubState(HubState.SessionForm);
-      // TODO better way to inform user
-      // eslint-disable-next-line no-alert
-      alert("hub got disconnected, please create a new session");
+    newWsConn.addEventListener("error", (err) => {
+      enqueueSnackbar("connection error", { variant: "error" });
+      console.error("ws conn error", err);
     });
     newWsConn.onmessage = (ev: MessageEvent) => {
       try {
@@ -141,10 +142,8 @@ export default function HubCanvasPage() {
           setHubState(HubState.WaitingRoom);
         })
         .catch((err: any) => {
-          console.error(err);
-          // TODO better way to inform error
-          // eslint-disable-next-line no-alert
-          alert("post session info failed");
+          enqueueSnackbar("failed to create session", { variant: "error" });
+          console.error("post session error", err);
         });
     },
   });

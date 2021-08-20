@@ -6,9 +6,10 @@ import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
-import { Typography } from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
+import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
 import {
   APIResponse,
@@ -32,6 +33,7 @@ enum ControllerState {
 }
 
 export default function ControllerCanvasPage() {
+  const { enqueueSnackbar } = useSnackbar();
   const [controllerState, setControllerState] = useState<ControllerState>(
     ControllerState.JoinForm
   );
@@ -43,7 +45,6 @@ export default function ControllerCanvasPage() {
   >();
   const [storyDetails, setStoryDetails] = useState<Session | undefined>();
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
-
   const [, execGetOnGoingSession] = useAxios<
     APIResponse<Session>,
     APIResponse<undefined>
@@ -64,6 +65,10 @@ export default function ControllerCanvasPage() {
     newWsConn.onopen = () => {
       setControllerState(ControllerState.WaitingRoom);
     };
+    newWsConn.addEventListener("error", (err) => {
+      enqueueSnackbar("connection error", { variant: "error" });
+      console.error("ws conn error", err);
+    });
     newWsConn.onmessage = (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
@@ -84,14 +89,18 @@ export default function ControllerCanvasPage() {
                 execGetOnGoingSession(
                   restAPI.session.getOngoing(msgData.classroomId)
                 )
-                  .then((response) => {
-                    setStoryDetails(response.data.data);
+                  .then(({ data: response }) => {
+                    setStoryDetails(response.data);
                   })
-                  .catch((err) => {
-                    console.error(err);
-                    // TODO better way to inform error
-                    // eslint-disable-next-line no-alert
-                    alert("get on going session failed");
+                  .catch((error) => {
+                    if (error.response.status === 404) {
+                      enqueueSnackbar("no on going session", {
+                        variant: "error",
+                      });
+                    } else {
+                      enqueueSnackbar("unknown error", { variant: "error" });
+                    }
+                    console.error("get ongoing session", error);
                   });
               }
             }
