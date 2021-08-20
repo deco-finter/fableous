@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
-	"github.com/deco-finter/fableous/fableous-be/config"
 	"github.com/deco-finter/fableous/fableous-be/constants"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/models"
@@ -104,20 +103,11 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[HubCommandWorker] failed reading message. %s\n", err)
 			}
-			_ = sess.BroadcastJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypeJoin,
-				Data: datatransfers.WSMessageData{
-					WSJoinMessageData: datatransfers.WSJoinMessageData{
-						Role:    constants.ControllerRoleHub,
-						Joining: utils.BoolAddr(false),
-					},
-				},
-			})
+			go m.SessionCleanUp(sess)
 			var session models.Session
 			if session, err = m.db.sessionOrmer.GetOneByIDByClassroomID(sess.sessionID, sess.classroomID); !session.Completed {
 				_ = m.db.sessionOrmer.DeleteByIDByClassroomID(sess.sessionID, sess.classroomID)
 			}
-			// TODO: cleanup static dir
 			break
 		}
 		switch message.Type {
@@ -232,7 +222,7 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 		log.Println(err)
 		return
 	}
-	directory := fmt.Sprintf("%s/%s/%s/%d", config.AppConfig.StaticDir, sess.classroomID, sess.sessionID, sess.currentPage)
+	directory := fmt.Sprintf("%s/%d", utils.GetSessionStaticDir(sess.sessionID, sess.classroomID), sess.currentPage)
 	if _, err = os.Stat(directory); os.IsNotExist(err) {
 		if err = os.MkdirAll(directory, 0700); err != nil {
 			log.Println(err)
