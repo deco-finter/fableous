@@ -550,11 +550,15 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [editingTextId, placeText, textShapes]
     );
 
-    // setup on component mount
-    useEffect(() => {
+    const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
       canvas.width = canvas.offsetWidth * SCALE;
       canvas.height = canvas.width * ASPECT_RATIO;
+    }, [canvasRef]);
+
+    // setup on component mount
+    useEffect(() => {
+      adjustCanvasSize();
       setAllowDrawing(role !== ControllerRole.Hub);
       switch (role) {
         case ControllerRole.Story:
@@ -576,7 +580,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       };
       // only trigger on new websocket connection
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [role, wsConn]);
+    }, [role, wsConn, adjustCanvasSize]);
 
     // cleanup before moving to next page
     useEffect(() => {
@@ -592,11 +596,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     // temporary workaround to recalculate width when canvas appears or becomes hidden
     useEffect(() => {
-      const canvas = canvasRef.current;
-      canvas.width = canvas.offsetWidth * SCALE;
-      canvas.height = canvas.width * ASPECT_RATIO;
+      adjustCanvasSize();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canvasRef, isShown]);
+    }, [adjustCanvasSize, isShown]);
 
     // initialize keyboard listener
     useEffect(() => {
