@@ -125,7 +125,7 @@ func DELETESession(c *gin.Context) {
 		c.JSON(http.StatusForbidden, datatransfers.Response{Error: "user does not own this classroom"})
 		return
 	}
-	if err = handlers.Handler.SessionDelete(classroomInfo.ID, c.Param("session_id")); err == gorm.ErrRecordNotFound {
+	if err = handlers.Handler.SessionDeleteByIDByClassroomID(c.Param("session_id"), classroomInfo.ID); err == gorm.ErrRecordNotFound {
 		c.JSON(http.StatusNotFound, datatransfers.Response{})
 		return
 	} else if err != nil {

@@ -81,7 +81,7 @@ func DELETEClassroom(c *gin.Context) {
 		c.JSON(http.StatusForbidden, datatransfers.Response{Error: "user does not own this classroom"})
 		return
 	}
-	if err = handlers.Handler.ClassroomDelete(classroomInfo.ID); err != nil {
+	if err = handlers.Handler.ClassroomDeleteByID(classroomInfo.ID); err != nil {
 		c.JSON(http.StatusInternalServerError, datatransfers.Response{Error: "cannot delete classroom"})
 		return
 	}
