@@ -29,7 +29,7 @@ type SessionOrmer interface {
 	GetAllCompletedByClassroomID(classroomID string) (sessions []Session, err error)
 	Insert(session Session) (id string, err error)
 	Update(session Session) (err error)
-	Delete(classroomID, id string) (err error)
+	DeleteByIDByClassroomID(id, classroomID string) (err error)
 }
 
 func NewSessionOrmer(db *gorm.DB) SessionOrmer {
@@ -67,7 +67,7 @@ func (o *sessionOrm) Update(session Session) (err error) {
 	return result.Error
 }
 
-func (o *sessionOrm) Delete(classroomID, id string) (err error) {
+func (o *sessionOrm) DeleteByIDByClassroomID(id, classroomID string) (err error) {
 	result := o.db.Model(&Session{}).Delete(&Session{ID: id, ClassroomID: classroomID})
 	return result.Error
 }

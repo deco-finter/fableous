@@ -24,7 +24,7 @@ type ClassroomOrmer interface {
 	GetAllByUserID(userID string) (classrooms []Classroom, err error)
 	Insert(classroom Classroom) (id string, err error)
 	Update(classroom Classroom) (err error)
-	Delete(classroomID string) (err error)
+	DeleteByID(classroomID string) (err error)
 }
 
 func NewClassroomOrmer(db *gorm.DB) ClassroomOrmer {
@@ -53,7 +53,7 @@ func (o *classroomOrm) Update(classroom Classroom) (err error) {
 	return result.Error
 }
 
-func (o *classroomOrm) Delete(id string) (err error) {
+func (o *classroomOrm) DeleteByID(id string) (err error) {
 	result := o.db.Model(&Classroom{}).Delete(&Classroom{ID: id})
 	return result.Error
 }
