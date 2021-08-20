@@ -95,7 +95,10 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 		return err
 	}
 	m.sessions.mutex.Lock()
-	var sess *activeSession
+	sess := &activeSession{
+		classroomID: classroomID,
+		sessionID:   id,
+	}
 	log.Println(m.sessions.keys)
 	for classroomToken, selected := range m.sessions.keys {
 		if selected.sessionID == id && selected.classroomID == classroomID {
@@ -105,9 +108,7 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 		}
 	}
 	m.sessions.mutex.Unlock()
-	if sess != nil {
-		go m.SessionCleanUp(sess)
-	}
+	go m.SessionCleanUp(sess)
 	return
 }
 
