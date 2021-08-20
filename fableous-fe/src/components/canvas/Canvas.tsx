@@ -705,7 +705,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             on text again to edit text.
           </div>
         )}
-        {role !== ControllerRole.Hub && (
+        {role !== ControllerRole.Hub && role !== ControllerRole.Story && (
           <div>
             <Slider
               disabled={toolMode !== ToolMode.Paint}
