@@ -124,6 +124,18 @@ export default function ControllerCanvasPage() {
 
   return (
     <>
+      <Grid item xs={12} className="mb-4">
+        <Typography variant="h2">
+          {
+            {
+              [ControllerState.JoinForm]: "join",
+              [ControllerState.WaitingRoom]: "draw",
+              [ControllerState.DrawingSession]: "draw",
+              [ControllerState.StoryFinished]: "finished",
+            }[controllerState]
+          }
+        </Typography>
+      </Grid>
       <Grid item xs={12}>
         <div
           style={{
@@ -201,29 +213,36 @@ export default function ControllerCanvasPage() {
           >
             <p>Role: {role}</p>
             <p>Title: {storyDetails?.title}</p>
-            <p>Description {storyDetails?.description}</p>
+            <p>Description: {storyDetails?.description}</p>
             {controllerState === ControllerState.WaitingRoom && (
-              <Typography variant="h4" component="p">
-                waiting for hub to start
+              <Typography variant="h6" component="p">
+                waiting for hub to start..
               </Typography>
             )}
             {controllerState === ControllerState.StoryFinished && (
               <>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setControllerState(ControllerState.JoinForm);
-                  }}
-                >
-                  Join another drawing session
-                </Button>
-                <Button
-                  variant="contained"
-                  component={Link}
-                  to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
-                >
-                  View completed story in gallery
-                </Button>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className="mb-2"
+                    onClick={() => {
+                      setControllerState(ControllerState.JoinForm);
+                    }}
+                  >
+                    Join another session
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    component={Link}
+                    to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
+                  >
+                    View story in gallery
+                  </Button>
+                </div>
               </>
             )}
             <div

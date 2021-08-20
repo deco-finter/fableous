@@ -39,9 +39,12 @@ export default function HubCanvasPage() {
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [storyPageCnt, setStoryPageCnt] = useState(0);
 
-  const [, executePostSession] = useAxios(restAPI.session.create(classroomId), {
-    manual: true,
-  });
+  const [{ loading: postLoading }, executePostSession] = useAxios(
+    restAPI.session.create(classroomId),
+    {
+      manual: true,
+    }
+  );
 
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
@@ -209,25 +212,38 @@ export default function HubCanvasPage() {
 
   return (
     <>
+      <Grid item xs={12}>
+        <Button
+          onClick={() => history.goBack()}
+          startIcon={<Icon>arrow_backward</Icon>}
+        >
+          Back
+        </Button>
+      </Grid>
+      <Grid item xs={12} className="mb-4">
+        <Typography variant="h2">
+          {
+            {
+              [HubState.SessionForm]: "story",
+              [HubState.WaitingRoom]: "lobby",
+              [HubState.DrawingSession]: "draw",
+            }[hubState]
+          }
+        </Typography>
+      </Grid>
       {hubState === HubState.SessionForm && (
         <>
-          <Grid item xs={12}>
-            <Button
-              onClick={() => history.goBack()}
-              startIcon={<Icon>arrow_backward</Icon>}
-            >
-              Back
-            </Button>
-          </Grid>
-          <Grid item xs={12} className="mb-4">
-            <Typography variant="h2">Lobby</Typography>
-          </Grid>
           <form onSubmit={formikSession.handleSubmit}>
             <div>
               <FormikTextField
                 formik={formikSession}
                 name="title"
                 label="Title"
+                overrides={{
+                  variant: "outlined",
+                  disabled: postLoading,
+                  className: "mb-4",
+                }}
               />
             </div>
             <div>
@@ -235,6 +251,11 @@ export default function HubCanvasPage() {
                 formik={formikSession}
                 name="description"
                 label="Description"
+                overrides={{
+                  variant: "outlined",
+                  disabled: postLoading,
+                  className: "mb-4",
+                }}
               />
             </div>
             <div>
@@ -244,22 +265,33 @@ export default function HubCanvasPage() {
                 label="Pages"
                 overrides={{
                   type: "number",
+                  variant: "outlined",
+                  disabled: postLoading,
+                  className: "mb-4",
                 }}
               />
             </div>
             <div>
-              <Button type="submit">create story</Button>
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={postLoading}
+                type="submit"
+              >
+                create
+              </Button>
             </div>
           </form>
         </>
       )}
       {hubState === HubState.WaitingRoom && (
         <Grid item xs={12}>
-          <h1>waiting room</h1>
-          <p>
-            code to join: <span>{classroomToken || "-"}</span>
-          </p>
-          <p>joined students:</p>
+          <Typography variant="h6">
+            token: <span>{classroomToken || "-"}</span>
+          </Typography>
+          <Typography variant="h6">
+            Joined Students ({Object.keys(joinedControllers).length}/3)
+          </Typography>
           <ul>
             {Object.entries(joinedControllers).map(([role, name]) => (
               <li key={role}>
@@ -278,11 +310,11 @@ export default function HubCanvasPage() {
         </Grid>
       )}
       {hubState === HubState.DrawingSession && (
-        <>
-          <h1>Hub {classroomToken}</h1>
-          <p>
+        <Grid item xs={12}>
+          <Typography variant="h6">Hub with token {classroomToken}</Typography>
+          <Typography variant="h6">
             page {currentPageIdx} of {storyPageCnt}
-          </p>
+          </Typography>
           <div style={{ display: "grid" }}>
             <div
               style={{
@@ -361,7 +393,7 @@ export default function HubCanvasPage() {
           <Button onClick={onNextPage}>
             {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
           </Button>
-        </>
+        </Grid>
       )}
     </>
   );
