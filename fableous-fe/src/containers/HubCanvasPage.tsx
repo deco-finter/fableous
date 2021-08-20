@@ -4,13 +4,14 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
-import { useFormik } from "formik";
+import { Formik, FormikHelpers } from "formik";
 import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
 import {
   ControllerRole,
+  Story,
   WSControlMessageData,
   WSJoinMessageData,
   WSMessageType,
@@ -63,8 +64,7 @@ export default function HubCanvasPage() {
     Cursor | undefined
   >();
 
-  const beginSession = () => {
-    // refactor this to useEffect?
+  const craeteWsSession = () => {
     const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
     newWsConn.addEventListener("error", (err) => {
       enqueueSnackbar("connection error", { variant: "error" });
@@ -115,38 +115,29 @@ export default function HubCanvasPage() {
     setNewWsConn(newWsConn);
   };
 
-  // TODO move to <Formik /> element
-  const formikSession = useFormik({
-    initialValues: {
-      title: "",
-      description: "",
-      pages: 1,
-    },
-    validationSchema: yup.object({
-      title: yup.string().required("required"),
-      description: yup.string().required("required"),
-      pages: yup.number().positive("must be positive"),
-    }),
-    onSubmit: (values) => {
-      executePostSession({
-        data: {
-          title: values.title,
-          description: values.description,
-          pages: values.pages,
-        },
+  const handleCreateSession = (
+    values: Story,
+    actions: FormikHelpers<Story>
+  ) => {
+    executePostSession({
+      data: {
+        title: values.title,
+        description: values.description,
+        pages: values.pages,
+      },
+    })
+      .then(() => {
+        craeteWsSession();
+        setCurrentPageIdx(0);
+        setStoryPageCnt(values.pages);
+        setHubState(HubState.WaitingRoom);
+        actions.resetForm();
       })
-        .then(() => {
-          beginSession();
-          setCurrentPageIdx(0);
-          setStoryPageCnt(values.pages);
-          setHubState(HubState.WaitingRoom);
-        })
-        .catch((err: any) => {
-          enqueueSnackbar("failed to create session", { variant: "error" });
-          console.error("post session error", err);
-        });
-    },
-  });
+      .catch((err: any) => {
+        enqueueSnackbar("failed to create session", { variant: "error" });
+        console.error("post session error", err);
+      });
+  };
 
   const exportCanvas = () => {
     const canvas = document.createElement("canvas");
@@ -199,7 +190,6 @@ export default function HubCanvasPage() {
   // go back to session form once all pages in story completed
   useEffect(() => {
     if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
-      formikSession.resetForm();
       setCurrentPageIdx(0);
       setStoryPageCnt(0);
       closeWsConn();
@@ -231,57 +221,73 @@ export default function HubCanvasPage() {
         </Typography>
       </Grid>
       {hubState === HubState.SessionForm && (
-        <>
-          <form onSubmit={formikSession.handleSubmit}>
-            <div>
-              <FormikTextField
-                formik={formikSession}
-                name="title"
-                label="Title"
-                overrides={{
-                  variant: "outlined",
-                  disabled: postLoading,
-                  className: "mb-4",
-                }}
-              />
-            </div>
-            <div>
-              <FormikTextField
-                formik={formikSession}
-                name="description"
-                label="Description"
-                overrides={{
-                  variant: "outlined",
-                  disabled: postLoading,
-                  className: "mb-4",
-                }}
-              />
-            </div>
-            <div>
-              <FormikTextField
-                formik={formikSession}
-                name="pages"
-                label="Pages"
-                overrides={{
-                  type: "number",
-                  variant: "outlined",
-                  disabled: postLoading,
-                  className: "mb-4",
-                }}
-              />
-            </div>
-            <div>
-              <Button
-                variant="contained"
-                color="primary"
-                disabled={postLoading}
-                type="submit"
-              >
-                create
-              </Button>
-            </div>
-          </form>
-        </>
+        <Formik
+          initialValues={
+            {
+              title: "",
+              description: "",
+              pages: 1,
+            } as Story
+          }
+          validationSchema={yup.object({
+            title: yup.string().required("required"),
+            description: yup.string().required("required"),
+            pages: yup.number().positive("must be positive"),
+          })}
+          onSubmit={handleCreateSession}
+        >
+          {(formik) => (
+            <form onSubmit={formik.handleSubmit}>
+              <div>
+                <FormikTextField
+                  formik={formik}
+                  name="title"
+                  label="Title"
+                  overrides={{
+                    variant: "outlined",
+                    disabled: postLoading,
+                    className: "mb-4",
+                  }}
+                />
+              </div>
+              <div>
+                <FormikTextField
+                  formik={formik}
+                  name="description"
+                  label="Description"
+                  overrides={{
+                    variant: "outlined",
+                    disabled: postLoading,
+                    className: "mb-4",
+                  }}
+                />
+              </div>
+              <div>
+                <FormikTextField
+                  formik={formik}
+                  name="pages"
+                  label="Pages"
+                  overrides={{
+                    type: "number",
+                    variant: "outlined",
+                    disabled: postLoading,
+                    className: "mb-4",
+                  }}
+                />
+              </div>
+              <div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={postLoading}
+                  type="submit"
+                >
+                  create
+                </Button>
+              </div>
+            </form>
+          )}
+        </Formik>
       )}
       {hubState === HubState.WaitingRoom && (
         <Grid item xs={12}>

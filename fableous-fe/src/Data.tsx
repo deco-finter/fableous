@@ -94,3 +94,9 @@ export interface ControllerJoin {
   token: string;
   role: ControllerRole;
 }
+
+export interface Story {
+  title: string;
+  description: string;
+  pages: number;
+}

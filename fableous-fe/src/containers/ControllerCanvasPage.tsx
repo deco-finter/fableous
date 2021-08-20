@@ -38,7 +38,6 @@ export default function ControllerCanvasPage() {
     ControllerState.JoinForm
   );
   const [wsConn, setNewWsConn] = useWsConn();
-  // TODO when url is /join/:token, auto populate this
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [sessionInfo, setSessionInfo] = useState<
     WSControlMessageData | undefined
@@ -58,12 +57,12 @@ export default function ControllerCanvasPage() {
     actions: FormikHelpers<ControllerJoin>
   ) => {
     setRole(values.role);
-    // TODO on error e.g. when token invalid, give feedback to user?
     const newWsConn = new WebSocket(
       wsAPI.controller.main(values.token, values.role, values.name)
     );
     newWsConn.onopen = () => {
       setControllerState(ControllerState.WaitingRoom);
+      actions.resetForm();
     };
     newWsConn.addEventListener("error", (err) => {
       enqueueSnackbar("connection error", { variant: "error" });
@@ -112,7 +111,6 @@ export default function ControllerCanvasPage() {
       }
     };
     setNewWsConn(newWsConn);
-    actions.resetForm();
   };
 
   // reset states when in join form state
