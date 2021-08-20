@@ -1,14 +1,54 @@
-import { Button, Grid, Icon, Typography } from "@material-ui/core";
 import { useRef, useEffect, useState } from "react";
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import useAxios from "axios-hooks";
+import * as yup from "yup";
+import { Formik, FormikHelpers } from "formik";
 import { useHistory, useParams } from "react-router-dom";
+import Icon from "@material-ui/core/Icon";
+import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
-import { wsAPI } from "../Api";
+import {
+  ControllerRole,
+  Story,
+  WSControlMessageData,
+  WSJoinMessageData,
+  WSMessageType,
+} from "../Data";
+import { restAPI, wsAPI } from "../Api";
+import FormikTextField from "../components/FormikTextField";
+import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
-import { ControllerRole, WSMessageType } from "../Data";
+
+enum HubState {
+  SessionForm = "SESSION_FORM",
+  WaitingRoom = "WAITING_ROOM",
+  DrawingSession = "DRAWING_SESSION",
+}
 
 export default function HubCanvasPage() {
+  const { classroomId } = useParams<{ classroomId: string }>();
   const history = useHistory();
-  const wsRef = useRef<WebSocket>();
+  const { enqueueSnackbar } = useSnackbar();
+  const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
+  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
+  const [classroomToken, setClassroomToken] = useState("");
+  const [joinedControllers, setJoinedControllers] = useState<
+    {
+      [key in ControllerRole]?: string | null;
+    }
+  >({});
+  const [currentPageIdx, setCurrentPageIdx] = useState(0);
+  const [storyPageCnt, setStoryPageCnt] = useState(0);
+
+  const [{ loading: postLoading }, executePostSession] = useAxios(
+    restAPI.session.create(classroomId),
+    {
+      manual: true,
+    }
+  );
+
   const storyCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
@@ -23,33 +63,47 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
-  const { classroomId } = useParams<{ classroomId: string }>();
-  const [classroomToken, setClassroomToken] = useState("");
-  const [hubReady, setHubReady] = useState(false);
-  const [ping, setPing] = useState<NodeJS.Timeout>();
 
-  const beginSession = () => {
-    wsRef.current = new WebSocket(wsAPI.hub.main(classroomId));
-    wsRef.current.onopen = () => {
-      setHubReady(true);
-      const interval = setInterval(
-        () => wsRef.current?.send(JSON.stringify({ type: WSMessageType.Ping })),
-        5000
-      );
-      setPing(interval);
-    };
-    wsRef.current.onclose = () => {
-      if (ping) clearInterval(ping);
-    };
-    wsRef.current.onerror = () => {
-      if (ping) clearInterval(ping);
-    };
-    wsRef.current.onmessage = (ev: MessageEvent) => {
+  const craeteWsSession = () => {
+    const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
+    newWsConn.addEventListener("error", (err) => {
+      enqueueSnackbar("connection error", { variant: "error" });
+      console.error("ws conn error", err);
+    });
+    newWsConn.onmessage = (ev: MessageEvent) => {
       try {
         const msg = JSON.parse(ev.data);
         switch (msg.type) {
           case WSMessageType.Control:
-            setClassroomToken(msg.data.classroomToken as string);
+            {
+              const { classroomToken: classroomTokenFromWs } =
+                msg.data as WSControlMessageData;
+              if (classroomTokenFromWs) {
+                setClassroomToken(classroomTokenFromWs);
+              }
+            }
+            break;
+          case WSMessageType.Join:
+            {
+              const { role, name, joining } = msg.data as WSJoinMessageData;
+              if (role === ControllerRole.Hub) {
+                break;
+              }
+
+              if (joining && name) {
+                setJoinedControllers((prev) => ({
+                  ...prev,
+                  [role]: name,
+                }));
+              } else if (!joining) {
+                setJoinedControllers((prev) => {
+                  const prevCopy = { ...prev };
+                  delete prevCopy[role];
+
+                  return prevCopy;
+                });
+              }
+            }
             break;
           default:
         }
@@ -57,6 +111,32 @@ export default function HubCanvasPage() {
         console.error(e);
       }
     };
+
+    setNewWsConn(newWsConn);
+  };
+
+  const handleCreateSession = (
+    values: Story,
+    actions: FormikHelpers<Story>
+  ) => {
+    executePostSession({
+      data: {
+        title: values.title,
+        description: values.description,
+        pages: values.pages,
+      },
+    })
+      .then(() => {
+        craeteWsSession();
+        setCurrentPageIdx(0);
+        setStoryPageCnt(values.pages);
+        setHubState(HubState.WaitingRoom);
+        actions.resetForm();
+      })
+      .catch((err: any) => {
+        enqueueSnackbar("failed to create session", { variant: "error" });
+        console.error("post session error", err);
+      });
   };
 
   const exportCanvas = () => {
@@ -80,35 +160,166 @@ export default function HubCanvasPage() {
     link.click();
   };
 
+  const isAllControllersJoined = (): boolean => {
+    return [
+      ControllerRole.Story,
+      ControllerRole.Character,
+      ControllerRole.Background,
+    ].every((role) => role in joinedControllers);
+  };
+
+  const onNextPage = () => {
+    wsConn?.send(
+      JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
+    );
+    // TODO send canvas result to BE now before changing page as
+    // canvas will be cleared when page number changes
+    setCurrentPageIdx((prev) => prev + 1);
+  };
+
+  const onBeginDrawing = () => {
+    onNextPage();
+    setHubState(HubState.DrawingSession);
+  };
+
+  // clear joined students when story finished and session created
   useEffect(() => {
-    return () => {
-      if (ping) clearInterval(ping);
-      wsRef.current?.close();
-      wsRef.current = undefined;
-    };
+    setJoinedControllers({});
+  }, [wsConn]);
+
+  // go back to session form once all pages in story completed
+  useEffect(() => {
+    if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
+      setCurrentPageIdx(0);
+      setStoryPageCnt(0);
+      closeWsConn();
+      setHubState(HubState.SessionForm);
+    }
+    // do not run when formikSession changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentPageIdx, storyPageCnt]);
 
   return (
-    <Grid container>
-      {!hubReady ? (
-        <>
-          <Grid container>
-            <Button
-              onClick={() => history.goBack()}
-              startIcon={<Icon>arrow_backward</Icon>}
-            >
-              Back
-            </Button>
-          </Grid>
-          <Grid item xs={12} className="mb-4">
-            <Typography variant="h2">Lobby</Typography>
-          </Grid>
-          <Button onClick={beginSession}>Start Session</Button>
-        </>
-      ) : (
-        <>
-          Hub {classroomToken}
+    <>
+      <Grid item xs={12}>
+        <Button
+          onClick={() => history.goBack()}
+          startIcon={<Icon>arrow_backward</Icon>}
+        >
+          Back
+        </Button>
+      </Grid>
+      <Grid item xs={12} className="mb-4">
+        <Typography variant="h2">
+          {
+            {
+              [HubState.SessionForm]: "story",
+              [HubState.WaitingRoom]: "lobby",
+              [HubState.DrawingSession]: "draw",
+            }[hubState]
+          }
+        </Typography>
+      </Grid>
+      {hubState === HubState.SessionForm && (
+        <Formik
+          initialValues={
+            {
+              title: "",
+              description: "",
+              pages: 1,
+            } as Story
+          }
+          validationSchema={yup.object({
+            title: yup.string().required("required"),
+            description: yup.string().required("required"),
+            pages: yup.number().positive("must be positive"),
+          })}
+          onSubmit={handleCreateSession}
+        >
+          {(formik) => (
+            <form onSubmit={formik.handleSubmit}>
+              <div>
+                <FormikTextField
+                  formik={formik}
+                  name="title"
+                  label="Title"
+                  overrides={{
+                    variant: "outlined",
+                    disabled: postLoading,
+                    className: "mb-4",
+                  }}
+                />
+              </div>
+              <div>
+                <FormikTextField
+                  formik={formik}
+                  name="description"
+                  label="Description"
+                  overrides={{
+                    variant: "outlined",
+                    disabled: postLoading,
+                    className: "mb-4",
+                  }}
+                />
+              </div>
+              <div>
+                <FormikTextField
+                  formik={formik}
+                  name="pages"
+                  label="Pages"
+                  overrides={{
+                    type: "number",
+                    variant: "outlined",
+                    disabled: postLoading,
+                    className: "mb-4",
+                  }}
+                />
+              </div>
+              <div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={postLoading}
+                  type="submit"
+                >
+                  create
+                </Button>
+              </div>
+            </form>
+          )}
+        </Formik>
+      )}
+      {hubState === HubState.WaitingRoom && (
+        <Grid item xs={12}>
+          <Typography variant="h6">
+            token: <span>{classroomToken || "-"}</span>
+          </Typography>
+          <Typography variant="h6">
+            Joined Students ({Object.keys(joinedControllers).length}/3)
+          </Typography>
+          <ul>
+            {Object.entries(joinedControllers).map(([role, name]) => (
+              <li key={role}>
+                {role} - {name}
+              </li>
+            ))}
+          </ul>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onBeginDrawing}
+            disabled={!isAllControllersJoined()}
+          >
+            begin drawing
+          </Button>
+        </Grid>
+      )}
+      {hubState === HubState.DrawingSession && (
+        <Grid item xs={12}>
+          <Typography variant="h6">Hub with token {classroomToken}</Typography>
+          <Typography variant="h6">
+            page {currentPageIdx} of {storyPageCnt}
+          </Typography>
           <div style={{ display: "grid" }}>
             <div
               style={{
@@ -118,11 +329,7 @@ export default function HubCanvasPage() {
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen
-                targetCanvasRef={storyCanvasRef}
-                cursor={storyCursor}
-                name="Story"
-              />
+              <CursorScreen cursor={storyCursor} name="Story" />
             </div>
             <div
               style={{
@@ -132,11 +339,7 @@ export default function HubCanvasPage() {
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen
-                targetCanvasRef={characterCanvasRef}
-                cursor={characterCursor}
-                name="Character"
-              />
+              <CursorScreen cursor={characterCursor} name="Character" />
             </div>
             <div
               style={{
@@ -146,43 +349,45 @@ export default function HubCanvasPage() {
                 pointerEvents: "none",
               }}
             >
-              <CursorScreen
-                targetCanvasRef={backgroundCanvasRef}
-                cursor={backgroundCursor}
-                name="Background"
-              />
+              <CursorScreen cursor={backgroundCursor} name="Background" />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
               <Canvas
                 ref={storyCanvasRef}
-                wsRef={wsRef}
+                wsConn={wsConn}
                 role={ControllerRole.Hub}
                 layer={ControllerRole.Story}
+                pageNum={currentPageIdx}
                 setCursor={setStoryCursor}
               />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
               <Canvas
                 ref={characterCanvasRef}
-                wsRef={wsRef}
+                wsConn={wsConn}
                 role={ControllerRole.Hub}
                 layer={ControllerRole.Character}
+                pageNum={currentPageIdx}
                 setCursor={setCharacterCursor}
               />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
               <Canvas
                 ref={backgroundCanvasRef}
-                wsRef={wsRef}
+                wsConn={wsConn}
                 role={ControllerRole.Hub}
                 layer={ControllerRole.Background}
+                pageNum={currentPageIdx}
                 setCursor={setBackgroundCursor}
               />
             </div>
           </div>
           <Button onClick={() => exportCanvas()}>Export</Button>
-        </>
+          <Button onClick={onNextPage}>
+            {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
+          </Button>
+        </Grid>
       )}
-    </Grid>
+    </>
   );
 }

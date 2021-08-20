@@ -77,6 +77,10 @@ export const restAPI = {
       url: `/api/classroom/${classroomId}/session/ongoing`,
       method: "get",
     }),
+    create: (classroomId: string) => ({
+      url: `/api/classroom/${classroomId}/session`,
+      method: "post",
+    }),
     delete: (classroomId: string, sessionId: string) => ({
       url: `/api/classroom/${classroomId}/session/${sessionId}`,
       method: "delete",
