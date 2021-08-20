@@ -89,8 +89,8 @@ func (m *module) SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err e
 	return
 }
 
-func (m *module) SessionDelete(id, classroomID string) (err error) {
-	if err = m.db.sessionOrmer.Delete(classroomID, id); err != nil {
+func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err error) {
+	if err = m.db.sessionOrmer.DeleteByIDByClassroomID(id, classroomID); err != nil {
 		return err
 	}
 	log.Println(m.sessions.keys)

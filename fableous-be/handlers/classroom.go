@@ -60,8 +60,8 @@ func (m *module) ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err
 	return
 }
 
-func (m *module) ClassroomDelete(classroomID string) (err error) {
-	if err = m.db.classroomOrmer.Delete(classroomID); err != nil {
+func (m *module) ClassroomDeleteByID(classroomID string) (err error) {
+	if err = m.db.classroomOrmer.DeleteByID(classroomID); err != nil {
 		return err
 	}
 	// TODO: clean up session static files

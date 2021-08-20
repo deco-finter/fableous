@@ -32,7 +32,7 @@ type HandlerFunc interface {
 	ClassroomGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error)
 	ClassroomInsert(classroomInfo datatransfers.ClassroomInfo) (classroomID string, err error)
 	ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err error)
-	ClassroomDelete(classroomID string) (err error)
+	ClassroomDeleteByID(classroomID string) (err error)
 
 	// Session
 	SessionGetAllByClassroomID(classroomID string) (sessionInfos []datatransfers.SessionInfo, err error)
@@ -40,7 +40,7 @@ type HandlerFunc interface {
 	SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error)
 	SessionInsert(sessionInfo datatransfers.SessionInfo) (id string, err error)
 	SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err error)
-	SessionDelete(id, classroomID string) (err error)
+	SessionDeleteByIDByClassroomID(id, classroomID string) (err error)
 
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
