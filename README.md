@@ -1,6 +1,7 @@
 # :art: Fableous
 
 [![GitHub Actions Status](https://github.com/deco-finter/fableous/actions/workflows/build.yml/badge.svg)](https://github.com/deco-finter/fableous/actions/workflows/build.yml)
+[![Docker Pulls](https://img.shields.io/docker/pulls/daystram/fableous)](https://hub.docker.com/r/daystram/fableous)
 
 ## Service
 
@@ -56,9 +57,33 @@ $ docker run --name fableous-fe -p 80:80 -d daystram/fableous:fe
 The following are required for `fableous-be` to function properly:
 
 - PostgreSQL
-- Redis
 
 Their credentials must be provided in the environment variable.
+
+### Helm Chart
+
+To deploy to a Kubernetes cluster, Helm charts could be used. Add the [repository](https://charts.daystram.com):
+
+```shell
+$ helm repo add daystram https://charts.daystram.com
+$ helm repo update
+```
+
+Ensure you have the secrets created for `fableous-be` by providing the secret name in `values.yaml`, or creating the secret from a populated `.env` file (make sure it is on the same namespace as `fableous` installation):
+
+```shell
+$ kubectl create secret generic secret-fableous-be --from-env-file=.env
+```
+
+And install `fableous`:
+
+```shell
+$ helm install fableous daystram/fableous
+```
+
+You can override the chart values by providing a `values.yaml` file via the `--values` flag.
+
+Pre-release and development charts are accessible using the `--devel` flag. To isntall the development chart, provide the `--set image.tag=dev` flag, as development images are deployed with the suffix `dev`.
 
 ### Docker Compose
 
@@ -75,7 +100,6 @@ services:
       - /path_to_env_file/.env
     depends_on:
       - "postgres"
-      - "redis"
     restart: unless-stopped
   fableous-fe:
     image: daystram/fableous:fe
@@ -88,13 +112,6 @@ services:
       - 5432
     volumes:
       - /path_to_postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-  redis:
-    image: redis:6.2-alpine
-    expose:
-      - 6379
-    volumes:
-      - /path_to_redis_data:/data
     restart: unless-stopped
 ```
 
