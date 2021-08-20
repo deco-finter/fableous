@@ -85,6 +85,9 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role, nam
 }
 
 func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (err error) {
+	defer func() {
+		delete(m.sessions.keys, sess.classroomToken)
+	}()
 	_ = conn.WriteJSON(datatransfers.WSMessage{
 		Type: constants.WSMessageTypeControl,
 		Data: datatransfers.WSMessageData{
@@ -103,10 +106,10 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[HubCommandWorker] failed reading message. %s\n", err)
 			}
-			go m.SessionCleanUp(sess)
 			var session models.Session
 			if session, err = m.db.sessionOrmer.GetOneByIDByClassroomID(sess.sessionID, sess.classroomID); !session.Completed {
 				_ = m.db.sessionOrmer.DeleteByIDByClassroomID(sess.sessionID, sess.classroomID)
+				go m.SessionCleanUp(sess)
 			}
 			break
 		}
