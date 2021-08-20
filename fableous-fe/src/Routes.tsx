@@ -42,7 +42,6 @@ export default function Routes() {
         exact
       />
       <Route path="/join" component={ControllerCanvasPage} exact />
-      {/* TODO 404 page instead of redirect to home? */}
       <Route>
         <Redirect to="/" />
       </Route>
