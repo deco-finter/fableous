@@ -7,7 +7,6 @@ import { useContext } from "react";
 import { AuthContext } from "./AuthProvider";
 
 export default function Navbar() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const history = useHistory();
   const [, isAuthenticated, , clearToken] = useContext(AuthContext);
   const onLogout = () => {
