@@ -39,9 +39,11 @@ interface TextShape extends Shape {
 }
 
 interface CanvasProps {
-  wsRef: MutableRefObject<WebSocket | undefined>;
+  wsConn: WebSocket | undefined;
   role: ControllerRole;
   layer: ControllerRole;
+  pageNum: number;
+  isShown?: boolean;
   setCursor: React.Dispatch<Cursor | undefined>;
 }
 
@@ -52,7 +54,7 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, setCursor, wsRef } = props;
+    const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -108,7 +110,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
           const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
           const [normWidth] = scaleDownXY(canvasRef, targetWidth, 0);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Paint,
@@ -124,7 +126,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const placeFill = useCallback(
@@ -199,7 +201,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.putImageData(image, 0, 0);
         if (role !== ControllerRole.Hub) {
           const [normX, normY] = scaleDownXY(canvasRef, startX, startY);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Fill,
@@ -208,7 +210,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const placeText = useCallback(
@@ -232,7 +234,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (role !== ControllerRole.Hub) {
           const [normX, normY] = scaleDownXY(canvasRef, x, y);
           const [normFontSize] = scaleDownXY(canvasRef, fontSize, 0);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Text,
@@ -247,7 +249,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const refreshText = useCallback(() => {
@@ -257,6 +259,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ) as CanvasRenderingContext2D;
       const { width, height } = canvasRef.current;
       ctx.clearRect(0, 0, width, height);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       Object.entries(textShapes).forEach(([id, shape]) => {
         ctx.font = `${shape.fontSize * SCALE}px Arial`;
         ctx.fillText(
@@ -327,7 +331,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               new Blob([data], { type: "audio/ogg;codecs=opus" })
             );
             reader.onloadend = () => {
-              wsRef.current?.send(
+              wsConn?.send(
                 JSON.stringify({
                   role,
                   type: WSMessageType.Audio,
@@ -369,7 +373,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           toolMode: targetMode,
         } as Cursor);
         if (role !== ControllerRole.Hub) {
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Cursor,
@@ -383,7 +387,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [setCursor, role, wsRef]
+      [setCursor, role, wsConn]
     );
 
     const readMessage = useCallback(
@@ -550,11 +554,15 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [editingTextId, placeText, textShapes]
     );
 
-    // setup on component mount
-    useEffect(() => {
+    const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
       canvas.width = canvas.offsetWidth * SCALE;
       canvas.height = canvas.width * ASPECT_RATIO;
+    }, [canvasRef]);
+
+    // setup on component mount
+    useEffect(() => {
+      adjustCanvasSize();
       setAllowDrawing(role !== ControllerRole.Hub);
       switch (role) {
         case ControllerRole.Story:
@@ -570,19 +578,31 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         default:
           setToolMode(ToolMode.None);
       }
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-      }
-      const ws = wsRef.current;
-      ws?.addEventListener("message", readMessage);
+      wsConn?.addEventListener("message", readMessage);
       return () => {
-        ws?.removeEventListener("message", readMessage);
+        wsConn?.removeEventListener("message", readMessage);
       };
-      // only trigger once during componentMount
+      // only trigger on new websocket connection
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [role, wsRef]);
+    }, [role, wsConn, adjustCanvasSize]);
+
+    // cleanup before moving to next page
+    useEffect(() => {
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      setAudioB64Strings([]);
+      setTextShapes({});
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageNum]);
+
+    // workaround to recalculate width when canvas appears or becomes hidden
+    useEffect(() => {
+      adjustCanvasSize();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [adjustCanvasSize, isShown]);
 
     // initialize keyboard listener
     useEffect(() => {
@@ -689,19 +709,21 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             on text again to edit text.
           </div>
         )}
-        <div>
-          <Slider
-            disabled={toolMode !== ToolMode.Paint}
-            defaultValue={8}
-            valueLabelDisplay="auto"
-            value={toolWidth}
-            onChange={(e, width) => setToolWidth(width as number)}
-            step={4 * SCALE}
-            marks
-            min={4 * SCALE}
-            max={32 * SCALE}
-          />
-        </div>
+        {role !== ControllerRole.Hub && role !== ControllerRole.Story && (
+          <div>
+            <Slider
+              disabled={toolMode !== ToolMode.Paint}
+              defaultValue={8}
+              valueLabelDisplay="auto"
+              value={toolWidth}
+              onChange={(e, width) => setToolWidth(width as number)}
+              step={4 * SCALE}
+              marks
+              min={4 * SCALE}
+              max={32 * SCALE}
+            />
+          </div>
+        )}
         {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
           <div>
             <FormControl component="fieldset">
@@ -762,5 +784,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
   }
 );
+
+Canvas.defaultProps = {
+  isShown: true,
+};
 
 export default Canvas;
