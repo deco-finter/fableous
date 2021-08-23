@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
@@ -64,13 +64,8 @@ export default function HubCanvasPage() {
     Cursor | undefined
   >();
 
-  const craeteWsSession = () => {
-    const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
-    newWsConn.addEventListener("error", (err) => {
-      enqueueSnackbar("connection error", { variant: "error" });
-      console.error("ws conn error", err);
-    });
-    newWsConn.onmessage = (ev: MessageEvent) => {
+  const wsMessageHandler = useCallback(
+    (ev: MessageEvent) => {
       try {
         const msg = JSON.parse(ev.data);
         switch (msg.type) {
@@ -90,6 +85,7 @@ export default function HubCanvasPage() {
                 break;
               }
 
+              // update joined controllers to show in waiting room
               if (joining && name) {
                 setJoinedControllers((prev) => ({
                   ...prev,
@@ -103,6 +99,13 @@ export default function HubCanvasPage() {
                   return prevCopy;
                 });
               }
+
+              // show error if controller disconnects during drawing session
+              if (!joining && hubState === HubState.DrawingSession) {
+                enqueueSnackbar(`${role} got disconnected`, {
+                  variant: "error",
+                });
+              }
             }
             break;
           default:
@@ -110,10 +113,17 @@ export default function HubCanvasPage() {
       } catch (e) {
         console.error(e);
       }
-    };
+    },
+    [hubState, enqueueSnackbar]
+  );
 
-    setNewWsConn(newWsConn);
-  };
+  const wsErrorHandler = useCallback(
+    (ev: Event) => {
+      enqueueSnackbar("connection error", { variant: "error" });
+      console.error("ws conn error", ev);
+    },
+    [enqueueSnackbar]
+  );
 
   const handleCreateSession = (
     values: Story,
@@ -127,7 +137,8 @@ export default function HubCanvasPage() {
       },
     })
       .then(() => {
-        craeteWsSession();
+        // ws event handlers added in useEffect
+        setNewWsConn(new WebSocket(wsAPI.hub.main(classroomId)));
         setCurrentPageIdx(0);
         setStoryPageCnt(values.pages);
         setHubState(HubState.WaitingRoom);
@@ -182,6 +193,20 @@ export default function HubCanvasPage() {
     setHubState(HubState.DrawingSession);
   };
 
+  // setup event listeners on ws connection
+  useEffect(() => {
+    if (!wsConn) {
+      return () => {};
+    }
+
+    wsConn.addEventListener("message", wsMessageHandler);
+    wsConn.addEventListener("error", wsErrorHandler);
+    return () => {
+      wsConn.removeEventListener("message", wsMessageHandler);
+      wsConn.removeEventListener("error", wsErrorHandler);
+    };
+  }, [wsConn, hubState, wsMessageHandler, wsErrorHandler, enqueueSnackbar]);
+
   // clear joined students when story finished and session created
   useEffect(() => {
     setJoinedControllers({});
@@ -195,7 +220,6 @@ export default function HubCanvasPage() {
       closeWsConn();
       setHubState(HubState.SessionForm);
     }
-    // do not run when formikSession changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPageIdx, storyPageCnt]);
 
