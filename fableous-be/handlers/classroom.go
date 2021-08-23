@@ -1,8 +1,12 @@
 package handlers
 
 import (
+	"fmt"
+	"os"
+
 	"gorm.io/gorm"
 
+	"github.com/deco-finter/fableous/fableous-be/config"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
@@ -14,6 +18,7 @@ func (m *module) ClassroomGetOneByID(id string) (classroomInfo datatransfers.Cla
 	}
 	classroomInfo = datatransfers.ClassroomInfo{
 		ID:        classroom.ID,
+		UserID:    classroom.UserID,
 		Name:      classroom.Name,
 		CreatedAt: classroom.CreatedAt,
 	}
@@ -28,13 +33,23 @@ func (m *module) ClassroomGetAllByUserID(userID string) (classroomInfos []datatr
 	} else if err != nil {
 		return classroomInfos, err
 	}
-
 	for _, classroom := range classrooms {
 		classroomInfos = append(classroomInfos, datatransfers.ClassroomInfo{
 			ID:        classroom.ID,
+			UserID:    classroom.UserID,
 			Name:      classroom.Name,
 			CreatedAt: classroom.CreatedAt,
 		})
+	}
+	return
+}
+
+func (m *module) ClassroomInsert(classroomInfo datatransfers.ClassroomInfo) (classroomID string, err error) {
+	if classroomID, err = m.db.classroomOrmer.Insert(models.Classroom{
+		UserID: classroomInfo.UserID,
+		Name:   classroomInfo.Name,
+	}); err != nil {
+		return "", err
 	}
 	return
 }
@@ -44,6 +59,22 @@ func (m *module) ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err
 		ID:   classroomInfo.ID,
 		Name: classroomInfo.Name,
 	}); err != nil {
+		return err
+	}
+	return
+}
+
+func (m *module) ClassroomDeleteByID(classroomID string) (err error) {
+	m.sessions.mutex.Lock()
+	for classroomToken, sess := range m.sessions.keys {
+		if sess.classroomID == classroomID {
+			delete(m.sessions.keys, classroomToken)
+			go m.SessionCleanUp(sess)
+		}
+	}
+	m.sessions.mutex.Unlock()
+	_ = os.RemoveAll(fmt.Sprintf("%s/%s", config.AppConfig.StaticDir, classroomID))
+	if err = m.db.classroomOrmer.DeleteByID(classroomID); err != nil {
 		return err
 	}
 	return

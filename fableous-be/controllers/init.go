@@ -25,14 +25,25 @@ func InitializeRouter() (router *gin.Engine) {
 		}
 		user := api.Group("/user")
 		{
-			user.GET("/:id", utils.AuthOnly, GETUser)
+			user.GET("/", utils.AuthOnly, GETUser)
 			user.PUT("/", utils.AuthOnly, PUTUser)
 		}
 		classroom := api.Group("/classroom")
 		{
-			classroom.GET("/:classroom_id", utils.AuthOnly, GETClassroom)
-			classroom.GET("/", utils.AuthOnly, GETClassrooms)
+			classroom.GET("/", utils.AuthOnly, GETClassroomList)
+			classroom.GET("/:classroom_id", GETClassroom)
+			classroom.POST("/", utils.AuthOnly, POSTClassroom)
 			classroom.PUT("/:classroom_id", utils.AuthOnly, PUTClassroom)
+			classroom.DELETE("/:classroom_id", utils.AuthOnly, DELETEClassroom)
+			session := classroom.Group("/:classroom_id/session")
+			{
+				session.GET("/", GETSessionList)
+				session.GET("/:session_id", GETSession)
+				session.GET("/ongoing", GETOngoingSession)
+				session.POST("/", utils.AuthOnly, POSTSession)
+				session.PUT("/:session_id", utils.AuthOnly, PUTSession)
+				session.DELETE("/:session_id", utils.AuthOnly, DELETESession)
+			}
 		}
 		gallery := api.Group("/gallery")
 		{
