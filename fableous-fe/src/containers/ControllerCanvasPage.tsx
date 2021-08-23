@@ -17,6 +17,7 @@ import {
   ControllerRole,
   Session,
   WSControlMessageData,
+  WSJoinMessageData,
   WSMessage,
   WSMessageType,
 } from "../Data";
@@ -37,7 +38,7 @@ export default function ControllerCanvasPage() {
   const [controllerState, setControllerState] = useState<ControllerState>(
     ControllerState.JoinForm
   );
-  const [wsConn, setNewWsConn] = useWsConn();
+  const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [sessionInfo, setSessionInfo] = useState<
     WSControlMessageData | undefined
@@ -101,6 +102,16 @@ export default function ControllerCanvasPage() {
                     }
                     console.error("get ongoing session", error);
                   });
+              }
+            }
+            break;
+          case WSMessageType.Join:
+            {
+              const msgData = msg.data as WSJoinMessageData;
+              if (!msgData.joining && msgData.role === ControllerRole.Hub) {
+                enqueueSnackbar("hub got disconnected", { variant: "error" });
+                clearWsConn();
+                setControllerState(ControllerState.JoinForm);
               }
             }
             break;
