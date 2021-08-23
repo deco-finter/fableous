@@ -77,15 +77,10 @@ export default function ControllerCanvasPage() {
             {
               const msgData = msg.data as WSControlMessageData;
               if (msgData.nextPage) {
-                setCurrentPageIdx((prev) => {
-                  if (prev === 0) {
-                    setControllerState(ControllerState.DrawingSession);
-                  }
-
-                  return prev + 1;
-                });
-              } else if (msgData.classroomId && msgData.sessionId) {
+                setCurrentPageIdx((prev) => prev + 1);
+              } else if (msgData.classroomId) {
                 setSessionInfo(msgData);
+                setCurrentPageIdx(msgData.currentPage || 0);
                 execGetOnGoingSession(
                   restAPI.session.getOngoing(msgData.classroomId)
                 )
@@ -135,12 +130,28 @@ export default function ControllerCanvasPage() {
     }
   }, [controllerState]);
 
+  // go to drawing state when current page goes from 0 to 1
+  useEffect(() => {
+    if (
+      [ControllerState.JoinForm, ControllerState.WaitingRoom].includes(
+        controllerState
+      ) &&
+      currentPageIdx > 0 &&
+      (storyDetails?.pages || 0) > 0
+    ) {
+      setControllerState(ControllerState.DrawingSession);
+    }
+  }, [currentPageIdx, storyDetails, controllerState]);
+
   // go to finish state after all story pages done
   useEffect(() => {
-    if (currentPageIdx && storyDetails && currentPageIdx > storyDetails.pages) {
+    if (
+      controllerState === ControllerState.DrawingSession &&
+      currentPageIdx > (storyDetails?.pages || Number.MAX_SAFE_INTEGER)
+    ) {
       setControllerState(ControllerState.StoryFinished);
     }
-  }, [currentPageIdx, storyDetails]);
+  }, [currentPageIdx, storyDetails, controllerState]);
 
   return (
     <>
@@ -243,9 +254,14 @@ export default function ControllerCanvasPage() {
               controllerState !== ControllerState.JoinForm ? "block" : "hidden"
             }
           >
-            <p>Role: {role}</p>
-            <p>Title: {storyDetails?.title}</p>
-            <p>Description: {storyDetails?.description}</p>
+            <Typography variant="h6">Role: {role}</Typography>
+            <Typography variant="h6">Title: {storyDetails?.title}</Typography>
+            <Typography variant="h6">
+              Description: {storyDetails?.description}
+            </Typography>
+            <Typography variant="h6">
+              page {currentPageIdx || "-"} of {storyDetails?.pages || "-"}
+            </Typography>
             {controllerState === ControllerState.WaitingRoom && (
               <Typography variant="h6" component="p">
                 waiting for hub to start..

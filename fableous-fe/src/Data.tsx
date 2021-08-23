@@ -19,6 +19,7 @@ export interface WSControlMessageData {
   classroomToken?: string;
   classroomId?: string;
   sessionId?: string;
+  currentPage?: number;
   nextPage?: boolean;
 }
 
