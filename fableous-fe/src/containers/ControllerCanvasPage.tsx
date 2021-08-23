@@ -109,7 +109,9 @@ export default function ControllerCanvasPage() {
             {
               const msgData = msg.data as WSJoinMessageData;
               if (!msgData.joining && msgData.role === ControllerRole.Hub) {
-                enqueueSnackbar("hub got disconnected", { variant: "error" });
+                enqueueSnackbar(`${ControllerRole.Hub} got disconnected`, {
+                  variant: "error",
+                });
                 clearWsConn();
                 setControllerState(ControllerState.JoinForm);
               }
