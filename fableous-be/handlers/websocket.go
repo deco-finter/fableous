@@ -28,7 +28,7 @@ type activeSession struct {
 
 func (sess *activeSession) BroadcastJSON(message datatransfers.WSMessage) (err error) {
 	sess.mutex.RLock()
-	defer sess.mutex.Unlock()
+	defer sess.mutex.RUnlock()
 	for _, conn := range sess.controllerConn {
 		if conn != nil {
 			err = conn.WriteJSON(message)
