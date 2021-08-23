@@ -160,9 +160,7 @@ export default function ControllerCanvasPage() {
   // go to drawing state when current page goes from 0 to 1
   useEffect(() => {
     if (
-      [ControllerState.JoinForm, ControllerState.WaitingRoom].includes(
-        controllerState
-      ) &&
+      controllerState === ControllerState.WaitingRoom &&
       currentPageIdx > 0 &&
       (storyDetails?.pages || 0) > 0
     ) {
