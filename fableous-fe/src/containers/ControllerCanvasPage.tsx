@@ -175,7 +175,11 @@ export default function ControllerCanvasPage() {
               }
               validationSchema={yup.object().shape({
                 name: yup.string().required("required"),
-                token: yup.string().required("required"),
+                token: yup
+                  .string()
+                  .required("required")
+                  .length(4, "must be 4 characters")
+                  .uppercase("must be all uppercase characters"),
               })}
               onSubmit={handleJoinSession}
             >
@@ -196,6 +200,14 @@ export default function ControllerCanvasPage() {
                       formik={formik}
                       name="token"
                       label="Token"
+                      overrides={{
+                        onChange: (ev: React.ChangeEvent<HTMLInputElement>) => {
+                          const evUpperCase = { ...ev };
+                          evUpperCase.target.value =
+                            ev.target.value?.toUpperCase();
+                          formik.handleChange(evUpperCase);
+                        },
+                      }}
                     />
                   </div>
 
