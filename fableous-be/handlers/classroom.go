@@ -67,7 +67,9 @@ func (m *module) ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err
 func (m *module) ClassroomDeleteByID(classroomID string) (err error) {
 	for classroomToken, sess := range m.sessions.keys {
 		if sess.classroomID == classroomID {
+			m.sessions.mutex.Lock()
 			delete(m.sessions.keys, classroomToken)
+			m.sessions.mutex.Unlock()
 			go m.SessionCleanUp(sess)
 		}
 	}

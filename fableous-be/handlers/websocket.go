@@ -90,7 +90,9 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role, nam
 
 func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (err error) {
 	defer func() {
+		m.sessions.mutex.Lock()
 		delete(m.sessions.keys, sess.classroomToken)
+		m.sessions.mutex.Unlock()
 	}()
 	_ = conn.WriteJSON(datatransfers.WSMessage{
 		Type: constants.WSMessageTypeControl,
