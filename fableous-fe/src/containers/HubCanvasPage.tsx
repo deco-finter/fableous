@@ -118,9 +118,9 @@ export default function HubCanvasPage() {
   );
 
   const wsErrorHandler = useCallback(
-    (ev: Event) => {
+    (err: Event) => {
       enqueueSnackbar("connection error", { variant: "error" });
-      console.error("ws conn error", ev);
+      console.error("ws conn error", err);
     },
     [enqueueSnackbar]
   );
