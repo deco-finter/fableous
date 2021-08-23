@@ -94,11 +94,11 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 	if err = m.db.sessionOrmer.DeleteByIDByClassroomID(id, classroomID); err != nil {
 		return err
 	}
-	m.sessions.mutex.Lock()
 	sess := &activeSession{
 		classroomID: classroomID,
 		sessionID:   id,
 	}
+	m.sessions.mutex.Lock()
 	log.Println(m.sessions.keys)
 	for classroomToken, selected := range m.sessions.keys {
 		if selected.sessionID == id && selected.classroomID == classroomID {
