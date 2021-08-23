@@ -208,8 +208,19 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeCursor:
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
-			go m.SavePayload(sess, message, true)
-			_ = sess.hubConn.WriteJSON(message)
+			go func() {
+				if fileName := m.SavePayload(sess, message, true); fileName != "" {
+					_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
+						Type: constants.WSMessageTypeAudio,
+						Role: role,
+						Data: datatransfers.WSMessageData{
+							WSPaintMessageData: datatransfers.WSPaintMessageData{
+								Text: fileName,
+							},
+						},
+					})
+				}
+			}()
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypePing,
@@ -228,7 +239,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 	return
 }
 
-func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) {
+func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (fileName string) {
 	var err error
 	var data []byte
 	if data, err = utils.ExtractPayload(message, isBase64); err != nil {
@@ -242,7 +253,6 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 			return
 		}
 	}
-	var fileName string
 	switch message.Type {
 	case constants.WSMessageTypeAudio:
 		fileName = fmt.Sprintf("%d.ogg", time.Now().Unix())
@@ -261,7 +271,9 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 	defer file.Close()
 	if _, err = file.Write(data); err != nil {
 		log.Println(err)
+		return
 	}
+	return
 }
 
 func (m *module) GetClassroomActiveSession(classroomToken string) (sess *activeSession) {
