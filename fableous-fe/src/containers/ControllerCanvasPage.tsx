@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -53,23 +53,8 @@ export default function ControllerCanvasPage() {
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
-  const handleJoinSession = (
-    values: ControllerJoin,
-    actions: FormikHelpers<ControllerJoin>
-  ) => {
-    setRole(values.role);
-    const newWsConn = new WebSocket(
-      wsAPI.controller.main(values.token, values.role, values.name)
-    );
-    newWsConn.onopen = () => {
-      setControllerState(ControllerState.WaitingRoom);
-      actions.resetForm();
-    };
-    newWsConn.addEventListener("error", (err) => {
-      enqueueSnackbar("connection error", { variant: "error" });
-      console.error("ws conn error", err);
-    });
-    newWsConn.onmessage = (ev: MessageEvent) => {
+  const wsMessageHandler = useCallback(
+    (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
         switch (msg.type) {
@@ -117,9 +102,51 @@ export default function ControllerCanvasPage() {
       } catch (e) {
         console.error(e);
       }
-    };
-    setNewWsConn(newWsConn);
+    },
+    [closeWsConn, execGetOnGoingSession, enqueueSnackbar]
+  );
+
+  const wsOpenHandler = useCallback(() => {
+    setControllerState(ControllerState.WaitingRoom);
+  }, []);
+
+  // TODO change state to join form on error and close?
+  const wsErrorHandler = useCallback(
+    (err: Event) => {
+      enqueueSnackbar("connection error", { variant: "error" });
+      console.error("ws conn error", err);
+    },
+    [enqueueSnackbar]
+  );
+
+  const handleJoinSession = (
+    values: ControllerJoin,
+    actions: FormikHelpers<ControllerJoin>
+  ) => {
+    setRole(values.role);
+    setNewWsConn(
+      new WebSocket(
+        wsAPI.controller.main(values.token, values.role, values.name)
+      )
+    );
+    actions.resetForm();
   };
+
+  // setup event listeners on ws connection
+  useEffect(() => {
+    if (!wsConn) {
+      return () => {};
+    }
+
+    wsConn.addEventListener("open", wsOpenHandler);
+    wsConn.addEventListener("message", wsMessageHandler);
+    wsConn.addEventListener("error", wsErrorHandler);
+    return () => {
+      wsConn.removeEventListener("open", wsOpenHandler);
+      wsConn.removeEventListener("message", wsMessageHandler);
+      wsConn.removeEventListener("error", wsErrorHandler);
+    };
+  }, [wsConn, wsOpenHandler, wsMessageHandler, wsErrorHandler]);
 
   // reset states when in join form state
   useEffect(() => {
