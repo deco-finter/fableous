@@ -220,8 +220,7 @@ export default function HubCanvasPage() {
       closeWsConn();
       setHubState(HubState.SessionForm);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPageIdx, storyPageCnt]);
+  }, [currentPageIdx, storyPageCnt, closeWsConn]);
 
   return (
     <>

@@ -38,7 +38,7 @@ export default function ControllerCanvasPage() {
   const [controllerState, setControllerState] = useState<ControllerState>(
     ControllerState.JoinForm
   );
-  const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
+  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [sessionInfo, setSessionInfo] = useState<
     WSControlMessageData | undefined
@@ -107,7 +107,7 @@ export default function ControllerCanvasPage() {
                 enqueueSnackbar(`${ControllerRole.Hub} got disconnected`, {
                   variant: "error",
                 });
-                clearWsConn();
+                closeWsConn();
                 setControllerState(ControllerState.JoinForm);
               }
             }
