@@ -286,9 +286,11 @@ export default function ControllerCanvasPage() {
             <Typography variant="h6">
               Description: {storyDetails?.description}
             </Typography>
-            <Typography variant="h6">
-              page {currentPageIdx || "-"} of {storyDetails?.pages || "-"}
-            </Typography>
+            {controllerState === ControllerState.DrawingSession && (
+              <Typography variant="h6">
+                page {currentPageIdx || "-"} of {storyDetails?.pages || "-"}
+              </Typography>
+            )}
             {controllerState === ControllerState.WaitingRoom && (
               <Typography variant="h6" component="p">
                 waiting for hub to start..
