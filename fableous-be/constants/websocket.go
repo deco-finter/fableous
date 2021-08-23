@@ -8,6 +8,7 @@ const (
 	WSMessageTypeCursor  = "CURSOR"
 	WSMessageTypeJoin    = "JOIN"
 	WSMessageTypeControl = "CONTROL"
+	WSMessageTypeImage   = "IMAGE"
 	WSMessageTypePing    = "PING"
 	WSMessageTypeError   = "ERROR"
 

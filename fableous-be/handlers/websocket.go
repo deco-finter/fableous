@@ -206,6 +206,8 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 		case constants.WSMessageTypeAudio:
 			go m.SavePayload(sess, message)
 			_ = sess.hubConn.WriteJSON(message)
+		case constants.WSMessageTypeImage:
+			go m.SavePayload(sess, message)
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypePing,
@@ -242,6 +244,8 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 	switch message.Type {
 	case constants.WSMessageTypeAudio:
 		fileName = fmt.Sprintf("%d.ogg", time.Now().Unix())
+	case constants.WSMessageTypeImage:
+		fileName = "image.png"
 	default:
 		return
 	}
