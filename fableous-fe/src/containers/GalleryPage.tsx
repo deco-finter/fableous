@@ -12,12 +12,12 @@ import { Link, useParams } from "react-router-dom";
 import useAxios from "axios-hooks";
 import { Alert } from "@material-ui/lab";
 import { restAPI } from "../Api";
-import { APIResponse, Story } from "../Data";
+import { APIResponse, Session } from "../Data";
 
 export default function GalleryPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const [{ data: stories, loading: getLoading, error: getError }, executeGet] =
-    useAxios<APIResponse<Story[]>, APIResponse<undefined>>(
+    useAxios<APIResponse<Session[]>, APIResponse<undefined>>(
       restAPI.gallery.getList(classroomId),
       { manual: true }
     );
@@ -51,7 +51,7 @@ export default function GalleryPage() {
                   <Button
                     size="small"
                     component={Link}
-                    to={`/classroom/${story.title}`}
+                    to={`/gallery/${classroomId}/${story.id}`}
                   >
                     View
                   </Button>
