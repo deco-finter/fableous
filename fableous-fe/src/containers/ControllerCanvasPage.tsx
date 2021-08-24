@@ -138,7 +138,13 @@ export default function ControllerCanvasPage() {
         wsAPI.controller.main(values.token, values.role, values.name)
       )
     );
-    actions.resetForm();
+    actions.resetForm({
+      values: {
+        name: values.name,
+        token: "",
+        role: values.role,
+      },
+    });
   };
 
   // setup event listeners on ws connection
