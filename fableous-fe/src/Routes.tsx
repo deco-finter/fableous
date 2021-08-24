@@ -9,6 +9,7 @@ import RegisterPage from "./containers/RegisterPage";
 import ClassroomDetailPage from "./containers/ClassroomDetailPage";
 import ClassroomListPage from "./containers/ClassroomListPage";
 import { AuthContext } from "./components/AuthProvider";
+import NotFoundPage from "./containers/NotFoundPage";
 
 const PrivateRoute = ({ ...routeProps }: RouteProps) => {
   const [, isAuthenticated] = useContext(AuthContext);
@@ -42,9 +43,7 @@ export default function Routes() {
         exact
       />
       <Route path="/join" component={ControllerCanvasPage} exact />
-      <Route>
-        <Redirect to="/" />
-      </Route>
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }
