@@ -7,25 +7,38 @@ import {
   CircularProgress,
   Typography,
 } from "@material-ui/core";
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
 import { Link, useParams } from "react-router-dom";
 import useAxios from "axios-hooks";
 import { Alert } from "@material-ui/lab";
 import { restAPI } from "../Api";
 import { APIResponse, Session } from "../Data";
+import { AuthContext } from "../components/AuthProvider";
 
 export default function GalleryPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
+  const [, isAuthenticated, ,] = useContext(AuthContext);
   const [{ data: stories, loading: getLoading, error: getError }, executeGet] =
     useAxios<APIResponse<Session[]>, APIResponse<undefined>>(
       restAPI.session.getList(classroomId),
       { manual: true }
     );
-
+  const [{ loading: deleteLoading }, executeDelete] = useAxios<
+    APIResponse<string>,
+    APIResponse<undefined>
+  >(restAPI.classroom.delete(classroomId), { manual: true });
   useEffect(() => {
     executeGet();
   }, [executeGet]);
-
+  const handleDelete = (sessionId: string) => {
+    executeDelete({
+      url: restAPI.session.delete(classroomId, sessionId).url,
+    })
+      .then(() => {
+        executeGet();
+      })
+      .catch((error) => console.error(error));
+  };
   return (
     <Grid container>
       <Grid item xs={12} className="mb-4">
@@ -48,13 +61,34 @@ export default function GalleryPage() {
                   </Typography>
                 </CardContent>
                 <CardActions>
-                  <Button
-                    size="small"
-                    component={Link}
-                    to={`/gallery/${classroomId}/${story.id}`}
-                  >
-                    View
-                  </Button>
+                  {isAuthenticated ? (
+                    <>
+                      <Button
+                        size="small"
+                        disabled={deleteLoading}
+                        onClick={() => handleDelete(story.id)}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        size="small"
+                        component={Link}
+                        to={`/gallery/${classroomId}/${story.id}`}
+                      >
+                        View
+                      </Button>{" "}
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        size="small"
+                        component={Link}
+                        to={`/gallery/${classroomId}/${story.id}`}
+                      >
+                        View
+                      </Button>{" "}
+                    </>
+                  )}
                 </CardActions>
               </Card>
             </Grid>
