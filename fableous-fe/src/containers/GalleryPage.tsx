@@ -18,7 +18,7 @@ export default function GalleryPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const [{ data: stories, loading: getLoading, error: getError }, executeGet] =
     useAxios<APIResponse<Session[]>, APIResponse<undefined>>(
-      restAPI.gallery.getList(classroomId),
+      restAPI.session.getList(classroomId),
       { manual: true }
     );
 
