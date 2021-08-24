@@ -139,6 +139,10 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					}
 				}
 			}
+		case constants.WSMessageTypeImage:
+			go m.SavePayload(sess, message, true)
+		case constants.WSMessageTypeManifest:
+			go m.SavePayload(sess, message, false)
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypePing,
@@ -204,8 +208,19 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeCursor:
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
-			go m.SavePayload(sess, message)
-			_ = sess.hubConn.WriteJSON(message)
+			go func() {
+				if filename := m.SavePayload(sess, message, true); filename != "" {
+					_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
+						Type: constants.WSMessageTypeAudio,
+						Role: role,
+						Data: datatransfers.WSMessageData{
+							WSPaintMessageData: datatransfers.WSPaintMessageData{
+								Text: fmt.Sprintf("%s/%s/%d/%s", sess.classroomID, sess.sessionID, sess.currentPage, filename),
+							},
+						},
+					})
+				}
+			}()
 		case constants.WSMessageTypePing:
 			_ = conn.WriteJSON(datatransfers.WSMessage{
 				Type: constants.WSMessageTypePing,
@@ -224,10 +239,10 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 	return
 }
 
-func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage) {
+func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (filename string) {
 	var err error
 	var data []byte
-	if data, err = utils.ExtractPayload(message); err != nil {
+	if data, err = utils.ExtractPayload(message, isBase64); err != nil {
 		log.Println(err)
 		return
 	}
@@ -238,22 +253,27 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 			return
 		}
 	}
-	var fileName string
 	switch message.Type {
 	case constants.WSMessageTypeAudio:
-		fileName = fmt.Sprintf("%d.ogg", time.Now().Unix())
+		filename = fmt.Sprintf("%d.ogg", time.Now().Unix())
+	case constants.WSMessageTypeImage:
+		filename = "image.png"
+	case constants.WSMessageTypeManifest:
+		filename = "manifest.json"
 	default:
 		return
 	}
 	var file *os.File
-	if file, err = os.OpenFile(fmt.Sprintf("%s/%s", directory, fileName), os.O_WRONLY|os.O_CREATE, 0700); err != nil {
+	if file, err = os.OpenFile(fmt.Sprintf("%s/%s", directory, filename), os.O_WRONLY|os.O_CREATE, 0700); err != nil {
 		log.Println(err)
 		return
 	}
 	defer file.Close()
 	if _, err = file.Write(data); err != nil {
 		log.Println(err)
+		return
 	}
+	return
 }
 
 func (m *module) GetClassroomActiveSession(classroomToken string) (sess *activeSession) {
