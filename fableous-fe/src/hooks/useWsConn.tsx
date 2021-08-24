@@ -32,13 +32,13 @@ export default function useWsConn(): [
     };
   }, [wsConn]);
 
-  const closeWsConn = useCallback(() => {
+  const clearWsConn = useCallback(() => {
     setWsConn(undefined);
   }, []);
 
   return [
     wsConn,
     setWsConn as React.Dispatch<React.SetStateAction<WebSocket>>,
-    closeWsConn,
+    clearWsConn,
   ];
 }

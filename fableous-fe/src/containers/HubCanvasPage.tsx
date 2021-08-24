@@ -32,7 +32,7 @@ export default function HubCanvasPage() {
   const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
-  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
+  const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
   const [classroomToken, setClassroomToken] = useState("");
   const [joinedControllers, setJoinedControllers] = useState<
     {
@@ -121,8 +121,18 @@ export default function HubCanvasPage() {
     (err: Event) => {
       enqueueSnackbar("connection error", { variant: "error" });
       console.error("ws conn error", err);
+      clearWsConn();
+      setHubState(HubState.SessionForm);
     },
-    [enqueueSnackbar]
+    [clearWsConn, enqueueSnackbar]
+  );
+
+  const wsCloseHandler = useCallback(
+    (_: CloseEvent) => {
+      // do not go to session form state as close occurs even when everything went well
+      clearWsConn();
+    },
+    [clearWsConn]
   );
 
   const handleCreateSession = (
@@ -183,8 +193,6 @@ export default function HubCanvasPage() {
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
-    // TODO send canvas result to BE now before changing page as
-    // canvas will be cleared when page number changes
     setCurrentPageIdx((prev) => prev + 1);
   };
 
@@ -201,26 +209,40 @@ export default function HubCanvasPage() {
 
     wsConn.addEventListener("message", wsMessageHandler);
     wsConn.addEventListener("error", wsErrorHandler);
+    wsConn.addEventListener("close", wsCloseHandler);
+
     return () => {
       wsConn.removeEventListener("message", wsMessageHandler);
       wsConn.removeEventListener("error", wsErrorHandler);
+      wsConn.removeEventListener("close", wsCloseHandler);
     };
-  }, [wsConn, hubState, wsMessageHandler, wsErrorHandler, enqueueSnackbar]);
+  }, [
+    wsConn,
+    hubState,
+    wsMessageHandler,
+    wsErrorHandler,
+    wsCloseHandler,
+    enqueueSnackbar,
+  ]);
 
-  // clear joined students when story finished and session created
+  // perform reset in session form state
   useEffect(() => {
-    setJoinedControllers({});
-  }, [wsConn]);
+    if (hubState === HubState.SessionForm) {
+      setCurrentPageIdx(0);
+      setStoryPageCnt(0);
+      setClassroomToken("");
+      setJoinedControllers({});
+    }
+  }, [hubState]);
 
   // go back to session form once all pages in story completed
   useEffect(() => {
     if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
-      setCurrentPageIdx(0);
-      setStoryPageCnt(0);
-      closeWsConn();
+      // TODO send canvas result to backend here
+      // assume backend will close ws conn
       setHubState(HubState.SessionForm);
     }
-  }, [currentPageIdx, storyPageCnt, closeWsConn]);
+  }, [currentPageIdx, storyPageCnt, clearWsConn]);
 
   return (
     <>

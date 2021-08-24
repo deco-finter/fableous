@@ -38,7 +38,7 @@ export default function ControllerCanvasPage() {
   const [controllerState, setControllerState] = useState<ControllerState>(
     ControllerState.JoinForm
   );
-  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
+  const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [sessionInfo, setSessionInfo] = useState<
     WSControlMessageData | undefined
@@ -92,7 +92,7 @@ export default function ControllerCanvasPage() {
                 enqueueSnackbar(`${ControllerRole.Hub} got disconnected`, {
                   variant: "error",
                 });
-                closeWsConn();
+                // assume backend will close ws conn
                 setControllerState(ControllerState.JoinForm);
               }
             }
@@ -103,20 +103,29 @@ export default function ControllerCanvasPage() {
         console.error(e);
       }
     },
-    [closeWsConn, execGetOnGoingSession, enqueueSnackbar]
+    [execGetOnGoingSession, enqueueSnackbar]
   );
 
   const wsOpenHandler = useCallback(() => {
     setControllerState(ControllerState.WaitingRoom);
   }, []);
 
-  // TODO change state to join form on error and close?
   const wsErrorHandler = useCallback(
     (err: Event) => {
       enqueueSnackbar("connection error", { variant: "error" });
       console.error("ws conn error", err);
+      clearWsConn();
+      setControllerState(ControllerState.JoinForm);
     },
-    [enqueueSnackbar]
+    [clearWsConn, enqueueSnackbar]
+  );
+
+  const wsCloseHandler = useCallback(
+    (_: CloseEvent) => {
+      // do not go to join form state as close occurs even when everything went well
+      clearWsConn();
+    },
+    [clearWsConn]
   );
 
   const handleJoinSession = (
@@ -141,12 +150,14 @@ export default function ControllerCanvasPage() {
     wsConn.addEventListener("open", wsOpenHandler);
     wsConn.addEventListener("message", wsMessageHandler);
     wsConn.addEventListener("error", wsErrorHandler);
+    wsConn.addEventListener("close", wsCloseHandler);
     return () => {
       wsConn.removeEventListener("open", wsOpenHandler);
       wsConn.removeEventListener("message", wsMessageHandler);
       wsConn.removeEventListener("error", wsErrorHandler);
+      wsConn.removeEventListener("close", wsCloseHandler);
     };
-  }, [wsConn, wsOpenHandler, wsMessageHandler, wsErrorHandler]);
+  }, [wsConn, wsOpenHandler, wsMessageHandler, wsErrorHandler, wsCloseHandler]);
 
   // reset states when in join form state
   useEffect(() => {
