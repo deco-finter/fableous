@@ -384,9 +384,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             ),
             timestamp: Date.now(),
           };
+        } else if (tool === ToolMode.Text) {
+          setTextShapes((shapes) => {
+            checkpoint = {
+              tool,
+              data: shapes,
+              timestamp: Date.now(),
+            };
+            return shapes;
+          });
         }
         setCheckpointHistory((prev) => {
-          console.table([...prev, checkpoint]);
+          console.log([...prev, checkpoint]);
           return [...prev, checkpoint];
         });
         if (role !== ControllerRole.Hub) {
@@ -407,9 +416,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const placeUndo = useCallback(() => {
       console.log("UNDO");
       setCheckpointHistory((prev) => {
-        prev.pop(); // drop latest checkpoint
-        console.table(prev);
-        const newCheckpoint = prev[prev.length - 1];
+        console.table(prev.slice(0, -1));
+        const newCheckpoint = prev.length >= 2 ? prev[prev.length - 2] : null;
         const ctx = canvasRef.current.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
@@ -420,13 +428,16 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             canvasRef.current.width,
             canvasRef.current.height
           );
+          setTextShapes({});
         } else if (
           newCheckpoint.tool === ToolMode.Paint ||
           newCheckpoint.tool === ToolMode.Fill
         ) {
           ctx.putImageData(newCheckpoint.data as ImageData, 0, 0);
+        } else if (newCheckpoint.tool === ToolMode.Text) {
+          setTextShapes(newCheckpoint.data as TextShapeMap);
         }
-        return prev;
+        return prev.slice(0, -1);
       });
       if (role !== ControllerRole.Hub) {
         wsConn?.send(
@@ -600,10 +611,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     const onPointerUp = (_event: SimplePointerEventData) => {
       if (!allowDrawing) return;
-      if (dragging) setEditingTextId(0);
+      if (toolMode === ToolMode.Paint || toolMode === ToolMode.Fill) {
+        placeCheckpoint(toolMode);
+      }
+      if (dragging) {
+        setEditingTextId(0);
+      }
       setDragging(false);
       setHasLifted(true);
-      placeCheckpoint(toolMode);
     };
 
     const wrapMouseHandler =
@@ -718,6 +733,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     // unselect text on tool change
     useEffect(() => setEditingTextId(0), [toolMode]);
+
+    // place checkpoint on finish text editing
+    useEffect(() => {
+      if (editingTextId === 0) placeCheckpoint(ToolMode.Text);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editingTextId, textId]);
 
     return (
       <>
@@ -879,7 +900,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         )}
         {role !== ControllerRole.Hub && (
           <div>
-            <Button onClick={placeUndo}>Undo</Button>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                placeUndo();
+              }}
+            >
+              Undo
+            </Button>
           </div>
         )}
       </>
