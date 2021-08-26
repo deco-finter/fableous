@@ -373,7 +373,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     const placeCheckpoint = useCallback(
       (tool: ToolMode) => {
-        console.log("CHECKPOINT");
         let checkpoint: Checkpoint;
         if (tool === ToolMode.Paint || tool === ToolMode.Fill) {
           const ctx = canvasRef.current.getContext(
@@ -391,16 +390,22 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           };
         } else if (tool === ToolMode.Text) {
           setTextShapes((shapes) => {
+            // purge empty texts
+            const newShapes = { ...shapes };
+            Object.entries(shapes).forEach(([id, shape]) => {
+              if (shape.text === "") {
+                delete newShapes[id];
+              }
+            });
             checkpoint = {
               tool,
-              data: shapes,
+              data: newShapes,
               timestamp: Date.now(),
             };
-            return shapes;
+            return newShapes;
           });
         }
         setCheckpointHistory((prev) => {
-          console.log([...prev, checkpoint]);
           return [...prev, checkpoint];
         });
         if (role !== ControllerRole.Hub) {
@@ -419,9 +424,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
 
     const placeUndo = useCallback(() => {
-      console.log("UNDO");
       setCheckpointHistory((prev) => {
-        console.table(prev.slice(0, -1));
         const newCheckpoint = prev.length >= 2 ? prev[prev.length - 2] : null;
         const ctx = canvasRef.current.getContext(
           "2d"
