@@ -11,15 +11,18 @@ type sessionOrm struct {
 }
 
 type Session struct {
-	ID          string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
-	Classroom   Classroom `gorm:"foreignKey:ClassroomID;references:id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
-	ClassroomID string    `json:"-"`
-	Title       string    `gorm:"column:title;type:varchar(255);not null" json:"-"`
-	Description string    `gorm:"column:description;type:text" json:"-"`
-	Pages       int       `gorm:"column:pages;not null" json:"-"`
-	Completed   bool      `gorm:"column:completed;type:boolean;not null" json:"-"`
-	CreatedAt   time.Time `gorm:"autoCreateTime" json:"-"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"-"`
+	ID             string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
+	Classroom      Classroom `gorm:"foreignKey:ClassroomID;references:id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
+	ClassroomID    string    `json:"-"`
+	Title          string    `gorm:"column:title;type:varchar(255);not null" json:"-"`
+	Description    string    `gorm:"column:description;type:text" json:"-"`
+	Pages          int       `gorm:"column:pages;not null" json:"-"`
+	NameStory      string    `gorm:"column:name_story;type:text" json:"-"`
+	NameCharacter  string    `gorm:"column:name_character;type:text" json:"-"`
+	NameBackground string    `gorm:"column:name_background;type:text" json:"-"`
+	Completed      bool      `gorm:"column:completed;type:boolean;not null" json:"-"`
+	CreatedAt      time.Time `gorm:"autoCreateTime" json:"-"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"-"`
 }
 
 type SessionOrmer interface {

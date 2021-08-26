@@ -25,9 +25,10 @@ func (m *module) SessionGetAllByClassroomID(classroomID string) (sessionInfos []
 			ID:          session.ID,
 			Title:       session.Title,
 			Description: session.Description,
-			Pages:       session.Pages,
-			Completed:   session.Completed,
-			CreatedAt:   session.CreatedAt,
+			// TODO
+			Pages:     session.Pages,
+			Completed: session.Completed,
+			CreatedAt: session.CreatedAt,
 		})
 	}
 	return
@@ -39,12 +40,15 @@ func (m *module) SessionGetOneByIDByClassroomID(id, classroomID string) (session
 		return
 	}
 	sessionInfo = datatransfers.SessionInfo{
-		ID:          session.ID,
-		Title:       session.Title,
-		Description: session.Description,
-		Pages:       session.Pages,
-		Completed:   session.Completed,
-		CreatedAt:   session.CreatedAt,
+		ID:             session.ID,
+		Title:          session.Title,
+		Description:    session.Description,
+		Pages:          session.Pages,
+		NameStory:      session.NameStory,
+		NameCharacter:  session.NameCharacter,
+		NameBackground: session.NameBackground,
+		Completed:      session.Completed,
+		CreatedAt:      session.CreatedAt,
 	}
 	return
 }
@@ -55,23 +59,29 @@ func (m *module) SessionGetOneOngoingByClassroomID(classroomID string) (sessionI
 		return
 	}
 	sessionInfo = datatransfers.SessionInfo{
-		ID:          session.ID,
-		Title:       session.Title,
-		Description: session.Description,
-		Pages:       session.Pages,
-		Completed:   session.Completed,
-		CreatedAt:   session.CreatedAt,
+		ID:             session.ID,
+		Title:          session.Title,
+		Description:    session.Description,
+		NameStory:      session.NameStory,
+		NameCharacter:  session.NameCharacter,
+		NameBackground: session.NameBackground,
+		Pages:          session.Pages,
+		Completed:      session.Completed,
+		CreatedAt:      session.CreatedAt,
 	}
 	return
 }
 
 func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (id string, err error) {
 	if id, err = m.db.sessionOrmer.Insert(models.Session{
-		ClassroomID: sessionInfo.ClassroomID,
-		Title:       sessionInfo.Title,
-		Description: sessionInfo.Description,
-		Pages:       sessionInfo.Pages,
-		Completed:   false,
+		ClassroomID:    sessionInfo.ClassroomID,
+		Title:          sessionInfo.Title,
+		Description:    sessionInfo.Description,
+		NameStory:      "",
+		NameCharacter:  "",
+		NameBackground: "",
+		Pages:          sessionInfo.Pages,
+		Completed:      false,
 	}); err != nil {
 		return "", err
 	}
