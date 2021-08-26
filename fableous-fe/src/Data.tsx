@@ -35,6 +35,8 @@ export enum WSMessageType {
   Fill = "FILL",
   Text = "TEXT",
   Audio = "AUDIO",
+  Checkpoint = "CHECKPOINT",
+  Undo = "UNDO",
   Cursor = "CURSOR",
   Connect = "CONNECT",
   Join = "JOIN",

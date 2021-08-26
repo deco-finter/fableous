@@ -359,6 +359,36 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }, [audioMediaRecorder, audioRecording]);
 
+    const placeCheckpoint = useCallback(() => {
+      if (role === ControllerRole.Hub) {
+        console.log("CHECKPOINT");
+      } else {
+        console.log("place:CHECKPOINT");
+        wsConn?.send(
+          JSON.stringify({
+            role,
+            type: WSMessageType.Checkpoint,
+            data: {},
+          } as WSMessage)
+        );
+      }
+    }, [role, wsConn]);
+
+    const placeUndo = useCallback(() => {
+      if (role === ControllerRole.Hub) {
+        console.log("UNDO");
+      } else {
+        console.log("place:UNDO");
+        wsConn?.send(
+          JSON.stringify({
+            role,
+            type: WSMessageType.Undo,
+            data: {},
+          } as WSMessage)
+        );
+      }
+    }, [role, wsConn]);
+
     const placeCursor = useCallback(
       (
         normX: number,
@@ -432,6 +462,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               case WSMessageType.Audio:
                 placeAudio(msg.data.text || "");
                 break;
+              case WSMessageType.Checkpoint:
+                placeCheckpoint();
+                break;
+              case WSMessageType.Undo:
+                placeUndo();
+                break;
               case WSMessageType.Cursor:
                 placeCursor(
                   msg.data.x1 || 0, // no need to denormalize
@@ -447,10 +483,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           console.error(e);
         }
       },
-      [layer, canvasRef, placePaint, placeFill, placeText, placeCursor]
+      [
+        layer,
+        canvasRef,
+        placePaint,
+        placeFill,
+        placeText,
+        placeCheckpoint,
+        placeUndo,
+        placeCursor,
+      ]
     );
 
-    function onPointerDown(event: SimplePointerEventData) {
+    const onPointerDown = (event: SimplePointerEventData) => {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
       const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
@@ -473,9 +518,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           break;
         default:
       }
-    }
+    };
 
-    function onPointerMove(event: SimplePointerEventData) {
+    const onPointerMove = (event: SimplePointerEventData) => {
       if (!allowDrawing) return;
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
@@ -501,14 +546,15 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         default:
       }
       setLastPos([x, y]);
-    }
+    };
 
-    function onPointerUp(_event: SimplePointerEventData) {
+    const onPointerUp = (_event: SimplePointerEventData) => {
       if (!allowDrawing) return;
       if (dragging) setEditingTextId(0);
       setDragging(false);
       setHasLifted(true);
-    }
+      placeCheckpoint();
+    };
 
     const wrapMouseHandler =
       (handler: (event: SimplePointerEventData) => void) =>
@@ -778,6 +824,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                 {audioRecording ? "Stop" : "Record"}
               </Button>
             </FormControl>
+          </div>
+        )}
+        {role !== ControllerRole.Hub && (
+          <div>
+            <Button onClick={placeUndo}>Undo</Button>
           </div>
         )}
       </>
