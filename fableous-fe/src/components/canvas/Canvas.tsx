@@ -38,6 +38,14 @@ interface TextShape extends Shape {
   fontSize: number;
 }
 
+type TextShapeMap = { [id: string]: TextShape };
+
+interface Checkpoint {
+  tool: ToolMode;
+  data: ImageData | TextShapeMap;
+  timestamp: number;
+}
+
 interface CanvasProps {
   wsConn: WebSocket | undefined;
   role: ControllerRole;
@@ -66,12 +74,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
     const [textId, setTextId] = useState(1);
-    const [textShapes, setTextShapes] = useState<{ [id: string]: TextShape }>(
-      {}
-    );
+    const [textShapes, setTextShapes] = useState<TextShapeMap>({});
     const [toolColor, setToolColor] = useState("#000000ff");
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
+    const [, setCheckpointHistory] = useState<Checkpoint[]>([]);
 
     const placePaint = useCallback(
       (
@@ -359,26 +366,69 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }, [audioMediaRecorder, audioRecording]);
 
-    const placeCheckpoint = useCallback(() => {
-      if (role === ControllerRole.Hub) {
+    const placeCheckpoint = useCallback(
+      (tool: ToolMode) => {
         console.log("CHECKPOINT");
-      } else {
-        console.log("place:CHECKPOINT");
-        wsConn?.send(
-          JSON.stringify({
-            role,
-            type: WSMessageType.Checkpoint,
-            data: {},
-          } as WSMessage)
-        );
-      }
-    }, [role, wsConn]);
+        let checkpoint: Checkpoint;
+        if (tool === ToolMode.Paint || tool === ToolMode.Fill) {
+          const ctx = canvasRef.current.getContext(
+            "2d"
+          ) as CanvasRenderingContext2D;
+          checkpoint = {
+            tool,
+            data: ctx.getImageData(
+              0,
+              0,
+              canvasRef.current.width,
+              canvasRef.current.height
+            ),
+            timestamp: Date.now(),
+          };
+        }
+        setCheckpointHistory((prev) => {
+          console.table([...prev, checkpoint]);
+          return [...prev, checkpoint];
+        });
+        if (role !== ControllerRole.Hub) {
+          wsConn?.send(
+            JSON.stringify({
+              role,
+              type: WSMessageType.Checkpoint,
+              data: {
+                text: tool,
+              },
+            } as WSMessage)
+          );
+        }
+      },
+      [canvasRef, role, wsConn]
+    );
 
     const placeUndo = useCallback(() => {
-      if (role === ControllerRole.Hub) {
-        console.log("UNDO");
-      } else {
-        console.log("place:UNDO");
+      console.log("UNDO");
+      setCheckpointHistory((prev) => {
+        prev.pop(); // drop latest checkpoint
+        console.table(prev);
+        const newCheckpoint = prev[prev.length - 1];
+        const ctx = canvasRef.current.getContext(
+          "2d"
+        ) as CanvasRenderingContext2D;
+        if (!newCheckpoint) {
+          ctx.clearRect(
+            0,
+            0,
+            canvasRef.current.width,
+            canvasRef.current.height
+          );
+        } else if (
+          newCheckpoint.tool === ToolMode.Paint ||
+          newCheckpoint.tool === ToolMode.Fill
+        ) {
+          ctx.putImageData(newCheckpoint.data as ImageData, 0, 0);
+        }
+        return prev;
+      });
+      if (role !== ControllerRole.Hub) {
         wsConn?.send(
           JSON.stringify({
             role,
@@ -387,7 +437,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           } as WSMessage)
         );
       }
-    }, [role, wsConn]);
+    }, [canvasRef, role, wsConn]);
 
     const placeCursor = useCallback(
       (
@@ -463,7 +513,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                 placeAudio(msg.data.text || "");
                 break;
               case WSMessageType.Checkpoint:
-                placeCheckpoint();
+                placeCheckpoint(msg.data.text as ToolMode);
                 break;
               case WSMessageType.Undo:
                 placeUndo();
@@ -553,7 +603,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       if (dragging) setEditingTextId(0);
       setDragging(false);
       setHasLifted(true);
-      placeCheckpoint();
+      placeCheckpoint(toolMode);
     };
 
     const wrapMouseHandler =
@@ -641,6 +691,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.clearRect(0, 0, width, height);
       setAudioB64Strings([]);
       setTextShapes({});
+      setCheckpointHistory([]);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
 
