@@ -72,9 +72,28 @@ export const restAPI = {
       method: "delete",
     }),
   },
+  gallery: {
+    getAsset: (
+      classroomId: string,
+      sessionId: string,
+      pageNumber: number,
+      name: string
+    ) => ({
+      url: `${baseAPI}/api/gallery/assets/${classroomId}/${sessionId}/${pageNumber}/${name}`,
+      method: "get",
+    }),
+  },
   session: {
     getOngoing: (classroomId: string) => ({
       url: `/api/classroom/${classroomId}/session/ongoing`,
+      method: "get",
+    }),
+    getList: (classroomId: string) => ({
+      url: `/api/classroom/${classroomId}/session`,
+      method: "get",
+    }),
+    getOne: (classroomId: string, sessionId: string) => ({
+      url: `/api/classroom/${classroomId}/session/${sessionId}`,
       method: "get",
     }),
     create: (classroomId: string) => ({
