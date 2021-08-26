@@ -91,6 +91,13 @@ export default function ClassroomListPage() {
                   >
                     View
                   </Button>
+                  <Button
+                    size="small"
+                    component={Link}
+                    to={`/gallery/${classroom.id}`}
+                  >
+                    Gallery
+                  </Button>
                 </CardActions>
               </Card>
             </Grid>
