@@ -307,8 +307,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       });
       if (isEditingText) {
         if (clickedId && clicked) {
+          // edit clicked text
           setEditingTextId(clickedId);
+        } else if (editingTextId) {
+          // deselect currently editing text
+          setEditingTextId(0);
         } else {
+          // insert new text
           placeText(x, y, textId, "", 18);
           setEditingTextId(textId);
           setTextId(textId + 1);
