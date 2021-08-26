@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -17,6 +17,7 @@ import {
   ControllerRole,
   Session,
   WSControlMessageData,
+  WSJoinMessageData,
   WSMessage,
   WSMessageType,
 } from "../Data";
@@ -37,7 +38,7 @@ export default function ControllerCanvasPage() {
   const [controllerState, setControllerState] = useState<ControllerState>(
     ControllerState.JoinForm
   );
-  const [wsConn, setNewWsConn] = useWsConn();
+  const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
   const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
   const [sessionInfo, setSessionInfo] = useState<
     WSControlMessageData | undefined
@@ -52,23 +53,8 @@ export default function ControllerCanvasPage() {
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
-  const handleJoinSession = (
-    values: ControllerJoin,
-    actions: FormikHelpers<ControllerJoin>
-  ) => {
-    setRole(values.role);
-    const newWsConn = new WebSocket(
-      wsAPI.controller.main(values.token, values.role, values.name)
-    );
-    newWsConn.onopen = () => {
-      setControllerState(ControllerState.WaitingRoom);
-      actions.resetForm();
-    };
-    newWsConn.addEventListener("error", (err) => {
-      enqueueSnackbar("connection error", { variant: "error" });
-      console.error("ws conn error", err);
-    });
-    newWsConn.onmessage = (ev: MessageEvent) => {
+  const wsMessageHandler = useCallback(
+    (ev: MessageEvent) => {
       try {
         const msg: WSMessage = JSON.parse(ev.data);
         switch (msg.type) {
@@ -76,15 +62,10 @@ export default function ControllerCanvasPage() {
             {
               const msgData = msg.data as WSControlMessageData;
               if (msgData.nextPage) {
-                setCurrentPageIdx((prev) => {
-                  if (prev === 0) {
-                    setControllerState(ControllerState.DrawingSession);
-                  }
-
-                  return prev + 1;
-                });
-              } else if (msgData.classroomId && msgData.sessionId) {
+                setCurrentPageIdx((prev) => prev + 1);
+              } else if (msgData.classroomId) {
                 setSessionInfo(msgData);
+                setCurrentPageIdx(msgData.currentPage || 0);
                 execGetOnGoingSession(
                   restAPI.session.getOngoing(msgData.classroomId)
                 )
@@ -104,14 +85,85 @@ export default function ControllerCanvasPage() {
               }
             }
             break;
+          case WSMessageType.Join:
+            {
+              const msgData = msg.data as WSJoinMessageData;
+              if (!msgData.joining && msgData.role === ControllerRole.Hub) {
+                enqueueSnackbar(`${ControllerRole.Hub} got disconnected`, {
+                  variant: "error",
+                });
+                // assume backend will close ws conn
+                setControllerState(ControllerState.JoinForm);
+              }
+            }
+            break;
           default:
         }
       } catch (e) {
         console.error(e);
       }
-    };
-    setNewWsConn(newWsConn);
+    },
+    [execGetOnGoingSession, enqueueSnackbar]
+  );
+
+  const wsOpenHandler = useCallback(() => {
+    setControllerState(ControllerState.WaitingRoom);
+  }, []);
+
+  const wsErrorHandler = useCallback(
+    (err: Event) => {
+      enqueueSnackbar("connection error", { variant: "error" });
+      console.error("ws conn error", err);
+      clearWsConn();
+      setControllerState(ControllerState.JoinForm);
+    },
+    [clearWsConn, enqueueSnackbar]
+  );
+
+  const wsCloseHandler = useCallback(
+    (_: CloseEvent) => {
+      // do not go to join form state as close occurs even when everything went well
+      clearWsConn();
+    },
+    [clearWsConn]
+  );
+
+  const handleJoinSession = (
+    values: ControllerJoin,
+    actions: FormikHelpers<ControllerJoin>
+  ) => {
+    setRole(values.role);
+    setNewWsConn(
+      new WebSocket(
+        wsAPI.controller.main(values.token, values.role, values.name)
+      )
+    );
+    actions.resetForm({
+      values: {
+        name: values.name,
+        token: "",
+        role: values.role,
+      },
+    });
   };
+
+  // setup event listeners on ws connection
+  useEffect(() => {
+    if (!wsConn) {
+      return () => {};
+    }
+
+    wsConn.addEventListener("open", wsOpenHandler);
+    wsConn.addEventListener("message", wsMessageHandler);
+    wsConn.addEventListener("error", wsErrorHandler);
+    wsConn.addEventListener("close", wsCloseHandler);
+    return () => {
+      wsConn.removeEventListener("open", wsOpenHandler);
+      wsConn.removeEventListener("message", wsMessageHandler);
+      wsConn.removeEventListener("error", wsErrorHandler);
+      wsConn.removeEventListener("close", wsCloseHandler);
+    };
+  }, [wsConn, wsOpenHandler, wsMessageHandler, wsErrorHandler, wsCloseHandler]);
 
   // reset states when in join form state
   useEffect(() => {
@@ -122,12 +174,26 @@ export default function ControllerCanvasPage() {
     }
   }, [controllerState]);
 
+  // go to drawing state when current page goes from 0 to 1
+  useEffect(() => {
+    if (
+      controllerState === ControllerState.WaitingRoom &&
+      currentPageIdx > 0 &&
+      (storyDetails?.pages || 0) > 0
+    ) {
+      setControllerState(ControllerState.DrawingSession);
+    }
+  }, [currentPageIdx, storyDetails, controllerState]);
+
   // go to finish state after all story pages done
   useEffect(() => {
-    if (currentPageIdx && storyDetails && currentPageIdx > storyDetails.pages) {
+    if (
+      controllerState === ControllerState.DrawingSession &&
+      currentPageIdx > (storyDetails?.pages || Number.MAX_SAFE_INTEGER)
+    ) {
       setControllerState(ControllerState.StoryFinished);
     }
-  }, [currentPageIdx, storyDetails]);
+  }, [currentPageIdx, storyDetails, controllerState]);
 
   return (
     <>
@@ -162,7 +228,11 @@ export default function ControllerCanvasPage() {
               }
               validationSchema={yup.object().shape({
                 name: yup.string().required("required"),
-                token: yup.string().required("required"),
+                token: yup
+                  .string()
+                  .required("required")
+                  .length(4, "must be 4 characters")
+                  .uppercase("must be all uppercase characters"),
               })}
               onSubmit={handleJoinSession}
             >
@@ -183,6 +253,14 @@ export default function ControllerCanvasPage() {
                       formik={formik}
                       name="token"
                       label="Token"
+                      overrides={{
+                        onChange: (ev: React.ChangeEvent<HTMLInputElement>) => {
+                          const evUpperCase = { ...ev };
+                          evUpperCase.target.value =
+                            ev.target.value?.toUpperCase();
+                          formik.handleChange(evUpperCase);
+                        },
+                      }}
                     />
                   </div>
 
@@ -218,9 +296,16 @@ export default function ControllerCanvasPage() {
               controllerState !== ControllerState.JoinForm ? "block" : "hidden"
             }
           >
-            <p>Role: {role}</p>
-            <p>Title: {storyDetails?.title}</p>
-            <p>Description: {storyDetails?.description}</p>
+            <Typography variant="h6">Role: {role}</Typography>
+            <Typography variant="h6">Title: {storyDetails?.title}</Typography>
+            <Typography variant="h6">
+              Description: {storyDetails?.description}
+            </Typography>
+            {controllerState === ControllerState.DrawingSession && (
+              <Typography variant="h6">
+                page {currentPageIdx || "-"} of {storyDetails?.pages || "-"}
+              </Typography>
+            )}
             {controllerState === ControllerState.WaitingRoom && (
               <Typography variant="h6" component="p">
                 waiting for hub to start..

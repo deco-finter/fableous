@@ -10,6 +10,7 @@ import GalleryPage from "./containers/GalleryPage";
 import ClassroomDetailPage from "./containers/ClassroomDetailPage";
 import ClassroomListPage from "./containers/ClassroomListPage";
 import { AuthContext } from "./components/AuthProvider";
+import NotFoundPage from "./containers/NotFoundPage";
 import StoryDetailPage from "./containers/StoryDetailPage";
 
 const PrivateRoute = ({ ...routeProps }: RouteProps) => {
@@ -50,10 +51,7 @@ export default function Routes() {
         exact
       />
       <Route path="/join" component={ControllerCanvasPage} exact />
-      {/* TODO 404 page instead of redirect to home? */}
-      <Route>
-        <Redirect to="/" />
-      </Route>
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }

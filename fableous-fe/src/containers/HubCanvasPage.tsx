@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
@@ -32,7 +32,7 @@ export default function HubCanvasPage() {
   const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
-  const [wsConn, setNewWsConn, closeWsConn] = useWsConn();
+  const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
   const [classroomToken, setClassroomToken] = useState("");
   const [joinedControllers, setJoinedControllers] = useState<
     {
@@ -64,13 +64,8 @@ export default function HubCanvasPage() {
     Cursor | undefined
   >();
 
-  const craeteWsSession = () => {
-    const newWsConn = new WebSocket(wsAPI.hub.main(classroomId));
-    newWsConn.addEventListener("error", (err) => {
-      enqueueSnackbar("connection error", { variant: "error" });
-      console.error("ws conn error", err);
-    });
-    newWsConn.onmessage = (ev: MessageEvent) => {
+  const wsMessageHandler = useCallback(
+    (ev: MessageEvent) => {
       try {
         const msg = JSON.parse(ev.data);
         switch (msg.type) {
@@ -90,6 +85,7 @@ export default function HubCanvasPage() {
                 break;
               }
 
+              // update joined controllers to show in waiting room
               if (joining && name) {
                 setJoinedControllers((prev) => ({
                   ...prev,
@@ -103,6 +99,13 @@ export default function HubCanvasPage() {
                   return prevCopy;
                 });
               }
+
+              // show error if controller disconnects during drawing session
+              if (!joining && hubState === HubState.DrawingSession) {
+                enqueueSnackbar(`${role} got disconnected`, {
+                  variant: "error",
+                });
+              }
             }
             break;
           default:
@@ -110,10 +113,27 @@ export default function HubCanvasPage() {
       } catch (e) {
         console.error(e);
       }
-    };
+    },
+    [hubState, enqueueSnackbar]
+  );
 
-    setNewWsConn(newWsConn);
-  };
+  const wsErrorHandler = useCallback(
+    (err: Event) => {
+      enqueueSnackbar("connection error", { variant: "error" });
+      console.error("ws conn error", err);
+      clearWsConn();
+      setHubState(HubState.SessionForm);
+    },
+    [clearWsConn, enqueueSnackbar]
+  );
+
+  const wsCloseHandler = useCallback(
+    (_: CloseEvent) => {
+      // do not go to session form state as close occurs even when everything went well
+      clearWsConn();
+    },
+    [clearWsConn]
+  );
 
   const handleCreateSession = (
     values: Story,
@@ -127,7 +147,8 @@ export default function HubCanvasPage() {
       },
     })
       .then(() => {
-        craeteWsSession();
+        // ws event handlers added in useEffect
+        setNewWsConn(new WebSocket(wsAPI.hub.main(classroomId)));
         setCurrentPageIdx(0);
         setStoryPageCnt(values.pages);
         setHubState(HubState.WaitingRoom);
@@ -172,8 +193,6 @@ export default function HubCanvasPage() {
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
-    // TODO send canvas result to BE now before changing page as
-    // canvas will be cleared when page number changes
     setCurrentPageIdx((prev) => prev + 1);
   };
 
@@ -182,22 +201,48 @@ export default function HubCanvasPage() {
     setHubState(HubState.DrawingSession);
   };
 
-  // clear joined students when story finished and session created
+  // setup event listeners on ws connection
   useEffect(() => {
-    setJoinedControllers({});
-  }, [wsConn]);
+    if (!wsConn) {
+      return () => {};
+    }
+
+    wsConn.addEventListener("message", wsMessageHandler);
+    wsConn.addEventListener("error", wsErrorHandler);
+    wsConn.addEventListener("close", wsCloseHandler);
+
+    return () => {
+      wsConn.removeEventListener("message", wsMessageHandler);
+      wsConn.removeEventListener("error", wsErrorHandler);
+      wsConn.removeEventListener("close", wsCloseHandler);
+    };
+  }, [
+    wsConn,
+    hubState,
+    wsMessageHandler,
+    wsErrorHandler,
+    wsCloseHandler,
+    enqueueSnackbar,
+  ]);
+
+  // perform reset in session form state
+  useEffect(() => {
+    if (hubState === HubState.SessionForm) {
+      setCurrentPageIdx(0);
+      setStoryPageCnt(0);
+      setClassroomToken("");
+      setJoinedControllers({});
+    }
+  }, [hubState]);
 
   // go back to session form once all pages in story completed
   useEffect(() => {
     if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
-      setCurrentPageIdx(0);
-      setStoryPageCnt(0);
-      closeWsConn();
+      // TODO send canvas result to backend here
+      // assume backend will close ws conn
       setHubState(HubState.SessionForm);
     }
-    // do not run when formikSession changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPageIdx, storyPageCnt]);
+  }, [currentPageIdx, storyPageCnt, clearWsConn]);
 
   return (
     <>

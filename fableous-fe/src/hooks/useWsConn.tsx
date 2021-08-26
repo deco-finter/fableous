@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { WSMessageType } from "../Data";
 
 export default function useWsConn(): [
@@ -32,9 +32,13 @@ export default function useWsConn(): [
     };
   }, [wsConn]);
 
+  const clearWsConn = useCallback(() => {
+    setWsConn(undefined);
+  }, []);
+
   return [
     wsConn,
     setWsConn as React.Dispatch<React.SetStateAction<WebSocket>>,
-    () => setWsConn(undefined),
+    clearWsConn,
   ];
 }
