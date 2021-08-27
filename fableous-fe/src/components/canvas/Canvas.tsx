@@ -689,6 +689,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     const onKeyDown = useCallback(
       (event: KeyboardEvent) => {
+        if (!allowDrawing) return;
+        event.preventDefault();
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
         const { key } = event;
