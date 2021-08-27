@@ -377,7 +377,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const initAudio = () => {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(
+      navigator.mediaDevices?.getUserMedia({ audio: true }).then(
         (stream) => {
           const mediaRecorder = new MediaRecorder(stream);
           mediaRecorder.ondataavailable = ({ data }) => {
@@ -815,6 +815,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           onTouchStart={wrapTouchHandler(onPointerDown)}
           onTouchMove={wrapTouchHandler(onPointerMove)}
           onTouchEnd={wrapTouchHandler(onPointerUp)}
+          onTouchCancel={wrapTouchHandler(onPointerUp)}
           onContextMenu={(e) => {
             e.preventDefault();
           }}
