@@ -691,9 +691,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       (event: KeyboardEvent) => {
         if (!allowDrawing) return;
         event.preventDefault();
+        const { ctrlKey, metaKey, key } = event;
+        if ((ctrlKey || metaKey) && key === "z") {
+          placeUndo();
+        }
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
-        const { key } = event;
         if (key === "Escape" || key === "Enter") {
           setEditingTextId(0);
         }
@@ -713,7 +716,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [editingTextId, placeText]
+      [allowDrawing, editingTextId, placeText, placeUndo]
     );
 
     const adjustCanvasSize = useCallback(() => {
