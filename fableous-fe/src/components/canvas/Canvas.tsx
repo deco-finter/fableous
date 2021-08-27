@@ -8,6 +8,7 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  useRef,
 } from "react";
 import Button from "@material-ui/core/Button";
 import Radio from "@material-ui/core/Radio";
@@ -62,19 +63,24 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
+    let FRAME_COUNTER = 0;
     const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
-    const [editingTextId, setEditingTextId] = useState(0);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
     const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
-    const [textId, setTextId] = useState(1);
     const [textShapes, setTextShapes] = useState<TextShapeMap>({});
+    const textShapesRef = useRef<TextShapeMap>(textShapes);
+    textShapesRef.current = textShapes; // inject ref, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
+    const [textId, setTextId] = useState(1);
+    const [editingTextId, setEditingTextId] = useState(0);
+    const editingTextIdRef = useRef(editingTextId);
+    editingTextIdRef.current = editingTextId;
     const [toolColor, setToolColor] = useState("#000000ff");
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
@@ -227,8 +233,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ) as CanvasRenderingContext2D;
         ctx.font = `${fontSize * SCALE}px Arial`;
         const [x1, y1, x2, y2] = getTextBounds(canvasRef, x, y, text, fontSize);
-        setTextShapes((prev) => ({
-          ...prev,
+        setTextShapes(() => ({
+          ...textShapesRef.current,
           [id]: {
             text,
             fontSize,
@@ -259,7 +265,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [canvasRef, role, wsConn]
     );
 
-    const refreshText = useCallback(() => {
+    const refreshText = () => {
+      window.requestAnimationFrame(refreshText);
+      FRAME_COUNTER = (FRAME_COUNTER + 1) % 60;
       if (!canvasRef.current) return;
       const ctx = canvasRef.current.getContext(
         "2d"
@@ -268,15 +276,34 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.clearRect(0, 0, width, height);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      Object.entries(textShapes).forEach(([id, shape]) => {
+      Object.entries(textShapesRef.current).forEach(([id, shape]) => {
         ctx.font = `${shape.fontSize * SCALE}px Arial`;
         ctx.fillText(
           shape.text,
           (shape.x1 + shape.x2) / 2,
           (shape.y1 + shape.y2) / 2
         );
-        if (parseInt(id, 10) === editingTextId) {
+        if (parseInt(id, 10) === editingTextIdRef.current) {
           ctx.beginPath();
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = "#00dd88";
+          ctx.rect(
+            shape.x1 - SELECT_PADDING,
+            shape.y1 - SELECT_PADDING,
+            shape.x2 - shape.x1 + 2 * SELECT_PADDING + 6,
+            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+          );
+          ctx.stroke();
+          ctx.closePath();
+          if (FRAME_COUNTER > 30) {
+            ctx.beginPath();
+            ctx.rect(shape.x2 + 2, shape.y1 - 2, 2, shape.y2 - shape.y1 + 2);
+            ctx.fill();
+            ctx.closePath();
+          }
+        } else {
+          ctx.beginPath();
+          ctx.lineWidth = 1;
           ctx.strokeStyle = "#00aaaa";
           ctx.rect(
             shape.x1 - SELECT_PADDING,
@@ -288,12 +315,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ctx.closePath();
         }
       });
-    }, [canvasRef, editingTextId, textShapes]);
+    };
 
     const interactCanvas = (x: number, y: number, isEditingText: boolean) => {
       let clickedId: number | undefined;
       let clicked: TextShape | undefined;
-      Object.entries(textShapes).forEach(([id, shape]) => {
+      Object.entries(textShapesRef.current).forEach(([id, shape]) => {
         if (
           !clicked &&
           x >= shape.x1 - SELECT_PADDING &&
@@ -608,7 +635,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           break;
         case ToolMode.Text:
           if (!editingTextId || hasLifted) return;
-          const shape = textShapes[editingTextId];
+          const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           placeText(x, y, editingTextId, shape.text, shape.fontSize);
           break;
@@ -648,8 +675,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     const onKeyDown = useCallback(
       (event: KeyboardEvent) => {
-        if (!editingTextId) return;
-        const shape = textShapes[editingTextId];
+        const shape = textShapesRef.current[editingTextId];
+        if (!shape) return;
         const { key } = event;
         if (key === "Escape" || key === "Enter") {
           setEditingTextId(0);
@@ -670,7 +697,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [editingTextId, placeText, textShapes]
+      [editingTextId, placeText]
     );
 
     const adjustCanvasSize = useCallback(() => {
@@ -736,8 +763,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     // start text layer animation
     useEffect(() => {
-      window.requestAnimationFrame(refreshText);
-    }, [refreshText]);
+      const anim = window.requestAnimationFrame(refreshText);
+      return () => {
+        window.cancelAnimationFrame(anim);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // unselect text on tool change
     useEffect(() => setEditingTextId(0), [toolMode]);
