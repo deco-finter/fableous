@@ -76,7 +76,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [audioRecording, setAudioRecording] = useState(false);
     const [textShapes, setTextShapes] = useState<TextShapeMap>({});
     const textShapesRef = useRef<TextShapeMap>(textShapes);
-    textShapesRef.current = textShapes; // inject ref, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
+    textShapesRef.current = textShapes; // inject ref to force sync, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
     const [textId, setTextId] = useState(1);
     const [editingTextId, setEditingTextId] = useState(0);
     const editingTextIdRef = useRef(editingTextId);
@@ -429,9 +429,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           };
         }
         setCheckpointHistory((prev) => {
-          [...prev, checkpoint].forEach((cp) => {
-            console.table(cp.data);
-          });
           return [...prev, checkpoint];
         });
         if (role !== ControllerRole.Hub) {
@@ -762,12 +759,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     // start text layer animation
     useEffect(() => {
-      const anim = window.requestAnimationFrame(refreshText);
-      return () => {
-        window.cancelAnimationFrame(anim);
-      };
+      if (isShown && layer === ControllerRole.Story) {
+        const anim = window.requestAnimationFrame(refreshText);
+        console.log(anim);
+        return () => {
+          console.log(`Reset ${layer} ${anim}`);
+          window.cancelAnimationFrame(anim);
+        };
+      }
+      return () => {};
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isShown, layer]);
 
     // unselect text on tool change
     useEffect(() => setEditingTextId(0), [toolMode]);
