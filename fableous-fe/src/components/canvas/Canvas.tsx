@@ -668,6 +668,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
       setDragging(false);
       setHasLifted(true);
+      setCursor(undefined);
     };
 
     const wrapPointerHandler =
@@ -798,10 +799,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ref={canvasRef}
           onPointerDown={wrapPointerHandler(onPointerDown)}
           onPointerMove={wrapPointerHandler(onPointerMove)}
-          onPointerOut={() => {
-            setCursor(undefined);
-            wrapPointerHandler(onPointerUp);
-          }}
+          onPointerUp={wrapPointerHandler(onPointerUp)}
           onContextMenu={(e) => {
             e.preventDefault();
           }}
