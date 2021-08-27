@@ -290,18 +290,21 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ctx.rect(
             shape.x1 - SELECT_PADDING,
             shape.y1 - SELECT_PADDING,
-            shape.x2 - shape.x1 + 2 * SELECT_PADDING + 6,
+            shape.x2 -
+              shape.x1 +
+              2 * SELECT_PADDING +
+              (role !== ControllerRole.Hub ? 6 : 0),
             shape.y2 - shape.y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
-          if (FRAME_COUNTER > 30) {
+          if (role !== ControllerRole.Hub && FRAME_COUNTER > 30) {
             ctx.beginPath();
             ctx.rect(shape.x2 + 2, shape.y1 - 2, 2, shape.y2 - shape.y1 + 2);
             ctx.fill();
             ctx.closePath();
           }
-        } else {
+        } else if (role !== ControllerRole.Hub) {
           ctx.beginPath();
           ctx.lineWidth = 1;
           ctx.strokeStyle = "#00aaaa";
@@ -317,25 +320,38 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       });
     };
 
-    const interactCanvas = (x: number, y: number, isEditingText: boolean) => {
-      let clickedId: number | undefined;
-      let clicked: TextShape | undefined;
+    const interactCanvas = (
+      x: number,
+      y: number,
+      isEditingText: boolean,
+      hover: boolean
+    ) => {
+      let targetId: number | undefined;
+      let targetShape: TextShape | undefined;
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
         if (
-          !clicked &&
+          !targetShape &&
           x >= shape.x1 - SELECT_PADDING &&
           x <= shape.x2 + SELECT_PADDING &&
           y >= shape.y1 - SELECT_PADDING &&
           y <= shape.y2 + SELECT_PADDING
         ) {
-          clickedId = parseInt(id, 10);
-          clicked = shape;
+          targetId = parseInt(id, 10);
+          targetShape = shape;
         }
       });
-      if (isEditingText) {
-        if (clickedId && clicked) {
+      if (hover) {
+        if (targetId) {
+          canvasRef.current.style.cursor = "pointer";
+          setEditingTextId(targetId);
+        } else {
+          canvasRef.current.style.cursor = "default";
+          setEditingTextId(0);
+        }
+      } else if (isEditingText) {
+        if (targetId) {
           // edit clicked text
-          setEditingTextId(clickedId);
+          setEditingTextId(targetId);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
@@ -346,9 +362,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
         }
-      } else if (clicked) {
+      } else if (targetShape) {
         window.speechSynthesis.speak(
-          new SpeechSynthesisUtterance(clicked.text)
+          new SpeechSynthesisUtterance(targetShape.text)
         );
       }
     };
@@ -603,25 +619,24 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           break;
         case ToolMode.Text:
           setHasLifted(false);
-          interactCanvas(x, y, true);
+          interactCanvas(x, y, true, false);
           break;
         case ToolMode.None:
-          interactCanvas(x, y, false);
+          interactCanvas(x, y, false, false);
           break;
         default:
       }
     };
 
     const onPointerMove = (event: SimplePointerEventData) => {
-      if (!allowDrawing) return;
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
       const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-      placeCursor(normX, normY, normWidth, toolMode);
+      if (allowDrawing) placeCursor(normX, normY, normWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
-          if (!dragging) return;
+          if (!dragging || !allowDrawing) return;
           if (
             Math.round(lastX) === Math.round(x) &&
             Math.round(lastY) === Math.round(y)
@@ -630,14 +645,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           placePaint(lastX, lastY, x, y, toolColor, toolWidth);
           break;
         case ToolMode.Text:
-          if (!editingTextId || hasLifted) return;
+          if (!editingTextId || hasLifted || !allowDrawing) return;
           const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           placeText(x, y, editingTextId, shape.text, shape.fontSize);
           break;
+        case ToolMode.None:
+          interactCanvas(x, y, false, true);
+          break;
         default:
       }
-      setLastPos([x, y]);
+      if (allowDrawing) setLastPos([x, y]);
     };
 
     const onPointerUp = (_event: SimplePointerEventData) => {
@@ -761,9 +779,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       if (isShown && layer === ControllerRole.Story) {
         const anim = window.requestAnimationFrame(refreshText);
-        console.log(anim);
         return () => {
-          console.log(`Reset ${layer} ${anim}`);
           window.cancelAnimationFrame(anim);
         };
       }
