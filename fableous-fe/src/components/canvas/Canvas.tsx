@@ -416,23 +416,22 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             timestamp: Date.now(),
           };
         } else if (tool === ToolMode.Text) {
-          setTextShapes((shapes) => {
-            // purge empty texts
-            const newShapes = { ...shapes };
-            Object.entries(shapes).forEach(([id, shape]) => {
-              if (shape.text === "") {
-                delete newShapes[id];
-              }
-            });
-            checkpoint = {
-              tool,
-              data: newShapes,
-              timestamp: Date.now(),
-            };
-            return newShapes;
-          });
+          const filtered = Object.fromEntries(
+            Object.entries(textShapesRef.current).filter(
+              ([, shape]) => shape.text.length > 0
+            )
+          );
+          setTextShapes(filtered);
+          checkpoint = {
+            tool,
+            data: filtered,
+            timestamp: Date.now(),
+          };
         }
         setCheckpointHistory((prev) => {
+          [...prev, checkpoint].forEach((cp) => {
+            console.table(cp.data);
+          });
           return [...prev, checkpoint];
         });
         if (role !== ControllerRole.Hub) {
