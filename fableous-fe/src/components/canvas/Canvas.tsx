@@ -772,13 +772,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     // initialize keyboard listener
     useEffect(() => {
-      if (layer === ControllerRole.Story) {
+      if (isShown) {
         window.addEventListener("keydown", onKeyDown);
       }
       return () => {
         window.removeEventListener("keydown", onKeyDown);
       };
-    }, [layer, onKeyDown]);
+    }, [isShown, layer, onKeyDown]);
 
     // start text layer animation
     useEffect(() => {
