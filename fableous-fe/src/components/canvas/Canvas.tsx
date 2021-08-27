@@ -16,6 +16,7 @@ import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import Slider from "@material-ui/core/Slider";
+import cloneDeep from "lodash.clonedeep";
 import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../../Data";
 import {
   convHEXtoRGBA,
@@ -416,21 +417,24 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     const placeCheckpoint = useCallback(
       (tool: ToolMode) => {
-        let checkpoint: Checkpoint;
         if (tool === ToolMode.Paint || tool === ToolMode.Fill) {
           const ctx = canvasRef.current.getContext(
             "2d"
           ) as CanvasRenderingContext2D;
-          checkpoint = {
-            tool,
-            data: ctx.getImageData(
-              0,
-              0,
-              canvasRef.current.width,
-              canvasRef.current.height
-            ),
-            timestamp: Date.now(),
-          };
+          setCheckpointHistory((prev) => {
+            const checkpoint = {
+              tool,
+              data: ctx.getImageData(
+                0,
+                0,
+                canvasRef.current.width,
+                canvasRef.current.height
+              ),
+              timestamp: Date.now(),
+            } as Checkpoint;
+
+            return [...prev, checkpoint];
+          });
         } else if (tool === ToolMode.Text) {
           const filtered = Object.fromEntries(
             Object.entries(textShapesRef.current).filter(
@@ -438,15 +442,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             )
           );
           setTextShapes(filtered);
-          checkpoint = {
-            tool,
-            data: filtered,
-            timestamp: Date.now(),
-          };
+          setCheckpointHistory((prev) => {
+            const checkpoint = {
+              tool,
+              data: filtered,
+              timestamp: Date.now(),
+            } as Checkpoint;
+
+            // deep copy needed, else editting text
+            // change past textshapes change somehow
+            return [...prev, cloneDeep(checkpoint)];
+          });
         }
-        setCheckpointHistory((prev) => {
-          return [...prev, checkpoint];
-        });
         if (role !== ControllerRole.Hub) {
           wsConn?.send(
             JSON.stringify({
