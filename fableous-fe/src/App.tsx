@@ -4,6 +4,7 @@ import { SnackbarProvider } from "notistack";
 import AuthProvider from "./components/AuthProvider";
 import Navbar from "./components/Navbar";
 import Routes from "./Routes";
+import InjectAxiosRespInterceptor from "./components/InjectAxiosRespInterceptor";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <AuthProvider>
         <SnackbarProvider maxSnack={3}>
           <Router>
+            <InjectAxiosRespInterceptor />
             <Navbar />
             <Container className="pt-5">
               <Grid container>

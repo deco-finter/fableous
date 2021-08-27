@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { configure } from "axios-hooks";
 import { TOKEN_KEY } from "./components/AuthProvider";
 
@@ -12,7 +12,9 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
-const onIntercept = (req: AxiosRequestConfig) => {
+const apiClient = axios.create();
+apiClient.defaults.baseURL = baseAPI;
+apiClient.interceptors.request.use((req: AxiosRequestConfig) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
     req.headers = {
@@ -20,11 +22,22 @@ const onIntercept = (req: AxiosRequestConfig) => {
     };
   }
   return req;
-};
+}, Promise.reject);
 
-const apiClient = axios.create();
-apiClient.defaults.baseURL = baseAPI;
-apiClient.interceptors.request.use(onIntercept, Promise.reject);
+export const setupResponseInterceptor = (onTokenExpired: () => void) => {
+  apiClient.interceptors.response.use(
+    (resp: AxiosResponse) => resp,
+    (err: any) => {
+      if (
+        err.response?.status === 401 &&
+        err.response?.data?.error?.includes("token has expired")
+      ) {
+        onTokenExpired();
+      }
+      return Promise.reject(err);
+    }
+  );
+};
 
 configure({
   axios: apiClient,
