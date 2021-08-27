@@ -759,6 +759,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.clearRect(0, 0, width, height);
       setAudioB64Strings([]);
       setTextShapes({});
+      setTextId(1);
       setCheckpointHistory([]);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
@@ -792,13 +793,16 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     }, [isShown, layer]);
 
     // unselect text on tool change
-    useEffect(() => setEditingTextId(0), [toolMode]);
+    useEffect(() => {
+      setEditingTextId(0);
+    }, [toolMode]);
 
     // place checkpoint on finish text editing
     useEffect(() => {
-      if (editingTextId === 0) placeCheckpoint(ToolMode.Text);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editingTextId, textId]);
+      if (editingTextId === 0 && textId > 1) {
+        placeCheckpoint(ToolMode.Text);
+      }
+    }, [editingTextId, textId, placeCheckpoint]);
 
     return (
       <>
