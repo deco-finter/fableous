@@ -670,20 +670,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setHasLifted(true);
     };
 
-    const wrapMouseHandler =
+    const wrapPointerHandler =
       (handler: (event: SimplePointerEventData) => void) =>
-      (event: React.MouseEvent<HTMLCanvasElement>) => {
-        event.preventDefault();
-        handler({ clientX: event.clientX, clientY: event.clientY });
-      };
-
-    const wrapTouchHandler =
-      (handler: (event: SimplePointerEventData) => void) =>
-      (event: React.TouchEvent<HTMLCanvasElement>) => {
-        event.preventDefault();
-        if (event.touches.length > 0) {
-          const firstTouch = event.touches[0];
-          handler({ clientX: firstTouch.clientX, clientY: firstTouch.clientY });
+      (event: React.PointerEvent<HTMLCanvasElement>) => {
+        if (event.isPrimary) {
+          handler({ clientX: event.clientX, clientY: event.clientY });
         }
       };
 
@@ -805,17 +796,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       <>
         <canvas
           ref={canvasRef}
-          onMouseDown={wrapMouseHandler(onPointerDown)}
-          onMouseMove={wrapMouseHandler(onPointerMove)}
-          onMouseUp={wrapMouseHandler(onPointerUp)}
-          onMouseLeave={() => {
+          onPointerDown={wrapPointerHandler(onPointerDown)}
+          onPointerMove={wrapPointerHandler(onPointerMove)}
+          onPointerOut={() => {
             setCursor(undefined);
-            wrapMouseHandler(onPointerUp);
+            wrapPointerHandler(onPointerUp);
           }}
-          onTouchStart={wrapTouchHandler(onPointerDown)}
-          onTouchMove={wrapTouchHandler(onPointerMove)}
-          onTouchEnd={wrapTouchHandler(onPointerUp)}
-          onTouchCancel={wrapTouchHandler(onPointerUp)}
           onContextMenu={(e) => {
             e.preventDefault();
           }}
