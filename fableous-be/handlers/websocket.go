@@ -23,6 +23,7 @@ type activeSession struct {
 	currentPage    int
 	hubConn        *websocket.Conn
 	controllerConn map[string]*websocket.Conn // key: role, value: ws.Conn
+	controllerName map[string]string          // key: role, value: user name
 	mutex          sync.RWMutex
 }
 
@@ -58,6 +59,7 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 		currentPage:    0,
 		hubConn:        conn,
 		controllerConn: make(map[string]*websocket.Conn),
+		controllerName: make(map[string]string),
 	}
 	m.sessions.mutex.Lock()
 	m.sessions.keys[classroomToken] = sess
@@ -84,6 +86,7 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role, nam
 	defer conn.Close()
 	sess.mutex.Lock()
 	sess.controllerConn[role] = conn
+	sess.controllerName[role] = name
 	sess.mutex.Unlock()
 	return m.ControllerCommandWorker(conn, sess, role, name)
 }
@@ -134,6 +137,15 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 				var session models.Session
 				if session, err = m.db.sessionOrmer.GetOneByIDByClassroomID(sess.sessionID, sess.classroomID); err == nil && sess.currentPage > session.Pages {
 					session.Completed = true
+					if name, ok := sess.controllerName[constants.ControllerRoleStory]; ok {
+						session.NameStory = name
+					}
+					if name, ok := sess.controllerName[constants.ControllerRoleCharacter]; ok {
+						session.NameCharacter = name
+					}
+					if name, ok := sess.controllerName[constants.ControllerRoleBackground]; ok {
+						session.NameBackground = name
+					}
 					if err = m.db.sessionOrmer.Update(session); err != nil {
 						log.Printf("[HubCommandWorker] failed completing session. %s\n", err)
 					}
@@ -205,7 +217,8 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeCursor:
+		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText,
+			constants.WSMessageTypeCheckpoint, constants.WSMessageTypeUndo, constants.WSMessageTypeCursor:
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
 			go func() {
