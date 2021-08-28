@@ -22,13 +22,15 @@ func (m *module) SessionGetAllByClassroomID(classroomID string) (sessionInfos []
 	}
 	for _, session := range sessions {
 		sessionInfos = append(sessionInfos, datatransfers.SessionInfo{
-			ID:          session.ID,
-			Title:       session.Title,
-			Description: session.Description,
-			// TODO
-			Pages:     session.Pages,
-			Completed: session.Completed,
-			CreatedAt: session.CreatedAt,
+			ID:             session.ID,
+			Title:          session.Title,
+			Description:    session.Description,
+			Pages:          session.Pages,
+			NameStory:      session.NameStory,
+			NameCharacter:  session.NameCharacter,
+			NameBackground: session.NameBackground,
+			Completed:      session.Completed,
+			CreatedAt:      session.CreatedAt,
 		})
 	}
 	return
@@ -62,10 +64,10 @@ func (m *module) SessionGetOneOngoingByClassroomID(classroomID string) (sessionI
 		ID:             session.ID,
 		Title:          session.Title,
 		Description:    session.Description,
+		Pages:          session.Pages,
 		NameStory:      session.NameStory,
 		NameCharacter:  session.NameCharacter,
 		NameBackground: session.NameBackground,
-		Pages:          session.Pages,
 		Completed:      session.Completed,
 		CreatedAt:      session.CreatedAt,
 	}
@@ -77,10 +79,10 @@ func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (id string
 		ClassroomID:    sessionInfo.ClassroomID,
 		Title:          sessionInfo.Title,
 		Description:    sessionInfo.Description,
+		Pages:          sessionInfo.Pages,
 		NameStory:      "",
 		NameCharacter:  "",
 		NameBackground: "",
-		Pages:          sessionInfo.Pages,
 		Completed:      false,
 	}); err != nil {
 		return "", err
