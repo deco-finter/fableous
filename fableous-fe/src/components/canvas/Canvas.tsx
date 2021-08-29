@@ -804,6 +804,20 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }, [editingTextId, textId, placeCheckpoint]);
 
+    // show and hide onscreen keyboard for touchscreen devices
+    useEffect(() => {
+      if (isShown && role !== ControllerRole.Hub) {
+        if (editingTextId) {
+          const mockInput = document.createElement("input");
+          mockInput.id = "MOCK_INPUT";
+          mockInput.style.display = "none";
+          mockInput.focus();
+        } else {
+          document.getElementById("MOCK_INPUT")?.remove();
+        }
+      }
+    }, [isShown, editingTextId, role]);
+
     return (
       <>
         <canvas
