@@ -810,7 +810,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (editingTextId) {
           const mockInput = document.createElement("input");
           mockInput.id = "MOCK_INPUT";
-          mockInput.style.display = "none";
+          mockInput.style.opacity = "0";
+          mockInput.style.position = "absolute";
           mockInput.focus();
         } else {
           document.getElementById("MOCK_INPUT")?.remove();
