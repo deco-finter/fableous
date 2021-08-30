@@ -990,7 +990,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         <input
           id="MOCK_INPUT"
           ref={onScreenKeyboardRef}
-          style={{ position: "absolute", pointerEvents: "none" }}
+          style={{ position: "absolute", top: 256, pointerEvents: "none" }}
         />
         <input
           style={{
