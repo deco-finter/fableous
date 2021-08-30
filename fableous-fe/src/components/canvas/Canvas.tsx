@@ -367,6 +367,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (targetId) {
           // edit clicked text
           setEditingTextId(targetId);
+          showKeyboard(true);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
@@ -377,6 +378,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setEditingTextId(textId);
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
+          showKeyboard(true);
         }
       } else if (targetShape) {
         window.speechSynthesis.speak(
@@ -670,6 +672,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           if (!editingTextId || hasLifted || !allowDrawing) return;
           const shape = textShapesRef.current[editingTextId];
           setDragging(true);
+          showKeyboard(false);
           placeText(x, y, editingTextId, shape.text, shape.fontSize);
           break;
         case ToolMode.None:
@@ -684,9 +687,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       if (!allowDrawing) return;
       if (toolMode === ToolMode.Paint || toolMode === ToolMode.Fill) {
         placeCheckpoint(toolMode);
-      }
-      if (editingTextId && !dragging) {
-        showKeyboard(true);
       }
       if (dragging) {
         setEditingTextId(0);
