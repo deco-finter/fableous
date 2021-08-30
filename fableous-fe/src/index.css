@@ -24,3 +24,13 @@ code {
   border-width: 4px;
   border-color: aqua;
 }
+
+#version_tag {
+  text-align: center;
+  font-family: "Courier", monospace;
+  opacity: 25%;
+  position: absolute;
+  bottom: 64px;
+  user-select: none;
+  pointer-events: none;
+}

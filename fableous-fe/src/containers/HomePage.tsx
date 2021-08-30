@@ -40,6 +40,9 @@ export default function HomePage() {
           Student
         </Button>
       </div>
+      {process.env.NODE_ENV === "development" && (
+        <div id="version_tag">{process.env.REACT_APP_VERSION}</div>
+      )}
     </Grid>
   );
 }
