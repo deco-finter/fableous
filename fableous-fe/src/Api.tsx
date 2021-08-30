@@ -63,6 +63,16 @@ export const restAPI = {
       method: "post",
     }),
   },
+  user: {
+    get: () => ({
+      url: "/api/user",
+      method: "get",
+    }),
+    update: () => ({
+      url: "/api/user",
+      method: "put",
+    }),
+  },
   classroom: {
     getList: () => ({
       url: "/api/classroom/",

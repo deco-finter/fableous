@@ -9,6 +9,7 @@ import {
 } from "@material-ui/core";
 import useAxios from "axios-hooks";
 import { Formik } from "formik";
+import { useSnackbar } from "notistack";
 import { useContext } from "react";
 import { useHistory } from "react-router-dom";
 import * as yup from "yup";
@@ -28,6 +29,7 @@ const useStyles = makeStyles({
 
 export default function LoginPage() {
   const history = useHistory();
+  const { enqueueSnackbar } = useSnackbar();
   const [{ loading }, executeLogin] = useAxios(restAPI.auth.login(), {
     manual: true,
   });
@@ -45,7 +47,10 @@ export default function LoginPage() {
         history.push("/");
       })
       .catch((err) => {
-        console.error(err);
+        enqueueSnackbar(err?.response?.data?.error || "login failed", {
+          variant: "error",
+        });
+        console.error("post login err", err);
       });
   };
 

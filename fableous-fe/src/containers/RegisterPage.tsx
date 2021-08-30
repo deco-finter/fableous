@@ -12,6 +12,7 @@ import { Formik } from "formik";
 import { useState } from "react";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
+import { useSnackbar } from "notistack";
 import { restAPI } from "../Api";
 import FormikTextField from "../components/FormikTextField";
 import { Register } from "../Data";
@@ -27,6 +28,7 @@ const useStyles = makeStyles({
 
 export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
   const [{ loading }, executeRegister] = useAxios(restAPI.auth.register(), {
     manual: true,
   });
@@ -43,7 +45,10 @@ export default function RegisterPage() {
         setSuccess(true);
       })
       .catch((error) => {
-        console.error(error);
+        enqueueSnackbar(error?.response?.data?.error || "register failed", {
+          variant: "error",
+        });
+        console.error("post register err", error);
       });
   };
 
