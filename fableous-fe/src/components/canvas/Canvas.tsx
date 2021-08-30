@@ -94,10 +94,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       console.log(show);
       if (show) {
         onScreenKeyboardRef.current.focus();
-        setTimeout(() => onScreenKeyboardRef.current.focus(), 500);
         console.log(onScreenKeyboardRef.current);
-      } else {
-        onScreenKeyboardRef.current.blur();
       }
     };
 
