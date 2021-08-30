@@ -20,11 +20,6 @@ code {
     monospace;
 }
 
-#MOCK_INPUT:focus {
-  border-width: 4px;
-  border-color: aqua;
-}
-
 #version_tag {
   text-align: center;
   font-family: "Courier", monospace;
