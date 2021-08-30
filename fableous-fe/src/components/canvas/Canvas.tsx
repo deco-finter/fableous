@@ -90,6 +90,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
     const [, setCheckpointHistory] = useState<Checkpoint[]>([]);
 
+    const showKeyboard = (show: boolean) => {
+      console.log(show);
+      if (show) {
+        onScreenKeyboardRef.current.focus();
+        setTimeout(() => onScreenKeyboardRef.current.focus(), 500);
+        console.log(onScreenKeyboardRef.current);
+      } else {
+        onScreenKeyboardRef.current.blur();
+      }
+    };
+
     const placePaint = useCallback(
       (
         x1: number,
@@ -359,6 +370,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
+          showKeyboard(false);
         } else {
           // insert new text
           placeText(x, y, textId, "", 18);
@@ -673,6 +685,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       if (toolMode === ToolMode.Paint || toolMode === ToolMode.Fill) {
         placeCheckpoint(toolMode);
       }
+      if (editingTextId && !dragging) {
+        showKeyboard(true);
+      }
       if (dragging) {
         setEditingTextId(0);
       }
@@ -701,6 +716,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (!shape) return;
         if (key === "Escape" || key === "Enter") {
           setEditingTextId(0);
+          showKeyboard(false);
         }
         if (key.length === 1 || key === "Backspace") {
           if (key.length === 1) {
@@ -806,20 +822,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         placeCheckpoint(ToolMode.Text);
       }
     }, [editingTextId, textId, placeCheckpoint]);
-
-    // show and hide onscreen keyboard for touchscreen devices
-    useEffect(() => {
-      if (isShown && role !== ControllerRole.Hub) {
-        if (editingTextId) {
-          onScreenKeyboardRef.current.focus();
-          setTimeout(() => onScreenKeyboardRef.current.focus(), 500);
-          console.log(editingTextId);
-          console.log(onScreenKeyboardRef.current);
-        } else {
-          onScreenKeyboardRef.current.blur();
-        }
-      }
-    }, [isShown, editingTextId, role]);
 
     return (
       <>
