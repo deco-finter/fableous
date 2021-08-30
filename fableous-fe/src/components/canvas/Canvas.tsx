@@ -811,7 +811,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       if (isShown && role !== ControllerRole.Hub) {
         if (editingTextId) {
-          setTimeout(() => onScreenKeyboardRef.current.focus(), 0);
+          setTimeout(() => onScreenKeyboardRef.current.focus(), 100);
         } else {
           onScreenKeyboardRef.current.blur();
         }
@@ -985,6 +985,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           id="MOCK_INPUT"
           ref={onScreenKeyboardRef}
           style={{ position: "absolute", pointerEvents: "none" }}
+        />
+        <input
+          style={{
+            position: "absolute",
+            top: 128,
+            borderWidth: 4,
+          }}
         />
       </>
     );
