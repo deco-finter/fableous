@@ -67,6 +67,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     let FRAME_COUNTER = 0;
     const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
+    const onScreenKeyboardRef = useRef<HTMLInputElement>(
+      document.createElement("input")
+    );
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
@@ -808,13 +811,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       if (isShown && role !== ControllerRole.Hub) {
         if (editingTextId) {
-          const mockInput = document.createElement("input");
-          mockInput.id = "MOCK_INPUT";
-          mockInput.style.opacity = "0";
-          mockInput.style.position = "absolute";
-          mockInput.focus();
+          setTimeout(() => onScreenKeyboardRef.current.focus(), 0);
         } else {
-          document.getElementById("MOCK_INPUT")?.remove();
+          onScreenKeyboardRef.current.blur();
         }
       }
     }, [isShown, editingTextId, role]);
@@ -833,7 +832,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             borderWidth: 4,
             width: "100%",
             // allows onPointerMove to be fired continuously on touch,
-            // else will be treated as pan gesture leading to short strokes
+            // else will be treated as pan .fgesture leading to short strokes
             touchAction: "none",
             msTouchAction: "none",
             msTouchSelect: "none",
@@ -982,6 +981,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             </Button>
           </div>
         )}
+        <input
+          id="MOCK_INPUT"
+          ref={onScreenKeyboardRef}
+          style={{ position: "absolute", pointerEvents: "none" }}
+        />
       </>
     );
   }
