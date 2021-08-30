@@ -28,6 +28,14 @@ export default function Navbar() {
               <Button
                 variant="outlined"
                 className="text-white"
+                component={Link}
+                to="/profile"
+              >
+                Profile
+              </Button>
+              <Button
+                variant="outlined"
+                className="ml-4 text-white"
                 onClick={onLogout}
               >
                 Logout

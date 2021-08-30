@@ -75,6 +75,11 @@ export interface Register {
   password2: string;
 }
 
+export interface User {
+  name: string;
+  email: string;
+}
+
 export interface Classroom {
   id: string;
   name: string;

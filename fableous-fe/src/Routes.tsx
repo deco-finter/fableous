@@ -12,6 +12,7 @@ import ClassroomListPage from "./containers/ClassroomListPage";
 import { AuthContext } from "./components/AuthProvider";
 import NotFoundPage from "./containers/NotFoundPage";
 import StoryDetailPage from "./containers/StoryDetailPage";
+import ProfilePage from "./containers/ProfilePage";
 
 const PrivateRoute = ({ ...routeProps }: RouteProps) => {
   const [, isAuthenticated] = useContext(AuthContext);
@@ -33,6 +34,7 @@ export default function Routes() {
       <PublicRoute path="/" component={HomePage} exact />
       <PublicRoute path="/login" component={LoginPage} exact />
       <PublicRoute path="/register" component={RegisterPage} exact />
+      <PrivateRoute path="/profile" component={ProfilePage} exact />
       <PrivateRoute path="/classroom" component={ClassroomListPage} exact />
       <Route path="/gallery/:classroomId" component={GalleryPage} exact />
       <Route
