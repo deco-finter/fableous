@@ -811,7 +811,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     useEffect(() => {
       if (isShown && role !== ControllerRole.Hub) {
         if (editingTextId) {
-          setTimeout(() => onScreenKeyboardRef.current.focus(), 100);
+          onScreenKeyboardRef.current.focus();
+          setTimeout(() => onScreenKeyboardRef.current.focus(), 500);
+          console.log(editingTextId);
+          console.log(onScreenKeyboardRef.current);
         } else {
           onScreenKeyboardRef.current.blur();
         }
