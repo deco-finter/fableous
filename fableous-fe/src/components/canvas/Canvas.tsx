@@ -699,6 +699,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const wrapPointerHandler =
       (handler: (event: SimplePointerEventData) => void) =>
       (event: React.PointerEvent<HTMLCanvasElement>) => {
+        event.preventDefault();
         if (event.isPrimary) {
           handler({ clientX: event.clientX, clientY: event.clientY });
         }
