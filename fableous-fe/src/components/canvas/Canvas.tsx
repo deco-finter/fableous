@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
@@ -91,10 +93,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [, setCheckpointHistory] = useState<Checkpoint[]>([]);
 
     const showKeyboard = (show: boolean) => {
-      console.log(show);
       if (show) {
         onScreenKeyboardRef.current.focus();
-        console.log(onScreenKeyboardRef.current);
+      } else {
+        onScreenKeyboardRef.current.blur();
       }
     };
 
@@ -364,7 +366,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (targetId) {
           // edit clicked text
           setEditingTextId(targetId);
-          showKeyboard(true);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
@@ -375,7 +376,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setEditingTextId(textId);
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
-          showKeyboard(true);
         }
       } else if (targetShape) {
         window.speechSynthesis.speak(
@@ -694,10 +694,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const wrapPointerHandler =
-      (handler: (event: SimplePointerEventData) => void) =>
+      (handler: ((event: SimplePointerEventData) => void) | undefined) =>
       (event: React.PointerEvent<HTMLCanvasElement>) => {
         event.preventDefault();
-        if (event.isPrimary) {
+        event.stopPropagation();
+        if (event.isPrimary && handler) {
           handler({ clientX: event.clientX, clientY: event.clientY });
         }
       };
@@ -828,8 +829,16 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           onPointerDown={wrapPointerHandler(onPointerDown)}
           onPointerMove={wrapPointerHandler(onPointerMove)}
           onPointerUp={wrapPointerHandler(onPointerUp)}
+          onPointerCancel={wrapPointerHandler(undefined)}
+          onPointerEnter={wrapPointerHandler(undefined)}
+          onPointerLeave={wrapPointerHandler(undefined)}
+          onPointerOut={wrapPointerHandler(undefined)}
+          onPointerOver={wrapPointerHandler(undefined)}
           onContextMenu={(e) => {
             e.preventDefault();
+          }}
+          onClick={() => {
+            if (editingTextId) showKeyboard(true);
           }}
           style={{
             borderWidth: 4,
@@ -985,15 +994,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           </div>
         )}
         <input
-          id="MOCK_INPUT"
           ref={onScreenKeyboardRef}
-          style={{ position: "absolute", top: 256, pointerEvents: "none" }}
-        />
-        <input
           style={{
             position: "absolute",
-            top: 128,
-            borderWidth: 4,
+            top: 0,
+            opacity: 0,
+            pointerEvents: "none",
           }}
         />
       </>
