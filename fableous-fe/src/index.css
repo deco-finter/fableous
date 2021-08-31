@@ -23,7 +23,7 @@ code {
 #version_tag {
   text-align: center;
   font-family: "Courier", monospace;
-  opacity: 25%;
+  opacity: 0.2;
   position: absolute;
   bottom: 64px;
   user-select: none;
