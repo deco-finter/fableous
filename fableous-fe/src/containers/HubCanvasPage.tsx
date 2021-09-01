@@ -196,6 +196,10 @@ export default function HubCanvasPage() {
     setCurrentPageIdx((prev) => prev + 1);
   };
 
+  const finishCanvas = () => {
+    wsConn?.send(JSON.stringify({ type: WSMessageType.Control, data: {} }));
+  };
+
   const onBeginDrawing = () => {
     onNextPage();
     setHubState(HubState.DrawingSession);
@@ -428,9 +432,11 @@ export default function HubCanvasPage() {
             </div>
           </div>
           <Button onClick={() => exportCanvas()}>Export</Button>
-          <Button onClick={onNextPage}>
-            {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
-          </Button>
+          {currentPageIdx >= storyPageCnt ? (
+            <Button onClick={finishCanvas}>Finish</Button>
+          ) : (
+            <Button onClick={onNextPage}>Next page</Button>
+          )}
         </Grid>
       )}
     </>
