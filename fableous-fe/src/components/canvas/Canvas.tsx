@@ -64,6 +64,12 @@ interface SimplePointerEventData {
   clientY: number;
 }
 
+interface SimpleKeyboardEventData {
+  key?: string;
+  metaKey: boolean;
+  ctrlKey: boolean;
+}
+
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
     let FRAME_COUNTER = 0;
@@ -704,20 +710,16 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       };
 
     const onKeyDown = useCallback(
-      (event: KeyboardEvent) => {
+      (event: SimpleKeyboardEventData) => {
         if (!allowDrawing) return;
-        event.preventDefault();
-        const { ctrlKey, metaKey, key } = event;
-        if ((ctrlKey || metaKey) && key === "z") {
-          placeUndo();
-        }
+        const { key } = event;
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
         if (key === "Escape" || key === "Enter") {
           setEditingTextId(0);
           showKeyboard(false);
         }
-        if (key.length === 1 || key === "Backspace") {
+        if (key && (key.length === 1 || key === "Backspace")) {
           if (key.length === 1) {
             shape.text += key;
           } else if (key === "Backspace") {
@@ -733,7 +735,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [allowDrawing, editingTextId, placeText, placeUndo]
+      [allowDrawing, editingTextId, placeText]
     );
 
     const adjustCanvasSize = useCallback(() => {
@@ -788,15 +790,20 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adjustCanvasSize, isShown]);
 
-    // initialize keyboard listener
+    // initialize undo shortcut listener
     useEffect(() => {
+      const undoListener = (event: KeyboardEvent) => {
+        if (event.key === "z" && (event.ctrlKey || event.metaKey)) {
+          placeUndo();
+        }
+      };
       if (isShown) {
-        window.addEventListener("keydown", onKeyDown);
+        document.addEventListener("keydown", undoListener);
       }
       return () => {
-        window.removeEventListener("keydown", onKeyDown);
+        document.removeEventListener("keydown", undoListener);
       };
-    }, [isShown, layer, onKeyDown]);
+    }, [isShown, layer, placeUndo]);
 
     // start text layer animation
     useEffect(() => {
@@ -995,6 +1002,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         )}
         <input
           ref={onScreenKeyboardRef}
+          onKeyDown={(e) => {
+            onKeyDown({
+              key: e.key.length > 1 ? e.key : undefined,
+              metaKey: e.metaKey,
+              ctrlKey: e.ctrlKey,
+            } as SimpleKeyboardEventData);
+          }}
+          onChange={(e) => {
+            onKeyDown({
+              key: e.target.value[e.target.value.length - 1],
+            } as SimpleKeyboardEventData);
+          }}
+          tabIndex={0}
           style={{
             position: "absolute",
             top: 0,
