@@ -792,18 +792,21 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     // initialize undo shortcut listener
     useEffect(() => {
-      const undoListener = (event: KeyboardEvent) => {
-        if (event.key === "z" && (event.ctrlKey || event.metaKey)) {
-          placeUndo();
+      if (isShown && role !== ControllerRole.Hub) {
+        const undoListener = (event: KeyboardEvent) => {
+          if (event.key === "z" && (event.ctrlKey || event.metaKey)) {
+            placeUndo();
+          }
+        };
+        if (isShown) {
+          document.addEventListener("keydown", undoListener);
         }
-      };
-      if (isShown) {
-        document.addEventListener("keydown", undoListener);
+        return () => {
+          document.removeEventListener("keydown", undoListener);
+        };
       }
-      return () => {
-        document.removeEventListener("keydown", undoListener);
-      };
-    }, [isShown, layer, placeUndo]);
+      return () => {};
+    }, [isShown, layer, placeUndo, role]);
 
     // start text layer animation
     useEffect(() => {
