@@ -798,9 +798,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             placeUndo();
           }
         };
-        if (isShown) {
-          document.addEventListener("keydown", undoListener);
-        }
+        document.addEventListener("keydown", undoListener);
         return () => {
           document.removeEventListener("keydown", undoListener);
         };
