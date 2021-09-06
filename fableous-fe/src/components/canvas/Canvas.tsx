@@ -64,12 +64,6 @@ interface SimplePointerEventData {
   clientY: number;
 }
 
-interface SimpleKeyboardEventData {
-  key?: string;
-  metaKey: boolean;
-  ctrlKey: boolean;
-}
-
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
     let FRAME_COUNTER = 0;
@@ -710,30 +704,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       };
 
     const onKeyDown = useCallback(
-      (event: SimpleKeyboardEventData) => {
+      (text: string) => {
         if (!allowDrawing) return;
-        const { key } = event;
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
-        if (key === "Escape" || key === "Enter") {
-          setEditingTextId(0);
-          showKeyboard(false);
-        }
-        if (key && (key.length === 1 || key === "Backspace")) {
-          if (key.length === 1) {
-            shape.text += key;
-          } else if (key === "Backspace") {
-            if (shape.text)
-              shape.text = shape.text.substring(0, shape.text.length - 1);
-          }
-          placeText(
-            (shape.x1 + shape.x2) / 2,
-            (shape.y1 + shape.y2) / 2,
-            editingTextId,
-            shape.text,
-            shape.fontSize
-          );
-        }
+        shape.text = text;
+        placeText(
+          (shape.x1 + shape.x2) / 2,
+          (shape.y1 + shape.y2) / 2,
+          editingTextId,
+          shape.text,
+          shape.fontSize
+        );
       },
       [allowDrawing, editingTextId, placeText]
     );
@@ -790,17 +772,21 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adjustCanvasSize, isShown]);
 
-    // initialize undo shortcut listener
+    // initialize text event listener
     useEffect(() => {
       if (isShown && role !== ControllerRole.Hub) {
-        const undoListener = (event: KeyboardEvent) => {
+        const textEventHandler = (event: KeyboardEvent) => {
           if (event.key === "z" && (event.ctrlKey || event.metaKey)) {
             placeUndo();
           }
+          if (event.key === "Escape" || event.key === "Enter") {
+            setEditingTextId(0);
+            showKeyboard(false);
+          }
         };
-        document.addEventListener("keydown", undoListener);
+        document.addEventListener("keydown", textEventHandler);
         return () => {
-          document.removeEventListener("keydown", undoListener);
+          document.removeEventListener("keydown", textEventHandler);
         };
       }
       return () => {};
@@ -1003,17 +989,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         )}
         <input
           ref={onScreenKeyboardRef}
-          onKeyDown={(e) => {
-            onKeyDown({
-              key: e.key.length > 1 ? e.key : undefined,
-              metaKey: e.metaKey,
-              ctrlKey: e.ctrlKey,
-            } as SimpleKeyboardEventData);
-          }}
+          value={textShapesRef.current[editingTextId]?.text}
           onChange={(e) => {
-            onKeyDown({
-              key: e.target.value[e.target.value.length - 1],
-            } as SimpleKeyboardEventData);
+            onKeyDown(e.target.value);
           }}
           tabIndex={0}
           style={{
