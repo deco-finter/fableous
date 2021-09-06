@@ -76,6 +76,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
+    const [dragOffset, setDragOffset] = useState([0, 0]);
     const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
@@ -363,9 +364,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setEditingTextId(0);
         }
       } else if (isEditingText) {
-        if (targetId) {
+        if (targetId && targetShape) {
           // edit clicked text
           setEditingTextId(targetId);
+          setDragOffset([
+            (targetShape.x1 + targetShape.x2) / 2 - x,
+            (targetShape.y1 + targetShape.y2) / 2 - y,
+          ]);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
@@ -670,7 +675,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           showKeyboard(false);
-          placeText(x, y, editingTextId, shape.text, shape.fontSize);
+          placeText(
+            x + dragOffset[0],
+            y + dragOffset[1],
+            editingTextId,
+            shape.text,
+            shape.fontSize
+          );
           break;
         case ToolMode.None:
           interactCanvas(x, y, false, true);
