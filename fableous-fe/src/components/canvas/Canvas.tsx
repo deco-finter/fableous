@@ -19,7 +19,8 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import Slider from "@material-ui/core/Slider";
 import cloneDeep from "lodash.clonedeep";
-import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../../Data";
+import { WSMessage } from "../../Data";
+
 import {
   convHEXtoRGBA,
   getTextBounds,
@@ -29,20 +30,8 @@ import {
 } from "./helpers";
 import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
 import { Cursor } from "./CursorScreen";
-
-interface Shape {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
-
-interface TextShape extends Shape {
-  text: string;
-  fontSize: number;
-}
-
-type TextShapeMap = { [id: string]: TextShape };
+import { TextShape, TextShapeMap } from "./data";
+import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -56,7 +45,9 @@ interface CanvasProps {
   layer: ControllerRole;
   pageNum: number;
   isShown?: boolean;
-  setCursor: React.Dispatch<Cursor | undefined>;
+  setCursor?: React.Dispatch<Cursor | undefined>;
+  textShapes: TextShapeMap;
+  setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
 }
 
 interface SimplePointerEventData {
@@ -67,7 +58,16 @@ interface SimplePointerEventData {
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
     let FRAME_COUNTER = 0;
-    const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
+    const {
+      layer,
+      role,
+      pageNum,
+      isShown,
+      setCursor,
+      setTextShapes,
+      textShapes,
+      wsConn,
+    } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const onScreenKeyboardRef = useRef<HTMLInputElement>(
       document.createElement("input")
@@ -81,7 +81,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
-    const [textShapes, setTextShapes] = useState<TextShapeMap>({});
+
     const textShapesRef = useRef<TextShapeMap>(textShapes);
     textShapesRef.current = textShapes; // inject ref to force sync, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
     const [textId, setTextId] = useState(1);
@@ -277,7 +277,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsConn]
+      [canvasRef, role, wsConn, setTextShapes]
     );
 
     const refreshText = () => {
@@ -485,7 +485,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsConn]
+      [canvasRef, role, setTextShapes, wsConn]
     );
 
     const placeUndo = useCallback(() => {
@@ -521,7 +521,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           } as WSMessage)
         );
       }
-    }, [canvasRef, role, wsConn]);
+    }, [canvasRef, role, setTextShapes, wsConn]);
 
     const placeCursor = useCallback(
       (
@@ -530,12 +530,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         normWidth: number,
         targetMode: ToolMode
       ) => {
-        setCursor({
-          normX,
-          normY,
-          normWidth,
-          toolMode: targetMode,
-        } as Cursor);
+        if (setCursor)
+          setCursor({
+            normX,
+            normY,
+            normWidth,
+            toolMode: targetMode,
+          } as Cursor);
         if (role !== ControllerRole.Hub) {
           wsConn?.send(
             JSON.stringify({
@@ -701,7 +702,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
       setDragging(false);
       setHasLifted(true);
-      setCursor(undefined);
+      if (setCursor) setCursor(undefined);
     };
 
     const wrapPointerHandler =
@@ -1019,6 +1020,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
 Canvas.defaultProps = {
   isShown: true,
+  setCursor: undefined,
 };
 
 export default Canvas;
