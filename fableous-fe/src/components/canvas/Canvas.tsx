@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
@@ -67,10 +69,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     let FRAME_COUNTER = 0;
     const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
+    const onScreenKeyboardRef = useRef<HTMLInputElement>(
+      document.createElement("input")
+    );
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
+    const [dragOffset, setDragOffset] = useState([0, 0]);
     const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
@@ -86,6 +92,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
     const [, setCheckpointHistory] = useState<Checkpoint[]>([]);
+
+    const showKeyboard = (show: boolean) => {
+      if (show) {
+        onScreenKeyboardRef.current.focus();
+      } else {
+        onScreenKeyboardRef.current.blur();
+      }
+    };
 
     const placePaint = useCallback(
       (
@@ -350,12 +364,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setEditingTextId(0);
         }
       } else if (isEditingText) {
-        if (targetId) {
+        if (targetId && targetShape) {
           // edit clicked text
           setEditingTextId(targetId);
+          setDragOffset([
+            (targetShape.x1 + targetShape.x2) / 2 - x,
+            (targetShape.y1 + targetShape.y2) / 2 - y,
+          ]);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
+          showKeyboard(false);
         } else {
           // insert new text
           placeText(x, y, textId, "", 18);
@@ -655,7 +674,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           if (!editingTextId || hasLifted || !allowDrawing) return;
           const shape = textShapesRef.current[editingTextId];
           setDragging(true);
-          placeText(x, y, editingTextId, shape.text, shape.fontSize);
+          showKeyboard(false);
+          placeText(
+            x + dragOffset[0],
+            y + dragOffset[1],
+            editingTextId,
+            shape.text,
+            shape.fontSize
+          );
           break;
         case ToolMode.None:
           interactCanvas(x, y, false, true);
@@ -679,43 +705,30 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const wrapPointerHandler =
-      (handler: (event: SimplePointerEventData) => void) =>
+      (handler: ((event: SimplePointerEventData) => void) | undefined) =>
       (event: React.PointerEvent<HTMLCanvasElement>) => {
-        if (event.isPrimary) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.isPrimary && handler) {
           handler({ clientX: event.clientX, clientY: event.clientY });
         }
       };
 
     const onKeyDown = useCallback(
-      (event: KeyboardEvent) => {
+      (text: string) => {
         if (!allowDrawing) return;
-        event.preventDefault();
-        const { ctrlKey, metaKey, key } = event;
-        if ((ctrlKey || metaKey) && key === "z") {
-          placeUndo();
-        }
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
-        if (key === "Escape" || key === "Enter") {
-          setEditingTextId(0);
-        }
-        if (key.length === 1 || key === "Backspace") {
-          if (key.length === 1) {
-            shape.text += key;
-          } else if (key === "Backspace") {
-            if (shape.text)
-              shape.text = shape.text.substring(0, shape.text.length - 1);
-          }
-          placeText(
-            (shape.x1 + shape.x2) / 2,
-            (shape.y1 + shape.y2) / 2,
-            editingTextId,
-            shape.text,
-            shape.fontSize
-          );
-        }
+        shape.text = text;
+        placeText(
+          (shape.x1 + shape.x2) / 2,
+          (shape.y1 + shape.y2) / 2,
+          editingTextId,
+          shape.text,
+          shape.fontSize
+        );
       },
-      [allowDrawing, editingTextId, placeText, placeUndo]
+      [allowDrawing, editingTextId, placeText]
     );
 
     const adjustCanvasSize = useCallback(() => {
@@ -770,15 +783,25 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adjustCanvasSize, isShown]);
 
-    // initialize keyboard listener
+    // initialize text event listener
     useEffect(() => {
-      if (isShown) {
-        window.addEventListener("keydown", onKeyDown);
+      if (isShown && role !== ControllerRole.Hub) {
+        const textEventHandler = (event: KeyboardEvent) => {
+          if (event.key === "z" && (event.ctrlKey || event.metaKey)) {
+            placeUndo();
+          }
+          if (event.key === "Escape" || event.key === "Enter") {
+            setEditingTextId(0);
+            showKeyboard(false);
+          }
+        };
+        document.addEventListener("keydown", textEventHandler);
+        return () => {
+          document.removeEventListener("keydown", textEventHandler);
+        };
       }
-      return () => {
-        window.removeEventListener("keydown", onKeyDown);
-      };
-    }, [isShown, layer, onKeyDown]);
+      return () => {};
+    }, [isShown, layer, placeUndo, role]);
 
     // start text layer animation
     useEffect(() => {
@@ -811,8 +834,16 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           onPointerDown={wrapPointerHandler(onPointerDown)}
           onPointerMove={wrapPointerHandler(onPointerMove)}
           onPointerUp={wrapPointerHandler(onPointerUp)}
+          onPointerCancel={wrapPointerHandler(undefined)}
+          onPointerEnter={wrapPointerHandler(undefined)}
+          onPointerLeave={wrapPointerHandler(undefined)}
+          onPointerOut={wrapPointerHandler(undefined)}
+          onPointerOver={wrapPointerHandler(undefined)}
           onContextMenu={(e) => {
             e.preventDefault();
+          }}
+          onClick={() => {
+            if (editingTextId) showKeyboard(true);
           }}
           style={{
             borderWidth: 4,
@@ -967,6 +998,20 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             </Button>
           </div>
         )}
+        <input
+          ref={onScreenKeyboardRef}
+          value={textShapesRef.current[editingTextId]?.text}
+          onChange={(e) => {
+            onKeyDown(e.target.value);
+          }}
+          tabIndex={0}
+          style={{
+            position: "absolute",
+            top: 0,
+            opacity: 0,
+            pointerEvents: "none",
+          }}
+        />
       </>
     );
   }
