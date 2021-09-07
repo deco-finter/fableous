@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { scaleUpXY } from "./helpers";
 import { ASPECT_RATIO, SCALE } from "./constants";
-import { ToolMode } from "../../Data";
+import { ToolMode } from "../../constant";
 
 export interface Cursor {
   normX: number;
