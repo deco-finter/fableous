@@ -50,10 +50,9 @@ export default function StoryDetailPage() {
   return (
     <Grid container>
       <Grid item xs={12} className="mb-4">
-        {Object.values(manifest?.texts || {}).map((text) => (
-          <Typography variant="h2">new {text.x2}</Typography>
-        ))}
-
+        <Typography variant="h2">
+          new {Object.keys(manifest?.texts || {}).length} texts
+        </Typography>
         <Typography variant="h2">{story?.data?.title}</Typography>
       </Grid>
       {getLoading && (
@@ -81,7 +80,7 @@ export default function StoryDetailPage() {
                     role={ControllerRole.Hub}
                     layer={ControllerRole.Story}
                     pageNum={page}
-                    isGallery
+                    // isGallery
                     setTextShapes={setTextShapes}
                     textShapes={textShapes}
                   />
