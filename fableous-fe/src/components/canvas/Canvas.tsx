@@ -78,7 +78,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
-    const [dragOffset, setDragOffset] = useState([0, 0]);
+    const [dragOffset, setDragOffset] = useState([0, 0]); // offset is in normalized scale
     const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
@@ -366,26 +366,28 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setEditingTextId(0);
         }
       } else if (isEditingText) {
+        const [normCursorX, normCursorY] = scaleDownXY(
+          canvasRef,
+          cursorX,
+          cursorY
+        );
         if (targetId && targetShape) {
           // edit clicked text
           setEditingTextId(targetId);
-          const [x, y] = scaleUpXY(
-            canvasRef,
-            targetShape.normX,
-            targetShape.normY
-          );
-          setDragOffset([x - cursorX, y - cursorY]);
+          setDragOffset([
+            targetShape.normX - normCursorX,
+            targetShape.normY - normCursorY,
+          ]);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
           showKeyboard(false);
         } else {
           // insert new text
-          const [normX, normY] = scaleDownXY(canvasRef, cursorX, cursorY);
           const [normFontSize] = scaleDownXY(canvasRef, 18, 0);
           placeText(textId, {
-            normX,
-            normY,
+            normX: normCursorX,
+            normY: normCursorY,
             normFontSize,
             text: "",
           } as TextShape);
@@ -684,17 +686,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         case ToolMode.Text:
           if (!editingTextId || hasLifted || !allowDrawing) return;
           const shape = textShapesRef.current[editingTextId];
-          const [textX, textY] = scaleDownXY(
-            canvasRef,
-            x + dragOffset[0],
-            y + dragOffset[1]
-          );
           setDragging(true);
           showKeyboard(false);
           placeText(editingTextId, {
             ...shape,
-            normX: textX,
-            normY: textY,
+            normX: normX + dragOffset[0],
+            normY: normY + dragOffset[1],
           } as TextShape);
           break;
         case ToolMode.None:
