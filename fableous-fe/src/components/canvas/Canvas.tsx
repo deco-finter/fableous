@@ -777,6 +777,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setAudioB64Strings([]);
       setTextShapes({});
       setTextId(1);
+      setEditingTextId(0);
       setCheckpointHistory([]);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
