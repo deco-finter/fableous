@@ -1,4 +1,4 @@
-name: Backend
+name: Build:Backend
 
 on:
   workflow_dispatch:
