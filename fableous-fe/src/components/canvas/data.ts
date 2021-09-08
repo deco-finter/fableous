@@ -10,4 +10,4 @@ export interface TextShape extends Shape {
   fontSize: number;
 }
 
-export type TextShapeMap = { [id: string]: TextShape };
+export type TextShapeMap = { [id: number]: TextShape };
