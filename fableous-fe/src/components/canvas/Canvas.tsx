@@ -848,7 +848,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             e.preventDefault();
           }}
           onClick={() => {
-            if (editingTextId) showKeyboard(true);
+            if (editingTextId && role !== ControllerRole.Hub)
+              showKeyboard(true);
           }}
           style={{
             borderWidth: 4,
