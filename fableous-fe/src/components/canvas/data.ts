@@ -1,11 +1,11 @@
 export interface Shape {
-  x: number;
-  y: number;
+  normX: number;
+  normY: number;
 }
 
 export interface TextShape extends Shape {
   text: string;
-  fontSize: number;
+  normFontSize: number;
 }
 
 export type TextShapeMap = { [id: number]: TextShape };

@@ -243,44 +243,32 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
 
     const placeText = useCallback(
-      (x, y, id, text, fontSize) => {
-        const ctx = canvasRef.current.getContext(
-          "2d"
-        ) as CanvasRenderingContext2D;
-        ctx.font = `${fontSize * SCALE}px Arial`;
+      (id, textShape) => {
         setTextShapes(() => ({
           ...textShapesRef.current,
-          [id]: {
-            x,
-            y,
-            text,
-            fontSize,
-          } as TextShape,
+          [id]: textShape,
         }));
         if (role !== ControllerRole.Hub) {
-          const [normX, normY] = scaleDownXY(canvasRef, x, y);
-          const [normFontSize] = scaleDownXY(canvasRef, fontSize, 0);
           wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Text,
               data: {
-                x1: normX,
-                y1: normY,
                 id,
-                text,
-                width: normFontSize,
+                x1: textShape.normX,
+                y1: textShape.normY,
+                text: textShape.text,
+                width: textShape.normFontSize,
               },
             } as WSMessage)
           );
         }
       },
-      [canvasRef, role, wsConn, setTextShapes]
+      [role, wsConn, setTextShapes]
     );
 
     const refreshText = () => {
       window.requestAnimationFrame(refreshText);
-      console.log(Object.keys(textShapesRef.current).length);
       FRAME_COUNTER = (FRAME_COUNTER + 1) % 60;
       if (!canvasRef.current) return;
       const ctx = canvasRef.current.getContext(
@@ -291,16 +279,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
+        const [x, y] = scaleUpXY(canvasRef, shape.normX, shape.normY);
+        const [fontSize] = scaleUpXY(canvasRef, shape.normFontSize, 0);
         const [x1, y1, x2, y2] = getTextBounds(
           canvasRef,
-          shape.x,
-          shape.y,
+          x,
+          y,
           shape.text,
-          shape.fontSize
+          fontSize
         );
         ctx.fillStyle = isGallery ? "#00000000" : "#000000";
-        ctx.font = `${shape.fontSize * SCALE}px Arial`;
-        ctx.fillText(shape.text, shape.x, shape.y);
+        ctx.font = `${fontSize * SCALE}px Arial`;
+        ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
           ctx.beginPath();
           ctx.lineWidth = 4;
@@ -339,27 +329,29 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const interactCanvas = (
-      x: number,
-      y: number,
+      cursorX: number,
+      cursorY: number,
       isEditingText: boolean,
       hover: boolean
     ) => {
       let targetId: number | undefined;
       let targetShape: TextShape | undefined;
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
+        const [x, y] = scaleUpXY(canvasRef, shape.normX, shape.normY);
+        const [fontSize] = scaleUpXY(canvasRef, shape.normFontSize, 0);
         const [x1, y1, x2, y2] = getTextBounds(
           canvasRef,
-          shape.x,
-          shape.y,
+          x,
+          y,
           shape.text,
-          shape.fontSize
+          fontSize
         );
         if (
           !targetShape &&
-          x >= x1 - SELECT_PADDING &&
-          x <= x2 + SELECT_PADDING &&
-          y >= y1 - SELECT_PADDING &&
-          y <= y2 + SELECT_PADDING
+          cursorX >= x1 - SELECT_PADDING &&
+          cursorX <= x2 + SELECT_PADDING &&
+          cursorY >= y1 - SELECT_PADDING &&
+          cursorY <= y2 + SELECT_PADDING
         ) {
           targetId = parseInt(id, 10);
           targetShape = shape;
@@ -377,14 +369,26 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (targetId && targetShape) {
           // edit clicked text
           setEditingTextId(targetId);
-          setDragOffset([targetShape.x - x, targetShape.y - y]);
+          const [x, y] = scaleUpXY(
+            canvasRef,
+            targetShape.normX,
+            targetShape.normY
+          );
+          setDragOffset([x - cursorX, y - cursorY]);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
           showKeyboard(false);
         } else {
           // insert new text
-          placeText(x, y, textId, "", 18);
+          const [normX, normY] = scaleDownXY(canvasRef, cursorX, cursorY);
+          const [normFontSize] = scaleDownXY(canvasRef, 18, 0);
+          placeText(textId, {
+            normX,
+            normY,
+            normFontSize,
+            text: "",
+          } as TextShape);
           setEditingTextId(textId);
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
@@ -593,13 +597,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                 placeFill(x1, y1, msg.data.color || "#000000ff");
                 break;
               case WSMessageType.Text:
-                placeText(
-                  x1,
-                  y1,
-                  msg.data.id || 1,
-                  msg.data.text || "",
-                  width || 0
-                );
+                placeText(msg.data.id || 1, {
+                  normX: msg.data.x1, // use normalized coords
+                  normY: msg.data.y1,
+                  normFontSize: msg.data.width,
+                  text: msg.data.text,
+                } as TextShape);
                 break;
               case WSMessageType.Audio:
                 placeAudio(msg.data.text || "");
@@ -681,15 +684,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         case ToolMode.Text:
           if (!editingTextId || hasLifted || !allowDrawing) return;
           const shape = textShapesRef.current[editingTextId];
+          const [textX, textY] = scaleDownXY(
+            canvasRef,
+            x + dragOffset[0],
+            y + dragOffset[1]
+          );
           setDragging(true);
           showKeyboard(false);
-          placeText(
-            x + dragOffset[0],
-            y + dragOffset[1],
-            editingTextId,
-            shape.text,
-            shape.fontSize
-          );
+          placeText(editingTextId, {
+            ...shape,
+            normX: textX,
+            normY: textY,
+          } as TextShape);
           break;
         case ToolMode.None:
           interactCanvas(x, y, false, true);
@@ -727,8 +733,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (!allowDrawing) return;
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
-        shape.text = text;
-        placeText(shape.x, shape.y, editingTextId, shape.text, shape.fontSize);
+        placeText(editingTextId, { ...shape, text } as TextShape);
       },
       [allowDrawing, editingTextId, placeText]
     );
