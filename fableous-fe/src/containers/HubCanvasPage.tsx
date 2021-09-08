@@ -182,6 +182,7 @@ export default function HubCanvasPage() {
       .toDataURL("image/png")
       .replace("image/png", "image/octet-stream");
     link.click();
+    console.log(JSON.stringify(storyTextShapes));
   };
 
   const isAllControllersJoined = (): boolean => {

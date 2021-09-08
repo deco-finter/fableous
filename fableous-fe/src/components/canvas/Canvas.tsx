@@ -78,7 +78,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
-    const [dragOffset, setDragOffset] = useState([0, 0]);
+    const [dragOffset, setDragOffset] = useState([0, 0]); // offset is in normalized scale
     const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
@@ -243,47 +243,32 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
 
     const placeText = useCallback(
-      (x, y, id, text, fontSize) => {
-        const ctx = canvasRef.current.getContext(
-          "2d"
-        ) as CanvasRenderingContext2D;
-        ctx.font = `${fontSize * SCALE}px Arial`;
-        const [x1, y1, x2, y2] = getTextBounds(canvasRef, x, y, text, fontSize);
+      (id, textShape) => {
         setTextShapes(() => ({
           ...textShapesRef.current,
-          [id]: {
-            text,
-            fontSize,
-            x1,
-            y1,
-            x2,
-            y2,
-          } as TextShape,
+          [id]: textShape,
         }));
         if (role !== ControllerRole.Hub) {
-          const [normX, normY] = scaleDownXY(canvasRef, x, y);
-          const [normFontSize] = scaleDownXY(canvasRef, fontSize, 0);
           wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Text,
               data: {
-                x1: normX,
-                y1: normY,
                 id,
-                text,
-                width: normFontSize,
+                x1: textShape.normX,
+                y1: textShape.normY,
+                text: textShape.text,
+                width: textShape.normFontSize,
               },
             } as WSMessage)
           );
         }
       },
-      [canvasRef, role, wsConn, setTextShapes]
+      [role, wsConn, setTextShapes]
     );
 
     const refreshText = () => {
       window.requestAnimationFrame(refreshText);
-      console.log(Object.keys(textShapesRef.current).length);
       FRAME_COUNTER = (FRAME_COUNTER + 1) % 60;
       if (!canvasRef.current) return;
       const ctx = canvasRef.current.getContext(
@@ -294,31 +279,36 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
-        ctx.fillStyle = isGallery ? "#00000000" : "#000000";
-        ctx.font = `${shape.fontSize * SCALE}px Arial`;
-        ctx.fillText(
+        const [x, y] = scaleUpXY(canvasRef, shape.normX, shape.normY);
+        const [fontSize] = scaleUpXY(canvasRef, shape.normFontSize, 0);
+        const [x1, y1, x2, y2] = getTextBounds(
+          canvasRef,
+          x,
+          y,
           shape.text,
-          (shape.x1 + shape.x2) / 2,
-          (shape.y1 + shape.y2) / 2
+          fontSize
         );
+        ctx.fillStyle = isGallery ? "#00000000" : "#000000";
+        ctx.font = `${fontSize * SCALE}px Arial`;
+        ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
           ctx.beginPath();
           ctx.lineWidth = 4;
           ctx.strokeStyle = "#00dd88";
           ctx.rect(
-            shape.x1 - SELECT_PADDING,
-            shape.y1 - SELECT_PADDING,
-            shape.x2 -
-              shape.x1 +
+            x1 - SELECT_PADDING,
+            y1 - SELECT_PADDING,
+            x2 -
+              x1 +
               2 * SELECT_PADDING +
               (role !== ControllerRole.Hub ? 6 : 0),
-            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+            y2 - y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
           if (role !== ControllerRole.Hub && FRAME_COUNTER > 30) {
             ctx.beginPath();
-            ctx.rect(shape.x2 + 2, shape.y1 - 2, 2, shape.y2 - shape.y1 + 2);
+            ctx.rect(x2 + 2, y1 - 2, 2, y2 - y1 + 2);
             ctx.fill();
             ctx.closePath();
           }
@@ -327,10 +317,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ctx.lineWidth = 1;
           ctx.strokeStyle = "#00aaaa";
           ctx.rect(
-            shape.x1 - SELECT_PADDING,
-            shape.y1 - SELECT_PADDING,
-            shape.x2 - shape.x1 + 2 * SELECT_PADDING,
-            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+            x1 - SELECT_PADDING,
+            y1 - SELECT_PADDING,
+            x2 - x1 + 2 * SELECT_PADDING,
+            y2 - y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
@@ -339,20 +329,29 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const interactCanvas = (
-      x: number,
-      y: number,
+      cursorX: number,
+      cursorY: number,
       isEditingText: boolean,
       hover: boolean
     ) => {
       let targetId: number | undefined;
       let targetShape: TextShape | undefined;
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
+        const [x, y] = scaleUpXY(canvasRef, shape.normX, shape.normY);
+        const [fontSize] = scaleUpXY(canvasRef, shape.normFontSize, 0);
+        const [x1, y1, x2, y2] = getTextBounds(
+          canvasRef,
+          x,
+          y,
+          shape.text,
+          fontSize
+        );
         if (
           !targetShape &&
-          x >= shape.x1 - SELECT_PADDING &&
-          x <= shape.x2 + SELECT_PADDING &&
-          y >= shape.y1 - SELECT_PADDING &&
-          y <= shape.y2 + SELECT_PADDING
+          cursorX >= x1 - SELECT_PADDING &&
+          cursorX <= x2 + SELECT_PADDING &&
+          cursorY >= y1 - SELECT_PADDING &&
+          cursorY <= y2 + SELECT_PADDING
         ) {
           targetId = parseInt(id, 10);
           targetShape = shape;
@@ -367,12 +366,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setEditingTextId(0);
         }
       } else if (isEditingText) {
+        const [normCursorX, normCursorY] = scaleDownXY(
+          canvasRef,
+          cursorX,
+          cursorY
+        );
         if (targetId && targetShape) {
           // edit clicked text
           setEditingTextId(targetId);
           setDragOffset([
-            (targetShape.x1 + targetShape.x2) / 2 - x,
-            (targetShape.y1 + targetShape.y2) / 2 - y,
+            targetShape.normX - normCursorX,
+            targetShape.normY - normCursorY,
           ]);
         } else if (editingTextId) {
           // deselect currently editing text
@@ -380,7 +384,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           showKeyboard(false);
         } else {
           // insert new text
-          placeText(x, y, textId, "", 18);
+          const [normFontSize] = scaleDownXY(canvasRef, 18, 0);
+          placeText(textId, {
+            normX: normCursorX,
+            normY: normCursorY,
+            normFontSize,
+            text: "",
+          } as TextShape);
           setEditingTextId(textId);
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
@@ -589,13 +599,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                 placeFill(x1, y1, msg.data.color || "#000000ff");
                 break;
               case WSMessageType.Text:
-                placeText(
-                  x1,
-                  y1,
-                  msg.data.id || 1,
-                  msg.data.text || "",
-                  width || 0
-                );
+                placeText(msg.data.id || 1, {
+                  normX: msg.data.x1 || 0, // use normalized coords
+                  normY: msg.data.y1 || 0,
+                  normFontSize: msg.data.width || 0,
+                  text: msg.data.text || "",
+                } as TextShape);
                 break;
               case WSMessageType.Audio:
                 placeAudio(msg.data.text || "");
@@ -679,13 +688,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           showKeyboard(false);
-          placeText(
-            x + dragOffset[0],
-            y + dragOffset[1],
-            editingTextId,
-            shape.text,
-            shape.fontSize
-          );
+          placeText(editingTextId, {
+            ...shape,
+            normX: normX + dragOffset[0],
+            normY: normY + dragOffset[1],
+          } as TextShape);
           break;
         case ToolMode.None:
           interactCanvas(x, y, false, true);
@@ -723,14 +730,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (!allowDrawing) return;
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
-        shape.text = text;
-        placeText(
-          (shape.x1 + shape.x2) / 2,
-          (shape.y1 + shape.y2) / 2,
-          editingTextId,
-          shape.text,
-          shape.fontSize
-        );
+        placeText(editingTextId, { ...shape, text } as TextShape);
       },
       [allowDrawing, editingTextId, placeText]
     );
@@ -777,6 +777,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setAudioB64Strings([]);
       setTextShapes({});
       setTextId(1);
+      setEditingTextId(0);
       setCheckpointHistory([]);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
@@ -848,7 +849,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             e.preventDefault();
           }}
           onClick={() => {
-            if (editingTextId) showKeyboard(true);
+            if (editingTextId && role !== ControllerRole.Hub)
+              showKeyboard(true);
           }}
           style={{
             borderWidth: 4,
@@ -1005,7 +1007,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         )}
         <input
           ref={onScreenKeyboardRef}
-          value={textShapesRef.current[editingTextId]?.text}
+          value={textShapesRef.current[editingTextId]?.text || ""}
           onChange={(e) => {
             onKeyDown(e.target.value);
           }}

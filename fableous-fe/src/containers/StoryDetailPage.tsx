@@ -17,7 +17,7 @@ export default function StoryDetailPage() {
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
 
   const [
-    { data: story, loading: getLoading, error: getError },
+    { data: story, loading: getStoryLoading, error: getStoryError },
     executeGetClassroomDetail,
   ] = useAxios<APIResponse<Session>, APIResponse<undefined>>(
     restAPI.session.getOne(classroomId, sessionId),
@@ -25,12 +25,13 @@ export default function StoryDetailPage() {
   );
 
   const [page, setPage] = useState(1);
-  const [{ data: manifest }, executeGetManifest] = useAxios<
-    Manifest,
-    undefined
-  >(restAPI.gallery.getAsset(classroomId, sessionId, page, "manifest.json"), {
-    manual: true,
-  });
+  const [{ data: manifest, loading: getManifestLoading }, executeGetManifest] =
+    useAxios<Manifest, undefined>(
+      restAPI.gallery.getAsset(classroomId, sessionId, page, "manifest.json"),
+      {
+        manual: true,
+      }
+    );
 
   useEffect(() => {
     executeGetClassroomDetail();
@@ -50,19 +51,18 @@ export default function StoryDetailPage() {
   return (
     <Grid container>
       <Grid item xs={12} className="mb-4">
-        {Object.values(manifest?.texts || {}).map((text) => (
-          <Typography variant="h2">new {text.x2}</Typography>
-        ))}
-
+        <Typography variant="h2">
+          {Object.keys(manifest?.texts || {}).length} texts
+        </Typography>
         <Typography variant="h2">{story?.data?.title}</Typography>
       </Grid>
-      {getLoading && (
+      {getStoryLoading && (
         <Grid container justifyContent="center">
           <CircularProgress />
         </Grid>
       )}
-      {getError && <Alert severity="error">Failed loading Gallery!</Alert>}
-      {!getLoading && !getError && (
+      {getStoryError && <Alert severity="error">Failed loading Gallery!</Alert>}
+      {!getStoryLoading && !getStoryError && (
         <Grid container spacing={2}>
           {story?.data && (
             <Grid item key={story.data.pages}>
@@ -81,6 +81,12 @@ export default function StoryDetailPage() {
                     role={ControllerRole.Hub}
                     layer={ControllerRole.Story}
                     pageNum={page}
+                    isShown={
+                      !getStoryLoading &&
+                      !!story &&
+                      !getManifestLoading &&
+                      !!manifest
+                    } // ensures canvas is loaded withh proper dimensions
                     isGallery
                     setTextShapes={setTextShapes}
                     textShapes={textShapes}
@@ -104,6 +110,9 @@ export default function StoryDetailPage() {
                       ).url
                     }
                     alt={story.data.title}
+                    style={{
+                      borderWidth: 4,
+                    }}
                   />
                 </div>
               </div>
