@@ -248,16 +248,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           "2d"
         ) as CanvasRenderingContext2D;
         ctx.font = `${fontSize * SCALE}px Arial`;
-        const [x1, y1, x2, y2] = getTextBounds(canvasRef, x, y, text, fontSize);
         setTextShapes(() => ({
           ...textShapesRef.current,
           [id]: {
+            x,
+            y,
             text,
             fontSize,
-            x1,
-            y1,
-            x2,
-            y2,
           } as TextShape,
         }));
         if (role !== ControllerRole.Hub) {
@@ -294,31 +291,34 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
+        const [x1, y1, x2, y2] = getTextBounds(
+          canvasRef,
+          shape.x,
+          shape.y,
+          shape.text,
+          shape.fontSize
+        );
         ctx.fillStyle = isGallery ? "#00000000" : "#000000";
         ctx.font = `${shape.fontSize * SCALE}px Arial`;
-        ctx.fillText(
-          shape.text,
-          (shape.x1 + shape.x2) / 2,
-          (shape.y1 + shape.y2) / 2
-        );
+        ctx.fillText(shape.text, shape.x, shape.y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
           ctx.beginPath();
           ctx.lineWidth = 4;
           ctx.strokeStyle = "#00dd88";
           ctx.rect(
-            shape.x1 - SELECT_PADDING,
-            shape.y1 - SELECT_PADDING,
-            shape.x2 -
-              shape.x1 +
+            x1 - SELECT_PADDING,
+            y1 - SELECT_PADDING,
+            x2 -
+              x1 +
               2 * SELECT_PADDING +
               (role !== ControllerRole.Hub ? 6 : 0),
-            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+            y2 - y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
           if (role !== ControllerRole.Hub && FRAME_COUNTER > 30) {
             ctx.beginPath();
-            ctx.rect(shape.x2 + 2, shape.y1 - 2, 2, shape.y2 - shape.y1 + 2);
+            ctx.rect(x2 + 2, y1 - 2, 2, y2 - y1 + 2);
             ctx.fill();
             ctx.closePath();
           }
@@ -327,10 +327,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ctx.lineWidth = 1;
           ctx.strokeStyle = "#00aaaa";
           ctx.rect(
-            shape.x1 - SELECT_PADDING,
-            shape.y1 - SELECT_PADDING,
-            shape.x2 - shape.x1 + 2 * SELECT_PADDING,
-            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+            x1 - SELECT_PADDING,
+            y1 - SELECT_PADDING,
+            x2 - x1 + 2 * SELECT_PADDING,
+            y2 - y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
@@ -347,12 +347,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       let targetId: number | undefined;
       let targetShape: TextShape | undefined;
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
+        const [x1, y1, x2, y2] = getTextBounds(
+          canvasRef,
+          shape.x,
+          shape.y,
+          shape.text,
+          shape.fontSize
+        );
         if (
           !targetShape &&
-          x >= shape.x1 - SELECT_PADDING &&
-          x <= shape.x2 + SELECT_PADDING &&
-          y >= shape.y1 - SELECT_PADDING &&
-          y <= shape.y2 + SELECT_PADDING
+          x >= x1 - SELECT_PADDING &&
+          x <= x2 + SELECT_PADDING &&
+          y >= y1 - SELECT_PADDING &&
+          y <= y2 + SELECT_PADDING
         ) {
           targetId = parseInt(id, 10);
           targetShape = shape;
@@ -370,10 +377,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (targetId && targetShape) {
           // edit clicked text
           setEditingTextId(targetId);
-          setDragOffset([
-            (targetShape.x1 + targetShape.x2) / 2 - x,
-            (targetShape.y1 + targetShape.y2) / 2 - y,
-          ]);
+          setDragOffset([targetShape.x - x, targetShape.y - y]);
         } else if (editingTextId) {
           // deselect currently editing text
           setEditingTextId(0);
@@ -724,13 +728,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
         shape.text = text;
-        placeText(
-          (shape.x1 + shape.x2) / 2,
-          (shape.y1 + shape.y2) / 2,
-          editingTextId,
-          shape.text,
-          shape.fontSize
-        );
+        placeText(shape.x, shape.y, editingTextId, shape.text, shape.fontSize);
       },
       [allowDrawing, editingTextId, placeText]
     );
