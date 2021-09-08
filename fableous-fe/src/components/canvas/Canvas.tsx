@@ -600,10 +600,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                 break;
               case WSMessageType.Text:
                 placeText(msg.data.id || 1, {
-                  normX: msg.data.x1, // use normalized coords
-                  normY: msg.data.y1,
-                  normFontSize: msg.data.width,
-                  text: msg.data.text,
+                  normX: msg.data.x1 || 0, // use normalized coords
+                  normY: msg.data.y1 || 0,
+                  normFontSize: msg.data.width || 0,
+                  text: msg.data.text || "",
                 } as TextShape);
                 break;
               case WSMessageType.Audio:
