@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Lint fableous-fe
+    name: Lint
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,7 +25,7 @@ jobs:
       - name: eslint
         run: yarn lint
   build:
-    name: Build fableous-fe
+    name: Build
     runs-on: Ubuntu-20.04
     defaults:
       run:
