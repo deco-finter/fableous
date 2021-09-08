@@ -44,6 +44,7 @@ interface CanvasProps {
   role: ControllerRole;
   layer: ControllerRole;
   pageNum: number;
+  isGallery?: boolean;
   isShown?: boolean;
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
@@ -62,6 +63,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       layer,
       role,
       pageNum,
+      isGallery,
       isShown,
       setCursor,
       setTextShapes,
@@ -81,7 +83,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
-
     const textShapesRef = useRef<TextShapeMap>(textShapes);
     textShapesRef.current = textShapes; // inject ref to force sync, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
     const [textId, setTextId] = useState(1);
@@ -282,6 +283,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     const refreshText = () => {
       window.requestAnimationFrame(refreshText);
+      console.log(Object.keys(textShapesRef.current).length);
       FRAME_COUNTER = (FRAME_COUNTER + 1) % 60;
       if (!canvasRef.current) return;
       const ctx = canvasRef.current.getContext(
@@ -292,6 +294,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
+        ctx.fillStyle = isGallery ? "#00000000" : "#000000";
         ctx.font = `${shape.fontSize * SCALE}px Arial`;
         ctx.fillText(
           shape.text,
@@ -807,6 +810,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     // start text layer animation
     useEffect(() => {
       if (isShown && layer === ControllerRole.Story) {
+        console.log("render");
         const anim = window.requestAnimationFrame(refreshText);
         return () => {
           window.cancelAnimationFrame(anim);
@@ -1019,6 +1023,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 );
 
 Canvas.defaultProps = {
+  isGallery: false,
   isShown: true,
   setCursor: undefined,
 };
