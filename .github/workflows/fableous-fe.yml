@@ -1,9 +1,13 @@
-name: Build
+name: Frontend
 
-on: push
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "fableous-fe/**"
 
 jobs:
-  lint-fe:
+  lint:
     name: Lint fableous-fe
     runs-on: ubuntu-latest
     defaults:
@@ -20,7 +24,7 @@ jobs:
         run: yarn
       - name: eslint
         run: yarn lint
-  build-fe:
+  build:
     name: Build fableous-fe
     runs-on: Ubuntu-20.04
     defaults:
@@ -43,34 +47,3 @@ jobs:
           name: build-fe
           path: |
             fableous-fe/build/
-  lint-be:
-    name: Lint fableous-be
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: latest
-          working-directory: fableous-be
-  build-be:
-    name: Build fableous-be
-    runs-on: Ubuntu-20.04
-    container: daystram/go-builder:1.16
-    defaults:
-      run:
-        working-directory: fableous-be
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: Install Dependencies
-        run: go mod tidy
-      - name: Build
-        run: go build -a -o app .
-      - name: Archive Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-be
-          path: |
-            fableous-be/app
