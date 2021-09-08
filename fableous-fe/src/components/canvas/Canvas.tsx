@@ -1006,7 +1006,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         )}
         <input
           ref={onScreenKeyboardRef}
-          value={textShapesRef.current[editingTextId]?.text}
+          value={textShapesRef.current[editingTextId]?.text || ""}
           onChange={(e) => {
             onKeyDown(e.target.value);
           }}
