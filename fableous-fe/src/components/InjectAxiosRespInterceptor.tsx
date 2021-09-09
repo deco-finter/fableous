@@ -1,6 +1,6 @@
 import { useContext, useEffect } from "react";
 import { useHistory } from "react-router-dom";
-import { setupResponseInterceptor } from "../Api";
+import { setupResponseInterceptor } from "../api";
 import { AuthContext } from "./AuthProvider";
 
 export default function InjectAxiosRespInterceptor() {

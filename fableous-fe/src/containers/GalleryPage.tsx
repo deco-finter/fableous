@@ -11,8 +11,8 @@ import { useEffect, useContext } from "react";
 import { Link, useParams } from "react-router-dom";
 import useAxios from "axios-hooks";
 import { Alert } from "@material-ui/lab";
-import { restAPI } from "../Api";
-import { APIResponse, Session } from "../Data";
+import { restAPI } from "../api";
+import { APIResponse, Session } from "../data";
 import { AuthContext } from "../components/AuthProvider";
 
 export default function GalleryPage() {

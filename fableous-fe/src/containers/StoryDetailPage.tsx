@@ -3,8 +3,8 @@ import useAxios from "axios-hooks";
 import { useEffect, useState } from "react";
 import { Alert } from "@material-ui/lab";
 import { useParams } from "react-router-dom";
-import { restAPI } from "../Api";
-import { APIResponse, Session } from "../Data";
+import { restAPI } from "../api";
+import { APIResponse, Session } from "../data";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();

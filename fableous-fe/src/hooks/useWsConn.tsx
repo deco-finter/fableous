@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { WSMessageType } from "../Data";
+import { WSMessageType } from "../data";
 
 export default function useWsConn(): [
   WebSocket | undefined,

@@ -9,14 +9,14 @@ import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
+import { restAPI, wsAPI } from "../api";
 import {
   ControllerRole,
   Story,
   WSControlMessageData,
   WSJoinMessageData,
   WSMessageType,
-} from "../Data";
-import { restAPI, wsAPI } from "../Api";
+} from "../data";
 import FormikTextField from "../components/FormikTextField";
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
