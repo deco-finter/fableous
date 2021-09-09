@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
@@ -8,6 +10,7 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  useRef,
 } from "react";
 import Button from "@material-ui/core/Button";
 import Radio from "@material-ui/core/Radio";
@@ -15,6 +18,7 @@ import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import Slider from "@material-ui/core/Slider";
+import cloneDeep from "lodash.clonedeep";
 import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../../Data";
 import {
   convHEXtoRGBA,
@@ -38,10 +42,20 @@ interface TextShape extends Shape {
   fontSize: number;
 }
 
+type TextShapeMap = { [id: string]: TextShape };
+
+interface Checkpoint {
+  tool: ToolMode;
+  data: ImageData | TextShapeMap;
+  timestamp: number;
+}
+
 interface CanvasProps {
-  wsRef: MutableRefObject<WebSocket | undefined>;
+  wsConn: WebSocket | undefined;
   role: ControllerRole;
   layer: ControllerRole;
+  pageNum: number;
+  isShown?: boolean;
   setCursor: React.Dispatch<Cursor | undefined>;
 }
 
@@ -52,24 +66,40 @@ interface SimplePointerEventData {
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
-    const { layer, role, setCursor, wsRef } = props;
+    let FRAME_COUNTER = 0;
+    const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
+    const onScreenKeyboardRef = useRef<HTMLInputElement>(
+      document.createElement("input")
+    );
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
-    const [editingTextId, setEditingTextId] = useState(0);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
+    const [dragOffset, setDragOffset] = useState([0, 0]);
     const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
+    const [textShapes, setTextShapes] = useState<TextShapeMap>({});
+    const textShapesRef = useRef<TextShapeMap>(textShapes);
+    textShapesRef.current = textShapes; // inject ref to force sync, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
     const [textId, setTextId] = useState(1);
-    const [textShapes, setTextShapes] = useState<{ [id: string]: TextShape }>(
-      {}
-    );
+    const [editingTextId, setEditingTextId] = useState(0);
+    const editingTextIdRef = useRef(editingTextId);
+    editingTextIdRef.current = editingTextId;
     const [toolColor, setToolColor] = useState("#000000ff");
     const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
     const [toolWidth, setToolWidth] = useState(8 * SCALE);
+    const [, setCheckpointHistory] = useState<Checkpoint[]>([]);
+
+    const showKeyboard = (show: boolean) => {
+      if (show) {
+        onScreenKeyboardRef.current.focus();
+      } else {
+        onScreenKeyboardRef.current.blur();
+      }
+    };
 
     const placePaint = useCallback(
       (
@@ -84,11 +114,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           "2d"
         ) as CanvasRenderingContext2D;
         const isCoordEq = x1 === x2 && y1 === y2;
-
         // lay down path
         ctx.beginPath();
         ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        ctx.lineTo(isCoordEq ? x1 + 0.1 : x2, isCoordEq ? y1 + 0.1 : y2);
         ctx.closePath();
         // clear overlapped pixels
         ctx.globalCompositeOperation = "destination-out";
@@ -102,14 +131,14 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.strokeStyle = targetColor;
         ctx.lineWidth = targetWidth;
         ctx.moveTo(x1, y1);
-        ctx.lineTo(isCoordEq ? x1 + 1 : x2, isCoordEq ? y1 + 1 : y2);
+        ctx.lineTo(isCoordEq ? x1 + 0.1 : x2, isCoordEq ? y1 + 0.1 : y2);
         ctx.closePath();
         ctx.stroke();
         if (role !== ControllerRole.Hub) {
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
           const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
           const [normWidth] = scaleDownXY(canvasRef, targetWidth, 0);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Paint,
@@ -125,7 +154,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const placeFill = useCallback(
@@ -200,7 +229,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.putImageData(image, 0, 0);
         if (role !== ControllerRole.Hub) {
           const [normX, normY] = scaleDownXY(canvasRef, startX, startY);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Fill,
@@ -209,7 +238,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
     const placeText = useCallback(
@@ -219,8 +248,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ) as CanvasRenderingContext2D;
         ctx.font = `${fontSize * SCALE}px Arial`;
         const [x1, y1, x2, y2] = getTextBounds(canvasRef, x, y, text, fontSize);
-        setTextShapes((prev) => ({
-          ...prev,
+        setTextShapes(() => ({
+          ...textShapesRef.current,
           [id]: {
             text,
             fontSize,
@@ -233,7 +262,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (role !== ControllerRole.Hub) {
           const [normX, normY] = scaleDownXY(canvasRef, x, y);
           const [normFontSize] = scaleDownXY(canvasRef, fontSize, 0);
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Text,
@@ -248,25 +277,51 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsRef]
+      [canvasRef, role, wsConn]
     );
 
-    const refreshText = useCallback(() => {
+    const refreshText = () => {
+      window.requestAnimationFrame(refreshText);
+      FRAME_COUNTER = (FRAME_COUNTER + 1) % 60;
       if (!canvasRef.current) return;
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
       const { width, height } = canvasRef.current;
       ctx.clearRect(0, 0, width, height);
-      Object.entries(textShapes).forEach(([id, shape]) => {
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      Object.entries(textShapesRef.current).forEach(([id, shape]) => {
         ctx.font = `${shape.fontSize * SCALE}px Arial`;
         ctx.fillText(
           shape.text,
           (shape.x1 + shape.x2) / 2,
           (shape.y1 + shape.y2) / 2
         );
-        if (parseInt(id, 10) === editingTextId) {
+        if (parseInt(id, 10) === editingTextIdRef.current) {
           ctx.beginPath();
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = "#00dd88";
+          ctx.rect(
+            shape.x1 - SELECT_PADDING,
+            shape.y1 - SELECT_PADDING,
+            shape.x2 -
+              shape.x1 +
+              2 * SELECT_PADDING +
+              (role !== ControllerRole.Hub ? 6 : 0),
+            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+          );
+          ctx.stroke();
+          ctx.closePath();
+          if (role !== ControllerRole.Hub && FRAME_COUNTER > 30) {
+            ctx.beginPath();
+            ctx.rect(shape.x2 + 2, shape.y1 - 2, 2, shape.y2 - shape.y1 + 2);
+            ctx.fill();
+            ctx.closePath();
+          }
+        } else if (role !== ControllerRole.Hub) {
+          ctx.beginPath();
+          ctx.lineWidth = 1;
           ctx.strokeStyle = "#00aaaa";
           ctx.rect(
             shape.x1 - SELECT_PADDING,
@@ -278,35 +333,58 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ctx.closePath();
         }
       });
-    }, [canvasRef, editingTextId, textShapes]);
+    };
 
-    const interactCanvas = (x: number, y: number, isEditingText: boolean) => {
-      let clickedId: number | undefined;
-      let clicked: TextShape | undefined;
-      Object.entries(textShapes).forEach(([id, shape]) => {
+    const interactCanvas = (
+      x: number,
+      y: number,
+      isEditingText: boolean,
+      hover: boolean
+    ) => {
+      let targetId: number | undefined;
+      let targetShape: TextShape | undefined;
+      Object.entries(textShapesRef.current).forEach(([id, shape]) => {
         if (
-          !clicked &&
+          !targetShape &&
           x >= shape.x1 - SELECT_PADDING &&
           x <= shape.x2 + SELECT_PADDING &&
           y >= shape.y1 - SELECT_PADDING &&
           y <= shape.y2 + SELECT_PADDING
         ) {
-          clickedId = parseInt(id, 10);
-          clicked = shape;
+          targetId = parseInt(id, 10);
+          targetShape = shape;
         }
       });
-      if (isEditingText) {
-        if (clickedId && clicked) {
-          setEditingTextId(clickedId);
+      if (hover) {
+        if (targetId) {
+          canvasRef.current.style.cursor = "pointer";
+          setEditingTextId(targetId);
         } else {
+          canvasRef.current.style.cursor = "default";
+          setEditingTextId(0);
+        }
+      } else if (isEditingText) {
+        if (targetId && targetShape) {
+          // edit clicked text
+          setEditingTextId(targetId);
+          setDragOffset([
+            (targetShape.x1 + targetShape.x2) / 2 - x,
+            (targetShape.y1 + targetShape.y2) / 2 - y,
+          ]);
+        } else if (editingTextId) {
+          // deselect currently editing text
+          setEditingTextId(0);
+          showKeyboard(false);
+        } else {
+          // insert new text
           placeText(x, y, textId, "", 18);
           setEditingTextId(textId);
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
         }
-      } else if (clicked) {
+      } else if (targetShape) {
         window.speechSynthesis.speak(
-          new SpeechSynthesisUtterance(clicked.text)
+          new SpeechSynthesisUtterance(targetShape.text)
         );
       }
     };
@@ -319,7 +397,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const initAudio = () => {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(
+      navigator.mediaDevices?.getUserMedia({ audio: true }).then(
         (stream) => {
           const mediaRecorder = new MediaRecorder(stream);
           mediaRecorder.ondataavailable = ({ data }) => {
@@ -328,7 +406,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               new Blob([data], { type: "audio/ogg;codecs=opus" })
             );
             reader.onloadend = () => {
-              wsRef.current?.send(
+              wsConn?.send(
                 JSON.stringify({
                   role,
                   type: WSMessageType.Audio,
@@ -356,6 +434,95 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     }, [audioMediaRecorder, audioRecording]);
 
+    const placeCheckpoint = useCallback(
+      (tool: ToolMode) => {
+        if (tool === ToolMode.Paint || tool === ToolMode.Fill) {
+          const ctx = canvasRef.current.getContext(
+            "2d"
+          ) as CanvasRenderingContext2D;
+          setCheckpointHistory((prev) => {
+            const checkpoint = {
+              tool,
+              data: ctx.getImageData(
+                0,
+                0,
+                canvasRef.current.width,
+                canvasRef.current.height
+              ),
+              timestamp: Date.now(),
+            } as Checkpoint;
+
+            return [...prev, checkpoint];
+          });
+        } else if (tool === ToolMode.Text) {
+          const filtered = Object.fromEntries(
+            Object.entries(textShapesRef.current).filter(
+              ([, shape]) => shape.text.length > 0
+            )
+          );
+          setTextShapes(filtered);
+          setCheckpointHistory((prev) => {
+            const checkpoint = {
+              tool,
+              data: filtered,
+              timestamp: Date.now(),
+            } as Checkpoint;
+
+            // deep copy needed, else editting text
+            // change past textshapes change somehow
+            return [...prev, cloneDeep(checkpoint)];
+          });
+        }
+        if (role !== ControllerRole.Hub) {
+          wsConn?.send(
+            JSON.stringify({
+              role,
+              type: WSMessageType.Checkpoint,
+              data: {
+                text: tool,
+              },
+            } as WSMessage)
+          );
+        }
+      },
+      [canvasRef, role, wsConn]
+    );
+
+    const placeUndo = useCallback(() => {
+      setCheckpointHistory((prev) => {
+        const newCheckpoint = prev.length >= 2 ? prev[prev.length - 2] : null;
+        const ctx = canvasRef.current.getContext(
+          "2d"
+        ) as CanvasRenderingContext2D;
+        if (!newCheckpoint) {
+          ctx.clearRect(
+            0,
+            0,
+            canvasRef.current.width,
+            canvasRef.current.height
+          );
+          setTextShapes({});
+        } else if (
+          newCheckpoint.tool === ToolMode.Paint ||
+          newCheckpoint.tool === ToolMode.Fill
+        ) {
+          ctx.putImageData(newCheckpoint.data as ImageData, 0, 0);
+        } else if (newCheckpoint.tool === ToolMode.Text) {
+          setTextShapes(newCheckpoint.data as TextShapeMap);
+        }
+        return prev.slice(0, -1);
+      });
+      if (role !== ControllerRole.Hub) {
+        wsConn?.send(
+          JSON.stringify({
+            role,
+            type: WSMessageType.Undo,
+            data: {},
+          } as WSMessage)
+        );
+      }
+    }, [canvasRef, role, wsConn]);
+
     const placeCursor = useCallback(
       (
         normX: number,
@@ -370,7 +537,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           toolMode: targetMode,
         } as Cursor);
         if (role !== ControllerRole.Hub) {
-          wsRef.current?.send(
+          wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Cursor,
@@ -384,7 +551,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [setCursor, role, wsRef]
+      [setCursor, role, wsConn]
     );
 
     const readMessage = useCallback(
@@ -429,6 +596,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               case WSMessageType.Audio:
                 placeAudio(msg.data.text || "");
                 break;
+              case WSMessageType.Checkpoint:
+                placeCheckpoint(msg.data.text as ToolMode);
+                break;
+              case WSMessageType.Undo:
+                placeUndo();
+                break;
               case WSMessageType.Cursor:
                 placeCursor(
                   msg.data.x1 || 0, // no need to denormalize
@@ -444,11 +617,23 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           console.error(e);
         }
       },
-      [layer, canvasRef, placePaint, placeFill, placeText, placeCursor]
+      [
+        layer,
+        canvasRef,
+        placePaint,
+        placeFill,
+        placeText,
+        placeCheckpoint,
+        placeUndo,
+        placeCursor,
+      ]
     );
 
-    function onPointerDown(event: SimplePointerEventData) {
+    const onPointerDown = (event: SimplePointerEventData) => {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
+      const [normX, normY] = scaleDownXY(canvasRef, x, y);
+      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
+      placeCursor(normX, normY, normWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
           setDragging(true);
@@ -460,25 +645,24 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           break;
         case ToolMode.Text:
           setHasLifted(false);
-          interactCanvas(x, y, true);
+          interactCanvas(x, y, true, false);
           break;
         case ToolMode.None:
-          interactCanvas(x, y, false);
+          interactCanvas(x, y, false, false);
           break;
         default:
       }
-    }
+    };
 
-    function onPointerMove(event: SimplePointerEventData) {
-      if (!allowDrawing) return;
+    const onPointerMove = (event: SimplePointerEventData) => {
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
       const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-      placeCursor(normX, normY, normWidth, toolMode);
+      if (allowDrawing) placeCursor(normX, normY, normWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
-          if (!dragging) return;
+          if (!dragging || !allowDrawing) return;
           if (
             Math.round(lastX) === Math.round(x) &&
             Math.round(lastY) === Math.round(y)
@@ -487,70 +671,75 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           placePaint(lastX, lastY, x, y, toolColor, toolWidth);
           break;
         case ToolMode.Text:
-          if (!editingTextId || hasLifted) return;
-          const shape = textShapes[editingTextId];
+          if (!editingTextId || hasLifted || !allowDrawing) return;
+          const shape = textShapesRef.current[editingTextId];
           setDragging(true);
-          placeText(x, y, editingTextId, shape.text, shape.fontSize);
-          break;
-        default:
-      }
-      setLastPos([x, y]);
-    }
-
-    function onPointerUp(_event: SimplePointerEventData) {
-      if (!allowDrawing) return;
-      if (dragging) setEditingTextId(0);
-      setDragging(false);
-      setHasLifted(true);
-    }
-
-    const wrapMouseHandler =
-      (handler: (event: SimplePointerEventData) => void) =>
-      (event: React.MouseEvent<HTMLCanvasElement>) => {
-        handler({ clientX: event.clientX, clientY: event.clientY });
-      };
-
-    const wrapTouchHandler =
-      (handler: (event: SimplePointerEventData) => void) =>
-      (event: React.TouchEvent<HTMLCanvasElement>) => {
-        if (event.targetTouches.length > 0) {
-          const firstTouch = event.targetTouches[0];
-          handler({ clientX: firstTouch.clientX, clientY: firstTouch.clientY });
-        }
-      };
-
-    const onKeyDown = useCallback(
-      (event: KeyboardEvent) => {
-        if (!editingTextId) return;
-        const shape = textShapes[editingTextId];
-        const { key } = event;
-        if (key === "Escape" || key === "Enter") {
-          setEditingTextId(0);
-        }
-        if (key.length === 1 || key === "Backspace") {
-          if (key.length === 1) {
-            shape.text += key;
-          } else if (key === "Backspace") {
-            if (shape.text)
-              shape.text = shape.text.substring(0, shape.text.length - 1);
-          }
+          showKeyboard(false);
           placeText(
-            (shape.x1 + shape.x2) / 2,
-            (shape.y1 + shape.y2) / 2,
+            x + dragOffset[0],
+            y + dragOffset[1],
             editingTextId,
             shape.text,
             shape.fontSize
           );
+          break;
+        case ToolMode.None:
+          interactCanvas(x, y, false, true);
+          break;
+        default:
+      }
+      if (allowDrawing) setLastPos([x, y]);
+    };
+
+    const onPointerUp = (_event: SimplePointerEventData) => {
+      if (!allowDrawing) return;
+      if (toolMode === ToolMode.Paint || toolMode === ToolMode.Fill) {
+        placeCheckpoint(toolMode);
+      }
+      if (dragging) {
+        setEditingTextId(0);
+      }
+      setDragging(false);
+      setHasLifted(true);
+      setCursor(undefined);
+    };
+
+    const wrapPointerHandler =
+      (handler: ((event: SimplePointerEventData) => void) | undefined) =>
+      (event: React.PointerEvent<HTMLCanvasElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.isPrimary && handler) {
+          handler({ clientX: event.clientX, clientY: event.clientY });
         }
+      };
+
+    const onKeyDown = useCallback(
+      (text: string) => {
+        if (!allowDrawing) return;
+        const shape = textShapesRef.current[editingTextId];
+        if (!shape) return;
+        shape.text = text;
+        placeText(
+          (shape.x1 + shape.x2) / 2,
+          (shape.y1 + shape.y2) / 2,
+          editingTextId,
+          shape.text,
+          shape.fontSize
+        );
       },
-      [editingTextId, placeText, textShapes]
+      [allowDrawing, editingTextId, placeText]
     );
 
-    // setup on component mount
-    useEffect(() => {
+    const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
       canvas.width = canvas.offsetWidth * SCALE;
       canvas.height = canvas.width * ASPECT_RATIO;
+    }, [canvasRef]);
+
+    // setup on component mount
+    useEffect(() => {
+      adjustCanvasSize();
       setAllowDrawing(role !== ControllerRole.Hub);
       switch (role) {
         case ControllerRole.Story:
@@ -566,54 +755,95 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         default:
           setToolMode(ToolMode.None);
       }
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-      }
-      const ws = wsRef.current;
-      ws?.addEventListener("message", readMessage);
+      wsConn?.addEventListener("message", readMessage);
       return () => {
-        ws?.removeEventListener("message", readMessage);
+        wsConn?.removeEventListener("message", readMessage);
       };
-      // only trigger once during componentMount
+      // only trigger on new websocket connection
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [role, wsRef]);
+    }, [role, wsConn, adjustCanvasSize]);
 
-    // initialize keyboard listener
+    // cleanup before moving to next page
     useEffect(() => {
-      if (layer === ControllerRole.Story) {
-        window.addEventListener("keydown", onKeyDown);
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      setAudioB64Strings([]);
+      setTextShapes({});
+      setTextId(1);
+      setCheckpointHistory([]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageNum]);
+
+    // workaround to recalculate width when canvas appears or becomes hidden
+    useEffect(() => {
+      adjustCanvasSize();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [adjustCanvasSize, isShown]);
+
+    // initialize text event listener
+    useEffect(() => {
+      if (isShown && role !== ControllerRole.Hub) {
+        const textEventHandler = (event: KeyboardEvent) => {
+          if (event.key === "z" && (event.ctrlKey || event.metaKey)) {
+            placeUndo();
+          }
+          if (event.key === "Escape" || event.key === "Enter") {
+            setEditingTextId(0);
+            showKeyboard(false);
+          }
+        };
+        document.addEventListener("keydown", textEventHandler);
+        return () => {
+          document.removeEventListener("keydown", textEventHandler);
+        };
       }
-      return () => {
-        window.removeEventListener("keydown", onKeyDown);
-      };
-    }, [layer, onKeyDown]);
+      return () => {};
+    }, [isShown, layer, placeUndo, role]);
 
     // start text layer animation
     useEffect(() => {
-      window.requestAnimationFrame(refreshText);
-    }, [refreshText]);
+      if (isShown && layer === ControllerRole.Story) {
+        const anim = window.requestAnimationFrame(refreshText);
+        return () => {
+          window.cancelAnimationFrame(anim);
+        };
+      }
+      return () => {};
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isShown, layer]);
 
     // unselect text on tool change
-    useEffect(() => setEditingTextId(0), [toolMode]);
+    useEffect(() => {
+      setEditingTextId(0);
+    }, [toolMode]);
+
+    // place checkpoint on finish text editing
+    useEffect(() => {
+      if (editingTextId === 0 && textId > 1) {
+        placeCheckpoint(ToolMode.Text);
+      }
+    }, [editingTextId, textId, placeCheckpoint]);
 
     return (
       <>
         <canvas
           ref={canvasRef}
-          onMouseDown={wrapMouseHandler(onPointerDown)}
-          onMouseMove={wrapMouseHandler(onPointerMove)}
-          onMouseUp={wrapMouseHandler(onPointerUp)}
-          onMouseLeave={() => {
-            setCursor(undefined);
-            wrapMouseHandler(onPointerUp);
-          }}
-          onTouchStart={wrapTouchHandler(onPointerDown)}
-          onTouchMove={wrapTouchHandler(onPointerMove)}
-          onTouchEnd={wrapTouchHandler(onPointerUp)}
+          onPointerDown={wrapPointerHandler(onPointerDown)}
+          onPointerMove={wrapPointerHandler(onPointerMove)}
+          onPointerUp={wrapPointerHandler(onPointerUp)}
+          onPointerCancel={wrapPointerHandler(undefined)}
+          onPointerEnter={wrapPointerHandler(undefined)}
+          onPointerLeave={wrapPointerHandler(undefined)}
+          onPointerOut={wrapPointerHandler(undefined)}
+          onPointerOver={wrapPointerHandler(undefined)}
           onContextMenu={(e) => {
             e.preventDefault();
+          }}
+          onClick={() => {
+            if (editingTextId) showKeyboard(true);
           }}
           style={{
             borderWidth: 4,
@@ -685,19 +915,21 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             on text again to edit text.
           </div>
         )}
-        <div>
-          <Slider
-            disabled={toolMode !== ToolMode.Paint}
-            defaultValue={8}
-            valueLabelDisplay="auto"
-            value={toolWidth}
-            onChange={(e, width) => setToolWidth(width as number)}
-            step={4 * SCALE}
-            marks
-            min={4 * SCALE}
-            max={32 * SCALE}
-          />
-        </div>
+        {role !== ControllerRole.Hub && role !== ControllerRole.Story && (
+          <div>
+            <Slider
+              disabled={toolMode !== ToolMode.Paint}
+              defaultValue={8}
+              valueLabelDisplay="auto"
+              value={toolWidth}
+              onChange={(e, width) => setToolWidth(width as number)}
+              step={4 * SCALE}
+              marks
+              min={4 * SCALE}
+              max={32 * SCALE}
+            />
+          </div>
+        )}
         {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
           <div>
             <FormControl component="fieldset">
@@ -754,9 +986,39 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             </FormControl>
           </div>
         )}
+        {role !== ControllerRole.Hub && (
+          <div>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                placeUndo();
+              }}
+            >
+              Undo
+            </Button>
+          </div>
+        )}
+        <input
+          ref={onScreenKeyboardRef}
+          value={textShapesRef.current[editingTextId]?.text}
+          onChange={(e) => {
+            onKeyDown(e.target.value);
+          }}
+          tabIndex={0}
+          style={{
+            position: "absolute",
+            top: 0,
+            opacity: 0,
+            pointerEvents: "none",
+          }}
+        />
       </>
     );
   }
 );
+
+Canvas.defaultProps = {
+  isShown: true,
+};
 
 export default Canvas;

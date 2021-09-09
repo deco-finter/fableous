@@ -1,6 +1,7 @@
 export interface WSMessage {
   role: ControllerRole;
   type: WSMessageType;
+  // TODO change type of data to all possible message data types
   data: {
     x1?: number;
     y1?: number;
@@ -13,13 +14,32 @@ export interface WSMessage {
   };
 }
 
+// for WSMessageType.Control
+export interface WSControlMessageData {
+  classroomToken?: string;
+  classroomId?: string;
+  sessionId?: string;
+  currentPage?: number;
+  nextPage?: boolean;
+}
+
+// for WSMessageType.Join
+export interface WSJoinMessageData {
+  role: ControllerRole;
+  name?: string;
+  joining: boolean;
+}
+
 export enum WSMessageType {
   Paint = "PAINT",
   Fill = "FILL",
   Text = "TEXT",
   Audio = "AUDIO",
+  Checkpoint = "CHECKPOINT",
+  Undo = "UNDO",
   Cursor = "CURSOR",
   Connect = "CONNECT",
+  Join = "JOIN",
   Control = "CONTROL",
   Ping = "PING",
 }
@@ -57,6 +77,11 @@ export interface Register {
   password2: string;
 }
 
+export interface User {
+  name: string;
+  email: string;
+}
+
 export interface Classroom {
   id: string;
   name: string;
@@ -70,4 +95,16 @@ export interface Session {
   pages: number;
   completed: boolean;
   createdAt: string;
+}
+
+export interface ControllerJoin {
+  name: string;
+  token: string;
+  role: ControllerRole;
+}
+
+export interface Story {
+  title: string;
+  description: string;
+  pages: number;
 }

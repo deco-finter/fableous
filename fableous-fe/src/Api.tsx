@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { configure } from "axios-hooks";
 import { TOKEN_KEY } from "./components/AuthProvider";
 
@@ -12,7 +12,9 @@ const baseWS =
     ? `${process.env.REACT_APP_BACKENDWS}`
     : `wss://${window.location.hostname}`;
 
-const onIntercept = (req: AxiosRequestConfig) => {
+const apiClient = axios.create();
+apiClient.defaults.baseURL = baseAPI;
+apiClient.interceptors.request.use((req: AxiosRequestConfig) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
     req.headers = {
@@ -20,11 +22,22 @@ const onIntercept = (req: AxiosRequestConfig) => {
     };
   }
   return req;
-};
+}, Promise.reject);
 
-const apiClient = axios.create();
-apiClient.defaults.baseURL = baseAPI;
-apiClient.interceptors.request.use(onIntercept, Promise.reject);
+export const setupResponseInterceptor = (onTokenExpired: () => void) => {
+  apiClient.interceptors.response.use(
+    (resp: AxiosResponse) => resp,
+    (err: any) => {
+      if (
+        err.response?.status === 401 &&
+        err.response?.data?.error?.includes("token has expired")
+      ) {
+        onTokenExpired();
+      }
+      return Promise.reject(err);
+    }
+  );
+};
 
 configure({
   axios: apiClient,
@@ -40,12 +53,6 @@ interface ApiEndpoints {
 }
 
 export const restAPI = {
-  canvas: {
-    getRandomTheme: () => ({
-      url: "/random/theme",
-      method: "get",
-    }),
-  },
   auth: {
     register: () => ({
       url: "/api/auth/register",
@@ -56,9 +63,19 @@ export const restAPI = {
       method: "post",
     }),
   },
+  user: {
+    get: () => ({
+      url: "/api/user",
+      method: "get",
+    }),
+    update: () => ({
+      url: "/api/user",
+      method: "put",
+    }),
+  },
   classroom: {
     getList: () => ({
-      url: "/api/classroom",
+      url: "/api/classroom/",
       method: "get",
     }),
     getOne: (id: string) => ({
@@ -66,7 +83,7 @@ export const restAPI = {
       method: "get",
     }),
     create: () => ({
-      url: "/api/classroom",
+      url: "/api/classroom/",
       method: "post",
     }),
     update: (id: string) => ({
@@ -78,10 +95,33 @@ export const restAPI = {
       method: "delete",
     }),
   },
+  gallery: {
+    getAsset: (
+      classroomId: string,
+      sessionId: string,
+      pageNumber: number,
+      name: string
+    ) => ({
+      url: `${baseAPI}/api/gallery/assets/${classroomId}/${sessionId}/${pageNumber}/${name}`,
+      method: "get",
+    }),
+  },
   session: {
     getOngoing: (classroomId: string) => ({
       url: `/api/classroom/${classroomId}/session/ongoing`,
       method: "get",
+    }),
+    getList: (classroomId: string) => ({
+      url: `/api/classroom/${classroomId}/session`,
+      method: "get",
+    }),
+    getOne: (classroomId: string, sessionId: string) => ({
+      url: `/api/classroom/${classroomId}/session/${sessionId}`,
+      method: "get",
+    }),
+    create: (classroomId: string) => ({
+      url: `/api/classroom/${classroomId}/session`,
+      method: "post",
     }),
     delete: (classroomId: string, sessionId: string) => ({
       url: `/api/classroom/${classroomId}/session/${sessionId}`,

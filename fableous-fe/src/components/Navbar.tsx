@@ -7,7 +7,6 @@ import { useContext } from "react";
 import { AuthContext } from "./AuthProvider";
 
 export default function Navbar() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const history = useHistory();
   const [, isAuthenticated, , clearToken] = useContext(AuthContext);
   const onLogout = () => {
@@ -29,6 +28,14 @@ export default function Navbar() {
               <Button
                 variant="outlined"
                 className="text-white"
+                component={Link}
+                to="/profile"
+              >
+                Profile
+              </Button>
+              <Button
+                variant="outlined"
+                className="ml-4 text-white"
                 onClick={onLogout}
               >
                 Logout

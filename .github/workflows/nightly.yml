@@ -30,7 +30,7 @@ jobs:
       - name: Provide Env File
         run: |
           echo "${{ secrets.FE_ENV_FILE }}" > ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
-          echo "REACT_APP_VERSION=${{ env.RELEASE_VERSION }}" >> ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
+          echo "REACT_APP_VERSION=${{ env.RELEASE_VERSION }}:${GITHUB_REF#refs/heads/}@${GITHUB_SHA:0:7}" >> ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
       - name: Build and Push Image
         uses: docker/build-push-action@v2
         with:
@@ -38,3 +38,40 @@ jobs:
           platforms: linux/amd64
           tags: daystram/${{ env.APPLICATION }}:${{ matrix.service }}-dev
           push: true
+  chart:
+    name: Publish Helm Chart
+    environment: Development
+    runs-on: Ubuntu-20.04
+    container: daystram/k8s-tools:latest
+    needs: [image]
+    env:
+      APPLICATION: fableous
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Set Development Version
+        run: echo "RELEASE_VERSION=v0.0.0-development" >> $GITHUB_ENV
+      - name: Initialize Git Credentials
+        run: |
+          git config --global user.name "${{ secrets.BOTDAYSTRAM_NAME }}"
+          git config --global user.email "${{ secrets.BOTDAYSTRAM_EMAIL }}"
+          mkdir -p /root/.ssh && echo "${{ secrets.BOTDAYSTRAM_KEY_FILE }}" > /root/.ssh/id_rsa.github && chmod 600 /root/.ssh/id_rsa.github
+          cat >> /etc/ssh/ssh_config <<EOF
+          Host github.com
+              HostName github.com
+              IdentityFile /root/.ssh/id_rsa.github
+              IdentitiesOnly yes
+              StrictHostKeyChecking no
+          EOF
+          echo "${{ secrets.KUBECONFIG_FILE }}" > $KUBECONFIG && chmod 700 $KUBECONFIG
+      - name: Build and Deploy Chart
+        run: |
+          eval `ssh-agent -s`
+          git clone ssh://git@github.com/daystram/helm-charts.git
+          cp -r .daystram helm-charts/docs/
+          cd helm-charts/docs/
+          curl -sfL https://charts.daystram.com/build.sh | sh -s - ${{ env.APPLICATION }} ${{ env.RELEASE_VERSION }}
+          rm -rf .daystram/
+          git add .
+          git commit -m "feat: added chart for ${{ env.APPLICATION }}@${{ env.RELEASE_VERSION }}"
+          git push

@@ -15,13 +15,13 @@ export interface Cursor {
 }
 
 interface CursorScreenProps {
-  targetCanvasRef?: React.RefObject<HTMLCanvasElement>;
   cursor: Cursor | undefined;
   name?: string;
+  isShown?: boolean;
 }
 
 const CursorScreen = (props: CursorScreenProps) => {
-  const { targetCanvasRef, cursor, name } = props;
+  const { cursor, name, isShown } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
 
   const refreshCursor = useCallback(() => {
@@ -86,21 +86,16 @@ const CursorScreen = (props: CursorScreenProps) => {
     }
   }, [cursor, name]);
 
-  // setup on component mount
+  // set canvas size onmount and when canvas appears or becomes hidden
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width =
-      (targetCanvasRef && targetCanvasRef.current
-        ? targetCanvasRef.current
-        : canvas
-      ).offsetWidth * SCALE;
+    canvas.width = canvas.offsetWidth * SCALE;
     canvas.height = canvas.width * ASPECT_RATIO;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
     }
-    // only trigger during componentMount or targetCanvasRef change
-  }, [targetCanvasRef]);
+  }, [canvasRef, isShown]);
 
   // start cursor layer animation
   useEffect(() => {
@@ -130,8 +125,8 @@ const CursorScreen = (props: CursorScreenProps) => {
 };
 
 CursorScreen.defaultProps = {
-  targetCanvasRef: null,
   name: "",
+  isShown: true,
 };
 
 export default CursorScreen;
