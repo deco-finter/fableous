@@ -13,14 +13,38 @@ export default function useAchievement(config?: {
   const [allColorColors, setAllColorColors] = useState<Set<string>>(
     new Set<string>()
   );
-
   const doAllColor = useCallback(
-    (msg: WSMessage) => {
-      allColorColors.add(msg.data.color || "");
-      setAllColorColors(new Set(allColorColors));
-      return allColorColors.size >= 6;
+    (msg: WSMessage): AchievementType | null => {
+      const newColors = new Set(allColorColors).add(msg.data.color || "");
+      setAllColorColors(newColors);
+      return newColors.size >= 6 ? AchievementType.AllColor : null;
     },
     [allColorColors]
+  );
+
+  const [fiveTextIds, setFiveTextIds] = useState<Set<number>>(
+    new Set<number>()
+  );
+  const doFiveText = useCallback(
+    (msg: WSMessage): AchievementType | null => {
+      if (!msg.data.text) return null;
+      const newIds = new Set(fiveTextIds).add(msg.data.id || 0);
+      setFiveTextIds(newIds);
+      return newIds.size >= 5 ? AchievementType.FiveText : null;
+    },
+    [fiveTextIds]
+  );
+
+  const [tenTextIds, setTenTextIds] = useState<Set<number>>(new Set<number>());
+  const doTenText = useCallback(
+    (msg: WSMessage): AchievementType | null => {
+      if (!msg.data.text) return null;
+      const newIds = new Set(tenTextIds).add(msg.data.id || 0);
+      console.log(newIds);
+      setTenTextIds(newIds);
+      return newIds.size >= 10 ? AchievementType.TenText : null;
+    },
+    [tenTextIds]
   );
 
   const checkAchievement = useCallback(
@@ -28,19 +52,34 @@ export default function useAchievement(config?: {
       if (!achievements.has(type)) {
         switch (type) {
           case AchievementType.AllColor:
-            console.log("check");
             if (
-              (msg.role === ControllerRole.Character ||
-                msg.role === ControllerRole.Background) &&
-              doAllColor(msg)
-            )
-              setAchievements((prev) => {
-                return new Set(prev).add(AchievementType.AllColor);
-              });
+              msg.role === ControllerRole.Character ||
+              msg.role === ControllerRole.Background
+            ) {
+              const res = doAllColor(msg);
+              if (res)
+                setAchievements((prev) => {
+                  return new Set(prev).add(res);
+                });
+            }
             break;
           case AchievementType.FiveText:
+            if (msg.role === ControllerRole.Story) {
+              const res = doFiveText(msg);
+              if (res)
+                setAchievements((prev) => {
+                  return new Set(prev).add(res);
+                });
+            }
             break;
           case AchievementType.TenText:
+            if (msg.role === ControllerRole.Story) {
+              const res = doTenText(msg);
+              if (res)
+                setAchievements((prev) => {
+                  return new Set(prev).add(res);
+                });
+            }
             break;
           case AchievementType.OnePage:
             break;
@@ -52,7 +91,7 @@ export default function useAchievement(config?: {
         }
       }
     },
-    [achievements, doAllColor]
+    [achievements, doAllColor, doFiveText, doTenText]
   );
 
   const achievementHandler = (ev: MessageEvent) => {
@@ -61,6 +100,10 @@ export default function useAchievement(config?: {
       switch (msg.type) {
         case WSMessageType.Paint:
           checkAchievement(AchievementType.AllColor, msg);
+          break;
+        case WSMessageType.Text:
+          checkAchievement(AchievementType.FiveText, msg);
+          checkAchievement(AchievementType.TenText, msg);
           break;
         default:
       }
