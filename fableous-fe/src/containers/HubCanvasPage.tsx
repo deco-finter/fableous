@@ -63,7 +63,9 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
-  const [, wsAchievementHandler] = useAchievement({ debug: true });
+  const [, wsAchievementHandler, achievementNextPage] = useAchievement({
+    debug: true,
+  });
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -194,7 +196,10 @@ export default function HubCanvasPage() {
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
-    setCurrentPageIdx((prev) => prev + 1);
+    setCurrentPageIdx((prev) => {
+      if (prev > 0) achievementNextPage();
+      return prev + 1;
+    });
   };
 
   const onBeginDrawing = () => {
