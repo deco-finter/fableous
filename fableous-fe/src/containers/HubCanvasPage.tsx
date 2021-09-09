@@ -18,7 +18,7 @@ import {
   WSMessageType,
 } from "../data";
 import FormikTextField from "../components/FormikTextField";
-import useWsConn from "../hooks/useWsConn";
+import { useAchievement, useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 
 enum HubState {
@@ -63,6 +63,7 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
+  const [, wsAchievementHandler] = useAchievement({ debug: true });
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -186,7 +187,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    ].some((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -207,11 +208,13 @@ export default function HubCanvasPage() {
       return () => {};
     }
 
+    wsConn.addEventListener("message", wsAchievementHandler);
     wsConn.addEventListener("message", wsMessageHandler);
     wsConn.addEventListener("error", wsErrorHandler);
     wsConn.addEventListener("close", wsCloseHandler);
 
     return () => {
+      wsConn.removeEventListener("message", wsAchievementHandler);
       wsConn.removeEventListener("message", wsMessageHandler);
       wsConn.removeEventListener("error", wsErrorHandler);
       wsConn.removeEventListener("close", wsCloseHandler);
@@ -219,6 +222,7 @@ export default function HubCanvasPage() {
   }, [
     wsConn,
     hubState,
+    wsAchievementHandler,
     wsMessageHandler,
     wsErrorHandler,
     wsCloseHandler,
