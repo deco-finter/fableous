@@ -22,7 +22,7 @@ import {
   WSMessage,
   WSMessageType,
 } from "../data";
-import useWsConn from "../hooks/useWsConn";
+import { useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 
