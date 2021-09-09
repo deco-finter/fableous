@@ -32,6 +32,7 @@ export default function StoryDetailPage() {
         manual: true,
       }
     );
+  // const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
 
   useEffect(() => {
     executeGetClassroomDetail();
@@ -130,6 +131,21 @@ export default function StoryDetailPage() {
               >
                 Next
               </Button>
+
+              {manifest?.audios.map((audio) => (
+                /* eslint-disable-next-line jsx-a11y/media-has-caption */
+                <audio
+                  src={
+                    restAPI.gallery.getAsset(
+                      classroomId,
+                      sessionId,
+                      page,
+                      audio.text
+                    ).url
+                  }
+                  controls
+                />
+              ))}
             </Grid>
           )}
         </Grid>
