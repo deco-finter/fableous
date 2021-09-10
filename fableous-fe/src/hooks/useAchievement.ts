@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AchievementType } from "../achievement";
-import { ControllerRole, WSMessage, WSMessageType } from "../data";
+import { WSMessage } from "../data";
+import { ControllerRole, WSMessageType } from "../constant";
 
 export default function useAchievement(config?: {
   debug?: boolean;
