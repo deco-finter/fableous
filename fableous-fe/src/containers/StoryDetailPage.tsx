@@ -135,14 +135,7 @@ export default function StoryDetailPage() {
               {manifest?.audios.map((audio) => (
                 /* eslint-disable-next-line jsx-a11y/media-has-caption */
                 <audio
-                  src={
-                    restAPI.gallery.getAsset(
-                      classroomId,
-                      sessionId,
-                      page,
-                      audio.text
-                    ).url
-                  }
+                  src={restAPI.gallery.getAssetByPath(audio.text).url}
                   controls
                 />
               ))}
