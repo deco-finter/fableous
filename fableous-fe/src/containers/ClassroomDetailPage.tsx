@@ -12,9 +12,9 @@ import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 import * as yup from "yup";
-import { restAPI } from "../Api";
+import { restAPI } from "../api";
 import FormikTextField from "../components/FormikTextField";
-import { APIResponse, Classroom, Session } from "../Data";
+import { APIResponse, Classroom, Session } from "../data";
 
 export default function ClassroomListPage() {
   const history = useHistory();
