@@ -9,10 +9,10 @@ import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
-import { Story, WSControlMessageData, WSJoinMessageData } from "../Data";
-import { restAPI, wsAPI } from "../Api";
+import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import { restAPI, wsAPI } from "../api";
 import FormikTextField from "../components/FormikTextField";
-import useWsConn from "../hooks/useWsConn";
+import { useAchievement, useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { WSMessageType, ControllerRole } from "../constant";
 import { TextShapeMap } from "../components/canvas/data";
@@ -66,6 +66,9 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
+  const [, wsAchievementHandler, achievementNextPage] = useAchievement({
+    debug: true,
+  });
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -197,7 +200,10 @@ export default function HubCanvasPage() {
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
-    setCurrentPageIdx((prev) => prev + 1);
+    setCurrentPageIdx((prev) => {
+      if (prev > 0) achievementNextPage();
+      return prev + 1;
+    });
   };
 
   const onBeginDrawing = () => {
@@ -211,11 +217,13 @@ export default function HubCanvasPage() {
       return () => {};
     }
 
+    wsConn.addEventListener("message", wsAchievementHandler);
     wsConn.addEventListener("message", wsMessageHandler);
     wsConn.addEventListener("error", wsErrorHandler);
     wsConn.addEventListener("close", wsCloseHandler);
 
     return () => {
+      wsConn.removeEventListener("message", wsAchievementHandler);
       wsConn.removeEventListener("message", wsMessageHandler);
       wsConn.removeEventListener("error", wsErrorHandler);
       wsConn.removeEventListener("close", wsCloseHandler);
@@ -223,6 +231,7 @@ export default function HubCanvasPage() {
   }, [
     wsConn,
     hubState,
+    wsAchievementHandler,
     wsMessageHandler,
     wsErrorHandler,
     wsCloseHandler,

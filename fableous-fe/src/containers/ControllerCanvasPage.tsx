@@ -11,6 +11,7 @@ import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
+import { restAPI, wsAPI } from "../api";
 import {
   APIResponse,
   ControllerJoin,
@@ -18,8 +19,7 @@ import {
   WSControlMessageData,
   WSJoinMessageData,
   WSMessage,
-} from "../Data";
-import { restAPI, wsAPI } from "../Api";
+} from "../data";
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";

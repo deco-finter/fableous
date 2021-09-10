@@ -13,10 +13,10 @@ import { useSnackbar } from "notistack";
 import { useContext } from "react";
 import { useHistory } from "react-router-dom";
 import * as yup from "yup";
-import { restAPI } from "../Api";
+import { restAPI } from "../api";
 import { AuthContext } from "../components/AuthProvider";
 import FormikTextField from "../components/FormikTextField";
-import { Login } from "../Data";
+import { Login } from "../data";
 
 const useStyles = makeStyles({
   root: {

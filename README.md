@@ -1,6 +1,7 @@
 # :art: Fableous
 
-[![GitHub Actions Status](https://github.com/deco-finter/fableous/actions/workflows/build.yml/badge.svg)](https://github.com/deco-finter/fableous/actions/workflows/build.yml)
+[![GitHub Actions Status](https://github.com/deco-finter/fableous/actions/workflows/build-backend.yml/badge.svg)](https://github.com/deco-finter/fableous/actions/workflows/build-backend.yml)
+[![GitHub Actions Status](https://github.com/deco-finter/fableous/actions/workflows/build-frontend.yml/badge.svg)](https://github.com/deco-finter/fableous/actions/workflows/build-frontend.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/daystram/fableous)](https://hub.docker.com/r/daystram/fableous)
 
 ## Service

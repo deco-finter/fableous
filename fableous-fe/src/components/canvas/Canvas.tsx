@@ -19,7 +19,7 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import Slider from "@material-ui/core/Slider";
 import cloneDeep from "lodash.clonedeep";
-import { WSMessage } from "../../Data";
+import { WSMessage } from "../../data";
 
 import {
   convHEXtoRGBA,
