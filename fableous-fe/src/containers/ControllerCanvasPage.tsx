@@ -10,6 +10,7 @@ import Typography from "@material-ui/core/Typography";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
+import { Chip } from "@material-ui/core";
 import Canvas from "../components/canvas/Canvas";
 import {
   APIResponse,
@@ -202,14 +203,12 @@ export default function ControllerCanvasPage() {
           {
             {
               [ControllerState.JoinForm]: "join",
-              [ControllerState.WaitingRoom]: "draw",
-              [ControllerState.DrawingSession]: "draw",
+              [ControllerState.WaitingRoom]: "",
+              [ControllerState.DrawingSession]: "",
               [ControllerState.StoryFinished]: "finished",
             }[controllerState]
           }
         </Typography>
-      </Grid>
-      <Grid item xs={12}>
         <div
           style={{
             WebkitTouchCallout: "none",
@@ -296,16 +295,31 @@ export default function ControllerCanvasPage() {
               controllerState !== ControllerState.JoinForm ? "block" : "hidden"
             }
           >
-            <Typography variant="h6">Role: {role}</Typography>
-            <Typography variant="h6">Title: {storyDetails?.title}</Typography>
-            <Typography variant="h6">
-              Description: {storyDetails?.description}
-            </Typography>
-            {controllerState === ControllerState.DrawingSession && (
-              <Typography variant="h6">
-                page {currentPageIdx || "-"} of {storyDetails?.pages || "-"}
-              </Typography>
-            )}
+            {/* TODO keep it one row regardless of screen size */}
+            <div className="flex flex-wrap justify-between gap-y-4">
+              <div className="flex">
+                <Chip label={`Title: ${storyDetails?.title}`} color="primary" />
+                {storyDetails?.description.split(",").map((tag) => (
+                  <Chip label={tag} color="secondary" key={tag} />
+                ))}
+              </div>
+              <div className="flex">
+                <Chip
+                  label={`Role: ${
+                    role[0].toUpperCase() + role.slice(1).toLowerCase()
+                  }`}
+                  color="primary"
+                  variant="outlined"
+                />
+                <Chip
+                  label={`Page ${currentPageIdx} of ${
+                    storyDetails?.pages || "-"
+                  }`}
+                  color="primary"
+                  variant="outlined"
+                />
+              </div>
+            </div>
             {controllerState === ControllerState.WaitingRoom && (
               <Typography variant="h6" component="p">
                 waiting for hub to start..
