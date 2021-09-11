@@ -50,7 +50,7 @@ export default function ControllerCanvasPage() {
     APIResponse<undefined>
   >({});
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
-
+  const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
@@ -375,6 +375,8 @@ export default function ControllerCanvasPage() {
                   setCursor={setCursor}
                   textShapes={textShapes}
                   setTextShapes={setTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
                 />
               </div>
             </div>
