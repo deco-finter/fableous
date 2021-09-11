@@ -32,7 +32,7 @@ export default function StoryDetailPage() {
         manual: true,
       }
     );
-  // const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
+  const [audioPaths, setAudioPaths] = useState<string[]>([]);
 
   useEffect(() => {
     executeGetClassroomDetail();
@@ -46,6 +46,7 @@ export default function StoryDetailPage() {
 
   useEffect(() => {
     if (manifest) setTextShapes(manifest.texts);
+    if (manifest) setAudioPaths(manifest.audios.map((audio) => audio.text));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manifest]);
 
@@ -91,6 +92,8 @@ export default function StoryDetailPage() {
                     isGallery
                     setTextShapes={setTextShapes}
                     textShapes={textShapes}
+                    audioPaths={audioPaths}
+                    setAudioPaths={setAudioPaths}
                   />
                 </div>
                 <div
@@ -131,14 +134,6 @@ export default function StoryDetailPage() {
               >
                 Next
               </Button>
-
-              {manifest?.audios.map((audio) => (
-                /* eslint-disable-next-line jsx-a11y/media-has-caption */
-                <audio
-                  src={restAPI.gallery.getAssetByPath(audio.text).url}
-                  controls
-                />
-              ))}
             </Grid>
           )}
         </Grid>
