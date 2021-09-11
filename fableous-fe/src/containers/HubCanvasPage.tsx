@@ -9,17 +9,13 @@ import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
+import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
 import { restAPI, wsAPI } from "../api";
-import {
-  ControllerRole,
-  Story,
-  WSControlMessageData,
-  WSJoinMessageData,
-  WSMessageType,
-} from "../data";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
+import { WSMessageType, ControllerRole } from "../constant";
+import { TextShapeMap } from "../components/canvas/data";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -58,6 +54,14 @@ export default function HubCanvasPage() {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(
     document.createElement("canvas")
   );
+  const [storyTextShapes, setStoryTextShapes] = useState<TextShapeMap>({});
+  const [CharacterTextShapes, setCharacterTextShapes] = useState<TextShapeMap>(
+    {}
+  );
+  const [BackgroundTextShapes, setBackgroundTextShapes] =
+    useState<TextShapeMap>({});
+  const [audioPaths, setAudioPaths] = useState<string[]>([]);
+
   const [storyCursor, setStoryCursor] = useState<Cursor | undefined>();
   const [characterCursor, setCharacterCursor] = useState<Cursor | undefined>();
   const [backgroundCursor, setBackgroundCursor] = useState<
@@ -182,6 +186,7 @@ export default function HubCanvasPage() {
       .toDataURL("image/png")
       .replace("image/png", "image/octet-stream");
     link.click();
+    console.log(JSON.stringify(storyTextShapes));
   };
 
   const isAllControllersJoined = (): boolean => {
@@ -413,6 +418,10 @@ export default function HubCanvasPage() {
                 layer={ControllerRole.Story}
                 pageNum={currentPageIdx}
                 setCursor={setStoryCursor}
+                setTextShapes={setStoryTextShapes}
+                textShapes={storyTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
               />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
@@ -423,6 +432,10 @@ export default function HubCanvasPage() {
                 layer={ControllerRole.Character}
                 pageNum={currentPageIdx}
                 setCursor={setCharacterCursor}
+                setTextShapes={setCharacterTextShapes}
+                textShapes={CharacterTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
               />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
@@ -433,6 +446,10 @@ export default function HubCanvasPage() {
                 layer={ControllerRole.Background}
                 pageNum={currentPageIdx}
                 setCursor={setBackgroundCursor}
+                setTextShapes={setBackgroundTextShapes}
+                textShapes={BackgroundTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
               />
             </div>
           </div>

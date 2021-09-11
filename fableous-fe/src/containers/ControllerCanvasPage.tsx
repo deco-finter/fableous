@@ -15,16 +15,16 @@ import { restAPI, wsAPI } from "../api";
 import {
   APIResponse,
   ControllerJoin,
-  ControllerRole,
   Session,
   WSControlMessageData,
   WSJoinMessageData,
   WSMessage,
-  WSMessageType,
 } from "../data";
-import { useWsConn } from "../hooks";
+import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
+import { ControllerRole, WSMessageType } from "../constant";
+import { TextShapeMap } from "../components/canvas/data";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -49,7 +49,8 @@ export default function ControllerCanvasPage() {
     APIResponse<Session>,
     APIResponse<undefined>
   >({});
-
+  const [textShapes, setTextShapes] = useState<TextShapeMap>({});
+  const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
@@ -372,6 +373,10 @@ export default function ControllerCanvasPage() {
                   pageNum={currentPageIdx}
                   isShown={controllerState === ControllerState.DrawingSession}
                   setCursor={setCursor}
+                  textShapes={textShapes}
+                  setTextShapes={setTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
                 />
               </div>
             </div>

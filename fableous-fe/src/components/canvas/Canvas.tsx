@@ -19,7 +19,8 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import Slider from "@material-ui/core/Slider";
 import cloneDeep from "lodash.clonedeep";
-import { ControllerRole, ToolMode, WSMessage, WSMessageType } from "../../data";
+import { WSMessage } from "../../data";
+
 import {
   convHEXtoRGBA,
   getTextBounds,
@@ -29,20 +30,9 @@ import {
 } from "./helpers";
 import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
 import { Cursor } from "./CursorScreen";
-
-interface Shape {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
-
-interface TextShape extends Shape {
-  text: string;
-  fontSize: number;
-}
-
-type TextShapeMap = { [id: string]: TextShape };
+import { TextShape, TextShapeMap } from "./data";
+import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
+import { restAPI } from "../../api";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -55,8 +45,13 @@ interface CanvasProps {
   role: ControllerRole;
   layer: ControllerRole;
   pageNum: number;
+  isGallery?: boolean;
   isShown?: boolean;
-  setCursor: React.Dispatch<Cursor | undefined>;
+  setCursor?: React.Dispatch<Cursor | undefined>;
+  textShapes: TextShapeMap;
+  setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
+  audioPaths: string[];
+  setAudioPaths: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 interface SimplePointerEventData {
@@ -67,7 +62,19 @@ interface SimplePointerEventData {
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   (props: CanvasProps, ref) => {
     let FRAME_COUNTER = 0;
-    const { layer, role, pageNum, isShown, setCursor, wsConn } = props;
+    const {
+      layer,
+      role,
+      pageNum,
+      isGallery,
+      isShown,
+      setCursor,
+      setTextShapes,
+      textShapes,
+      setAudioPaths,
+      audioPaths,
+      wsConn,
+    } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
     const onScreenKeyboardRef = useRef<HTMLInputElement>(
       document.createElement("input")
@@ -76,12 +83,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
-    const [dragOffset, setDragOffset] = useState([0, 0]);
-    const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
+    const [dragOffset, setDragOffset] = useState([0, 0]); // offset is in normalized scale
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
-    const [textShapes, setTextShapes] = useState<TextShapeMap>({});
     const textShapesRef = useRef<TextShapeMap>(textShapes);
     textShapesRef.current = textShapes; // inject ref to force sync, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
     const [textId, setTextId] = useState(1);
@@ -242,42 +247,28 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     );
 
     const placeText = useCallback(
-      (x, y, id, text, fontSize) => {
-        const ctx = canvasRef.current.getContext(
-          "2d"
-        ) as CanvasRenderingContext2D;
-        ctx.font = `${fontSize * SCALE}px Arial`;
-        const [x1, y1, x2, y2] = getTextBounds(canvasRef, x, y, text, fontSize);
+      (id, textShape) => {
         setTextShapes(() => ({
           ...textShapesRef.current,
-          [id]: {
-            text,
-            fontSize,
-            x1,
-            y1,
-            x2,
-            y2,
-          } as TextShape,
+          [id]: textShape,
         }));
         if (role !== ControllerRole.Hub) {
-          const [normX, normY] = scaleDownXY(canvasRef, x, y);
-          const [normFontSize] = scaleDownXY(canvasRef, fontSize, 0);
           wsConn?.send(
             JSON.stringify({
               role,
               type: WSMessageType.Text,
               data: {
-                x1: normX,
-                y1: normY,
                 id,
-                text,
-                width: normFontSize,
+                x1: textShape.normX,
+                y1: textShape.normY,
+                text: textShape.text,
+                width: textShape.normFontSize,
               },
             } as WSMessage)
           );
         }
       },
-      [canvasRef, role, wsConn]
+      [role, wsConn, setTextShapes]
     );
 
     const refreshText = () => {
@@ -292,30 +283,36 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
-        ctx.font = `${shape.fontSize * SCALE}px Arial`;
-        ctx.fillText(
+        const [x, y] = scaleUpXY(canvasRef, shape.normX, shape.normY);
+        const [fontSize] = scaleUpXY(canvasRef, shape.normFontSize, 0);
+        const [x1, y1, x2, y2] = getTextBounds(
+          canvasRef,
+          x,
+          y,
           shape.text,
-          (shape.x1 + shape.x2) / 2,
-          (shape.y1 + shape.y2) / 2
+          fontSize
         );
+        ctx.fillStyle = isGallery ? "#00000000" : "#000000";
+        ctx.font = `${fontSize * SCALE}px Arial`;
+        ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
           ctx.beginPath();
           ctx.lineWidth = 4;
           ctx.strokeStyle = "#00dd88";
           ctx.rect(
-            shape.x1 - SELECT_PADDING,
-            shape.y1 - SELECT_PADDING,
-            shape.x2 -
-              shape.x1 +
+            x1 - SELECT_PADDING,
+            y1 - SELECT_PADDING,
+            x2 -
+              x1 +
               2 * SELECT_PADDING +
               (role !== ControllerRole.Hub ? 6 : 0),
-            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+            y2 - y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
           if (role !== ControllerRole.Hub && FRAME_COUNTER > 30) {
             ctx.beginPath();
-            ctx.rect(shape.x2 + 2, shape.y1 - 2, 2, shape.y2 - shape.y1 + 2);
+            ctx.rect(x2 + 2, y1 - 2, 2, y2 - y1 + 2);
             ctx.fill();
             ctx.closePath();
           }
@@ -324,10 +321,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           ctx.lineWidth = 1;
           ctx.strokeStyle = "#00aaaa";
           ctx.rect(
-            shape.x1 - SELECT_PADDING,
-            shape.y1 - SELECT_PADDING,
-            shape.x2 - shape.x1 + 2 * SELECT_PADDING,
-            shape.y2 - shape.y1 + 2 * SELECT_PADDING
+            x1 - SELECT_PADDING,
+            y1 - SELECT_PADDING,
+            x2 - x1 + 2 * SELECT_PADDING,
+            y2 - y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
@@ -336,20 +333,29 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const interactCanvas = (
-      x: number,
-      y: number,
+      cursorX: number,
+      cursorY: number,
       isEditingText: boolean,
       hover: boolean
     ) => {
       let targetId: number | undefined;
       let targetShape: TextShape | undefined;
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
+        const [x, y] = scaleUpXY(canvasRef, shape.normX, shape.normY);
+        const [fontSize] = scaleUpXY(canvasRef, shape.normFontSize, 0);
+        const [x1, y1, x2, y2] = getTextBounds(
+          canvasRef,
+          x,
+          y,
+          shape.text,
+          fontSize
+        );
         if (
           !targetShape &&
-          x >= shape.x1 - SELECT_PADDING &&
-          x <= shape.x2 + SELECT_PADDING &&
-          y >= shape.y1 - SELECT_PADDING &&
-          y <= shape.y2 + SELECT_PADDING
+          cursorX >= x1 - SELECT_PADDING &&
+          cursorX <= x2 + SELECT_PADDING &&
+          cursorY >= y1 - SELECT_PADDING &&
+          cursorY <= y2 + SELECT_PADDING
         ) {
           targetId = parseInt(id, 10);
           targetShape = shape;
@@ -364,12 +370,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           setEditingTextId(0);
         }
       } else if (isEditingText) {
+        const [normCursorX, normCursorY] = scaleDownXY(
+          canvasRef,
+          cursorX,
+          cursorY
+        );
         if (targetId && targetShape) {
           // edit clicked text
           setEditingTextId(targetId);
           setDragOffset([
-            (targetShape.x1 + targetShape.x2) / 2 - x,
-            (targetShape.y1 + targetShape.y2) / 2 - y,
+            targetShape.normX - normCursorX,
+            targetShape.normY - normCursorY,
           ]);
         } else if (editingTextId) {
           // deselect currently editing text
@@ -377,7 +388,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           showKeyboard(false);
         } else {
           // insert new text
-          placeText(x, y, textId, "", 18);
+          const [normFontSize] = scaleDownXY(canvasRef, 18, 0);
+          placeText(textId, {
+            normX: normCursorX,
+            normY: normCursorY,
+            normFontSize,
+            text: "",
+          } as TextShape);
           setEditingTextId(textId);
           setTextId(textId + 1);
           setHasLifted(true); // disable dragging for new texts
@@ -389,12 +406,15 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     };
 
-    const placeAudio = (b64Audio: string) => {
-      const player = document.createElement("audio");
-      player.src = b64Audio;
-      player.play();
-      setAudioB64Strings((prev) => [...prev, b64Audio]);
-    };
+    const placeAudio = useCallback(
+      (path: string) => {
+        const player = document.createElement("audio");
+        player.src = restAPI.gallery.getAssetByPath(path).url || "";
+        player.play();
+        setAudioPaths((prev) => [...prev, path]);
+      },
+      [setAudioPaths]
+    );
 
     const initAudio = () => {
       navigator.mediaDevices?.getUserMedia({ audio: true }).then(
@@ -485,7 +505,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           );
         }
       },
-      [canvasRef, role, wsConn]
+      [canvasRef, role, setTextShapes, wsConn]
     );
 
     const placeUndo = useCallback(() => {
@@ -521,7 +541,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           } as WSMessage)
         );
       }
-    }, [canvasRef, role, wsConn]);
+    }, [canvasRef, role, setTextShapes, wsConn]);
 
     const placeCursor = useCallback(
       (
@@ -530,12 +550,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         normWidth: number,
         targetMode: ToolMode
       ) => {
-        setCursor({
-          normX,
-          normY,
-          normWidth,
-          toolMode: targetMode,
-        } as Cursor);
+        if (setCursor)
+          setCursor({
+            normX,
+            normY,
+            normWidth,
+            toolMode: targetMode,
+          } as Cursor);
         if (role !== ControllerRole.Hub) {
           wsConn?.send(
             JSON.stringify({
@@ -585,13 +606,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                 placeFill(x1, y1, msg.data.color || "#000000ff");
                 break;
               case WSMessageType.Text:
-                placeText(
-                  x1,
-                  y1,
-                  msg.data.id || 1,
-                  msg.data.text || "",
-                  width || 0
-                );
+                placeText(msg.data.id || 1, {
+                  normX: msg.data.x1 || 0, // use normalized coords
+                  normY: msg.data.y1 || 0,
+                  normFontSize: msg.data.width || 0,
+                  text: msg.data.text || "",
+                } as TextShape);
                 break;
               case WSMessageType.Audio:
                 placeAudio(msg.data.text || "");
@@ -626,6 +646,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         placeCheckpoint,
         placeUndo,
         placeCursor,
+        placeAudio,
       ]
     );
 
@@ -675,13 +696,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           showKeyboard(false);
-          placeText(
-            x + dragOffset[0],
-            y + dragOffset[1],
-            editingTextId,
-            shape.text,
-            shape.fontSize
-          );
+          placeText(editingTextId, {
+            ...shape,
+            normX: normX + dragOffset[0],
+            normY: normY + dragOffset[1],
+          } as TextShape);
           break;
         case ToolMode.None:
           interactCanvas(x, y, false, true);
@@ -701,7 +720,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
       setDragging(false);
       setHasLifted(true);
-      setCursor(undefined);
+      if (setCursor) setCursor(undefined);
     };
 
     const wrapPointerHandler =
@@ -719,14 +738,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (!allowDrawing) return;
         const shape = textShapesRef.current[editingTextId];
         if (!shape) return;
-        shape.text = text;
-        placeText(
-          (shape.x1 + shape.x2) / 2,
-          (shape.y1 + shape.y2) / 2,
-          editingTextId,
-          shape.text,
-          shape.fontSize
-        );
+        placeText(editingTextId, { ...shape, text } as TextShape);
       },
       [allowDrawing, editingTextId, placeText]
     );
@@ -770,9 +782,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ) as CanvasRenderingContext2D;
       const { width, height } = canvasRef.current;
       ctx.clearRect(0, 0, width, height);
-      setAudioB64Strings([]);
+      setAudioPaths([]);
       setTextShapes({});
       setTextId(1);
+      setEditingTextId(0);
       setCheckpointHistory([]);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
@@ -806,6 +819,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     // start text layer animation
     useEffect(() => {
       if (isShown && layer === ControllerRole.Story) {
+        console.log("render");
         const anim = window.requestAnimationFrame(refreshText);
         return () => {
           window.cancelAnimationFrame(anim);
@@ -843,7 +857,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             e.preventDefault();
           }}
           onClick={() => {
-            if (editingTextId) showKeyboard(true);
+            if (editingTextId && role !== ControllerRole.Hub)
+              showKeyboard(true);
           }}
           style={{
             borderWidth: 4,
@@ -865,7 +880,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           }}
         />
         {role === ControllerRole.Hub &&
-          audioB64Strings.map((b64Audio) => <audio src={b64Audio} controls />)}
+          audioPaths.map((path) => (
+            <audio src={restAPI.gallery.getAssetByPath(path).url} controls />
+          ))}
         {toolMode !== ToolMode.None && (
           <div>
             <FormControl component="fieldset">
@@ -1000,7 +1017,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         )}
         <input
           ref={onScreenKeyboardRef}
-          value={textShapesRef.current[editingTextId]?.text}
+          value={textShapesRef.current[editingTextId]?.text || ""}
           onChange={(e) => {
             onKeyDown(e.target.value);
           }}
@@ -1018,7 +1035,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 );
 
 Canvas.defaultProps = {
+  isGallery: false,
   isShown: true,
+  setCursor: undefined,
 };
 
 export default Canvas;

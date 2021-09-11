@@ -1,3 +1,6 @@
+import { TextShapeMap } from "./components/canvas/data";
+import { ControllerRole, WSMessageType } from "./constant";
+
 export interface WSMessage {
   role: ControllerRole;
   type: WSMessageType;
@@ -28,35 +31,6 @@ export interface WSJoinMessageData {
   role: ControllerRole;
   name?: string;
   joining: boolean;
-}
-
-export enum WSMessageType {
-  Paint = "PAINT",
-  Fill = "FILL",
-  Text = "TEXT",
-  Audio = "AUDIO",
-  Checkpoint = "CHECKPOINT",
-  Undo = "UNDO",
-  Cursor = "CURSOR",
-  Connect = "CONNECT",
-  Join = "JOIN",
-  Control = "CONTROL",
-  Ping = "PING",
-}
-
-export enum ToolMode {
-  Paint = "PAINT",
-  Fill = "FILL",
-  Text = "TEXT",
-  Audio = "AUDIO",
-  None = "NONE",
-}
-
-export enum ControllerRole {
-  Character = "CHARACTER",
-  Background = "BACKGROUND",
-  Story = "STORY",
-  Hub = "HUB",
 }
 
 export interface APIResponse<T> {
@@ -101,6 +75,11 @@ export interface ControllerJoin {
   name: string;
   token: string;
   role: ControllerRole;
+}
+export interface Manifest {
+  texts: TextShapeMap;
+  audios: { text: string }[];
+  achievements: string[];
 }
 
 export interface Story {
