@@ -49,6 +49,8 @@ interface CanvasProps {
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
+  audioPaths: string[];
+  setAudioPaths: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 interface SimplePointerEventData {
@@ -68,6 +70,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setCursor,
       setTextShapes,
       textShapes,
+      setAudioPaths,
+      audioPaths,
       wsConn,
     } = props;
     const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
@@ -79,7 +83,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [hasLifted, setHasLifted] = useState(false);
     const [lastPos, setLastPos] = useState([0, 0]);
     const [dragOffset, setDragOffset] = useState([0, 0]); // offset is in normalized scale
-    const [audioB64Strings, setAudioB64Strings] = useState<string[]>([]);
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
     const [audioRecording, setAudioRecording] = useState(false);
@@ -402,12 +405,31 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     };
 
-    const placeAudio = (b64Audio: string) => {
-      const player = document.createElement("audio");
-      player.src = b64Audio;
-      player.play();
-      setAudioB64Strings((prev) => [...prev, b64Audio]);
-    };
+    // const placeAudio = (b64Audio: string) => {
+    //   const player = document.createElement("audio");
+    //   player.src = b64Audio;
+    //   player.play();
+    //   setAudioPaths((prev) => [...prev, b64Audio]);
+    // };
+
+    // const placeAudio = useCallback(
+    //   (b64Audio: string) => {
+    //     const player = document.createElement("audio");
+    //     player.src = b64Audio;
+    //     player.play();
+    //     setAudioPaths((prev) => [...prev, b64Audio]);
+    //   },
+    //   [setAudioPaths]
+    // );
+    const placeAudio = useCallback(
+      (b64Audio: string) => {
+        const player = document.createElement("audio");
+        player.src = b64Audio;
+        player.play();
+        setAudioPaths((prev) => [...prev, b64Audio]);
+      },
+      [setAudioPaths]
+    );
 
     const initAudio = () => {
       navigator.mediaDevices?.getUserMedia({ audio: true }).then(
@@ -639,6 +661,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         placeCheckpoint,
         placeUndo,
         placeCursor,
+        placeAudio,
       ]
     );
 
@@ -774,7 +797,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       ) as CanvasRenderingContext2D;
       const { width, height } = canvasRef.current;
       ctx.clearRect(0, 0, width, height);
-      setAudioB64Strings([]);
+      setAudioPaths([]);
       setTextShapes({});
       setTextId(1);
       setEditingTextId(0);
@@ -872,7 +895,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           }}
         />
         {role === ControllerRole.Hub &&
-          audioB64Strings.map((b64Audio) => <audio src={b64Audio} controls />)}
+          audioPaths.map((b64Audio) => <audio src={b64Audio} controls />)}
         {toolMode !== ToolMode.None && (
           <div>
             <FormControl component="fieldset">
