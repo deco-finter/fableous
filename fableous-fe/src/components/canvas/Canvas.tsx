@@ -407,11 +407,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     const placeAudio = useCallback(
-      (b64Audio: string) => {
+      (path: string) => {
         const player = document.createElement("audio");
-        player.src = b64Audio;
+        player.src = restAPI.gallery.getAssetByPath(path).url || "";
         player.play();
-        setAudioPaths((prev) => [...prev, b64Audio]);
+        setAudioPaths((prev) => [...prev, path]);
       },
       [setAudioPaths]
     );
@@ -880,11 +880,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           }}
         />
         {role === ControllerRole.Hub &&
-          audioPaths.map((b64Audio) => (
-            <audio
-              src={restAPI.gallery.getAssetByPath(b64Audio).url}
-              controls
-            />
+          audioPaths.map((path) => (
+            <audio src={restAPI.gallery.getAssetByPath(path).url} controls />
           ))}
         {toolMode !== ToolMode.None && (
           <div>
