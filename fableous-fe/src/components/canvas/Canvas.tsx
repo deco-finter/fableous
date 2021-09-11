@@ -32,6 +32,7 @@ import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
 import { Cursor } from "./CursorScreen";
 import { TextShape, TextShapeMap } from "./data";
 import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
+import { restAPI } from "../../api";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -405,22 +406,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       }
     };
 
-    // const placeAudio = (b64Audio: string) => {
-    //   const player = document.createElement("audio");
-    //   player.src = b64Audio;
-    //   player.play();
-    //   setAudioPaths((prev) => [...prev, b64Audio]);
-    // };
-
-    // const placeAudio = useCallback(
-    //   (b64Audio: string) => {
-    //     const player = document.createElement("audio");
-    //     player.src = b64Audio;
-    //     player.play();
-    //     setAudioPaths((prev) => [...prev, b64Audio]);
-    //   },
-    //   [setAudioPaths]
-    // );
     const placeAudio = useCallback(
       (b64Audio: string) => {
         const player = document.createElement("audio");
@@ -895,7 +880,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           }}
         />
         {role === ControllerRole.Hub &&
-          audioPaths.map((b64Audio) => <audio src={b64Audio} controls />)}
+          audioPaths.map((b64Audio) => (
+            <audio
+              src={restAPI.gallery.getAssetByPath(b64Audio).url}
+              controls
+            />
+          ))}
         {toolMode !== ToolMode.None && (
           <div>
             <FormControl component="fieldset">
