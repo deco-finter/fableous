@@ -60,6 +60,7 @@ export default function HubCanvasPage() {
   );
   const [BackgroundTextShapes, setBackgroundTextShapes] =
     useState<TextShapeMap>({});
+  const [audioPaths, setAudioPaths] = useState<string[]>([]);
 
   const [storyCursor, setStoryCursor] = useState<Cursor | undefined>();
   const [characterCursor, setCharacterCursor] = useState<Cursor | undefined>();
@@ -419,6 +420,8 @@ export default function HubCanvasPage() {
                 setCursor={setStoryCursor}
                 setTextShapes={setStoryTextShapes}
                 textShapes={storyTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
               />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
@@ -431,6 +434,8 @@ export default function HubCanvasPage() {
                 setCursor={setCharacterCursor}
                 setTextShapes={setCharacterTextShapes}
                 textShapes={CharacterTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
               />
             </div>
             <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
@@ -443,6 +448,8 @@ export default function HubCanvasPage() {
                 setCursor={setBackgroundCursor}
                 setTextShapes={setBackgroundTextShapes}
                 textShapes={BackgroundTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
               />
             </div>
           </div>
