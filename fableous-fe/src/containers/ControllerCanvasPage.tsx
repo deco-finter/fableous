@@ -13,20 +13,20 @@ import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
 import { Chip } from "@material-ui/core";
 import Canvas from "../components/canvas/Canvas";
+import { restAPI, wsAPI } from "../api";
 import {
   APIResponse,
   ControllerJoin,
-  ControllerRole,
   Session,
   WSControlMessageData,
   WSJoinMessageData,
   WSMessage,
-  WSMessageType,
-} from "../Data";
-import { restAPI, wsAPI } from "../Api";
+} from "../data";
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
+import { ControllerRole, WSMessageType } from "../constant";
+import { TextShapeMap } from "../components/canvas/data";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -61,6 +61,8 @@ export default function ControllerCanvasPage() {
   >({});
   const classes = useStyles();
 
+  const [textShapes, setTextShapes] = useState<TextShapeMap>({});
+  const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
@@ -393,6 +395,10 @@ export default function ControllerCanvasPage() {
                 pageNum={currentPageIdx}
                 isShown={controllerState === ControllerState.DrawingSession}
                 setCursor={setCursor}
+                textShapes={textShapes}
+                setTextShapes={setTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
               />
             </div>
           </div>

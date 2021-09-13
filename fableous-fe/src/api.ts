@@ -101,8 +101,12 @@ export const restAPI = {
       sessionId: string,
       pageNumber: number,
       name: string
-    ) => ({
-      url: `${baseAPI}/api/gallery/assets/${classroomId}/${sessionId}/${pageNumber}/${name}`,
+    ) =>
+      restAPI.gallery.getAssetByPath(
+        `${classroomId}/${sessionId}/${pageNumber}/${name}`
+      ),
+    getAssetByPath: (path: string) => ({
+      url: `${baseAPI}/api/gallery/assets/${path}`,
       method: "get",
     }),
   },

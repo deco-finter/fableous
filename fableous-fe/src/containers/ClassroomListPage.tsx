@@ -15,9 +15,9 @@ import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import * as yup from "yup";
-import { restAPI } from "../Api";
+import { restAPI } from "../api";
 import FormikTextField from "../components/FormikTextField";
-import { APIResponse, Classroom } from "../Data";
+import { APIResponse, Classroom } from "../data";
 
 export default function ClassroomListPage() {
   const [creating, setCreating] = useState(false);
