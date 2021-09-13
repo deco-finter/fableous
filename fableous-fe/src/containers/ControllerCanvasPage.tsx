@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import Radio from "@material-ui/core/Radio";
+import { makeStyles } from "@material-ui/core/styles";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
@@ -10,6 +11,7 @@ import Typography from "@material-ui/core/Typography";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
+import { Chip } from "@material-ui/core";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import {
@@ -33,6 +35,14 @@ enum ControllerState {
   StoryFinished = "STORY_FINISHED",
 }
 
+const useStyles = makeStyles({
+  disableMobileHoldInteraction: {
+    WebkitTouchCallout: "none",
+    WebkitUserSelect: "none",
+    userSelect: "none",
+  },
+});
+
 export default function ControllerCanvasPage() {
   const { enqueueSnackbar } = useSnackbar();
   const [controllerState, setControllerState] = useState<ControllerState>(
@@ -49,6 +59,8 @@ export default function ControllerCanvasPage() {
     APIResponse<Session>,
     APIResponse<undefined>
   >({});
+  const classes = useStyles();
+
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
@@ -197,192 +209,201 @@ export default function ControllerCanvasPage() {
   }, [currentPageIdx, storyDetails, controllerState]);
 
   return (
-    <>
-      <Grid item xs={12} className="mb-4">
+    <Grid
+      item
+      container
+      className={`mb-4 ${classes.disableMobileHoldInteraction}`}
+    >
+      <Grid item xs={12}>
         <Typography variant="h2">
           {
             {
               [ControllerState.JoinForm]: "join",
-              [ControllerState.WaitingRoom]: "draw",
-              [ControllerState.DrawingSession]: "draw",
+              [ControllerState.WaitingRoom]: "",
+              [ControllerState.DrawingSession]: "",
               [ControllerState.StoryFinished]: "finished",
             }[controllerState]
           }
         </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <div
-          style={{
-            WebkitTouchCallout: "none",
-            WebkitUserSelect: "none",
-            userSelect: "none",
-          }}
-        >
-          {controllerState === ControllerState.JoinForm && (
-            <Formik
-              initialValues={
-                {
-                  name: "",
-                  token: "",
-                  role: ControllerRole.Story,
-                } as ControllerJoin
-              }
-              validationSchema={yup.object().shape({
-                name: yup.string().required("required"),
-                token: yup
-                  .string()
-                  .required("required")
-                  .length(4, "must be 4 characters")
-                  .uppercase("must be all uppercase characters"),
-              })}
-              onSubmit={handleJoinSession}
-            >
-              {(formik) => (
-                <form onSubmit={formik.handleSubmit}>
-                  <div>
-                    <FormikTextField
-                      formik={formik}
-                      name="name"
-                      label="Name"
-                      overrides={{
-                        autoFocus: true,
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <FormikTextField
-                      formik={formik}
-                      name="token"
-                      label="Token"
-                      overrides={{
-                        onChange: (ev: React.ChangeEvent<HTMLInputElement>) => {
-                          const evUpperCase = { ...ev };
-                          evUpperCase.target.value =
-                            ev.target.value?.toUpperCase();
-                          formik.handleChange(evUpperCase);
-                        },
-                      }}
-                    />
-                  </div>
+        {controllerState === ControllerState.JoinForm && (
+          <Formik
+            initialValues={
+              {
+                name: "",
+                token: "",
+                role: ControllerRole.Story,
+              } as ControllerJoin
+            }
+            validationSchema={yup.object().shape({
+              name: yup.string().required("required"),
+              token: yup
+                .string()
+                .required("required")
+                .length(4, "must be 4 characters")
+                .uppercase("must be all uppercase characters"),
+            })}
+            onSubmit={handleJoinSession}
+          >
+            {(formik) => (
+              <form onSubmit={formik.handleSubmit}>
+                <div>
+                  <FormikTextField
+                    formik={formik}
+                    name="name"
+                    label="Name"
+                    overrides={{
+                      autoFocus: true,
+                    }}
+                  />
+                </div>
+                <div>
+                  <FormikTextField
+                    formik={formik}
+                    name="token"
+                    label="Token"
+                    overrides={{
+                      onChange: (ev: React.ChangeEvent<HTMLInputElement>) => {
+                        const evUpperCase = { ...ev };
+                        evUpperCase.target.value =
+                          ev.target.value?.toUpperCase();
+                        formik.handleChange(evUpperCase);
+                      },
+                    }}
+                  />
+                </div>
 
-                  <RadioGroup
-                    name="role"
-                    value={formik.values.role}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                  >
-                    <FormControlLabel
-                      value={ControllerRole.Story}
-                      control={<Radio />}
-                      label="Story"
-                    />
-                    <FormControlLabel
-                      value={ControllerRole.Character}
-                      control={<Radio />}
-                      label="Character"
-                    />
-                    <FormControlLabel
-                      value={ControllerRole.Background}
-                      control={<Radio />}
-                      label="Background"
-                    />
-                  </RadioGroup>
-                  <Button type="submit">Join Session</Button>
-                </form>
-              )}
-            </Formik>
+                <RadioGroup
+                  name="role"
+                  value={formik.values.role}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                >
+                  <FormControlLabel
+                    value={ControllerRole.Story}
+                    control={<Radio />}
+                    label="Story"
+                  />
+                  <FormControlLabel
+                    value={ControllerRole.Character}
+                    control={<Radio />}
+                    label="Character"
+                  />
+                  <FormControlLabel
+                    value={ControllerRole.Background}
+                    control={<Radio />}
+                    label="Background"
+                  />
+                </RadioGroup>
+                <Button type="submit">Join Session</Button>
+              </form>
+            )}
+          </Formik>
+        )}
+        <div
+          className={
+            controllerState !== ControllerState.JoinForm ? "block" : "hidden"
+          }
+        >
+          {/* TODO keep it one row regardless of screen size */}
+          <div className="flex flex-wrap justify-between gap-y-4">
+            <div className="flex">
+              <Chip label={`Title: ${storyDetails?.title}`} color="primary" />
+              {storyDetails?.description.split(",").map((tag) => (
+                <Chip label={tag} color="secondary" key={tag} />
+              ))}
+            </div>
+            <div className="flex">
+              <Chip
+                label={`Role: ${
+                  role[0].toUpperCase() + role.slice(1).toLowerCase()
+                }`}
+                color="primary"
+                variant="outlined"
+              />
+              <Chip
+                label={`Page ${currentPageIdx} of ${
+                  storyDetails?.pages || "-"
+                }`}
+                color="primary"
+                variant="outlined"
+              />
+            </div>
+          </div>
+          {controllerState === ControllerState.WaitingRoom && (
+            <Typography variant="h6" component="p">
+              waiting for hub to start..
+            </Typography>
+          )}
+          {controllerState === ControllerState.StoryFinished && (
+            <>
+              <div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className="mb-2"
+                  onClick={() => {
+                    setControllerState(ControllerState.JoinForm);
+                  }}
+                >
+                  Join another session
+                </Button>
+              </div>
+              <div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  component={Link}
+                  to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
+                >
+                  View story in gallery
+                </Button>
+              </div>
+            </>
           )}
           <div
             className={
-              controllerState !== ControllerState.JoinForm ? "block" : "hidden"
+              controllerState === ControllerState.DrawingSession
+                ? "grid"
+                : "hidden"
             }
           >
-            <Typography variant="h6">Role: {role}</Typography>
-            <Typography variant="h6">Title: {storyDetails?.title}</Typography>
-            <Typography variant="h6">
-              Description: {storyDetails?.description}
-            </Typography>
-            {controllerState === ControllerState.DrawingSession && (
-              <Typography variant="h6">
-                page {currentPageIdx || "-"} of {storyDetails?.pages || "-"}
-              </Typography>
-            )}
-            {controllerState === ControllerState.WaitingRoom && (
-              <Typography variant="h6" component="p">
-                waiting for hub to start..
-              </Typography>
-            )}
-            {controllerState === ControllerState.StoryFinished && (
-              <>
-                <div>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    className="mb-2"
-                    onClick={() => {
-                      setControllerState(ControllerState.JoinForm);
-                    }}
-                  >
-                    Join another session
-                  </Button>
-                </div>
-                <div>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    component={Link}
-                    to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
-                  >
-                    View story in gallery
-                  </Button>
-                </div>
-              </>
-            )}
             <div
-              className={
-                controllerState === ControllerState.DrawingSession
-                  ? "grid"
-                  : "hidden"
-              }
+              style={{
+                gridRowStart: 1,
+                gridColumnStart: 1,
+                zIndex: 20,
+                pointerEvents: "none", // forwards pointer events to next layer
+              }}
             >
-              <div
-                style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 20,
-                  pointerEvents: "none", // forwards pointer events to next layer
-                }}
-              >
-                <CursorScreen
-                  cursor={cursor}
-                  isShown={controllerState === ControllerState.DrawingSession}
-                />
-              </div>
-              <div
-                style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 10,
-                }}
-              >
-                <Canvas
-                  ref={canvasRef}
-                  wsConn={wsConn}
-                  role={role}
-                  layer={role}
-                  pageNum={currentPageIdx}
-                  isShown={controllerState === ControllerState.DrawingSession}
-                  setCursor={setCursor}
-                  textShapes={textShapes}
-                  setTextShapes={setTextShapes}
-                  audioPaths={audioPaths}
-                  setAudioPaths={setAudioPaths}
-                />
-              </div>
+              <CursorScreen
+                cursor={cursor}
+                isShown={controllerState === ControllerState.DrawingSession}
+              />
+            </div>
+            <div
+              style={{
+                gridRowStart: 1,
+                gridColumnStart: 1,
+                zIndex: 10,
+              }}
+            >
+              <Canvas
+                ref={canvasRef}
+                wsConn={wsConn}
+                role={role}
+                layer={role}
+                pageNum={currentPageIdx}
+                isShown={controllerState === ControllerState.DrawingSession}
+                setCursor={setCursor}
+                textShapes={textShapes}
+                setTextShapes={setTextShapes}
+                audioPaths={audioPaths}
+                setAudioPaths={setAudioPaths}
+              />
             </div>
           </div>
         </div>
       </Grid>
-    </>
+    </Grid>
   );
 }
