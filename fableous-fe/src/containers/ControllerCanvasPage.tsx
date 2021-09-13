@@ -214,7 +214,7 @@ export default function ControllerCanvasPage() {
       container
       className={`mb-4 ${classes.disableMobileHoldInteraction}`}
     >
-      <Grid item>
+      <Grid item xs={12}>
         <Typography variant="h2">
           {
             {
