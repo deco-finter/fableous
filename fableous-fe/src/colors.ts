@@ -1,7 +1,8 @@
 export default {
   orange: {
     light: "#FF857B",
-    main: "#FF594B",
+    main: "#E45D3F",
+    dark: "#FF594B",
   },
   blue: {
     light: "#1583D8",
@@ -9,4 +10,5 @@ export default {
     dark: "#0D44BA",
   },
   white: "#FFFFFF",
+  gray: "#AAAAAA",
 };
