@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Grid } from "@material-ui/core";
+import { Container } from "@material-ui/core";
 import { createTheme, ThemeProvider } from "@material-ui/core/styles";
 import { BrowserRouter as Router } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
@@ -53,24 +53,24 @@ export default function App() {
 
   return (
     <div id="app">
-      {/* place Snackbar outside of React.StrictMode to suppress finddomnode is deprecated warning */}
-      <SnackbarProvider maxSnack={3}>
-        <React.StrictMode>
-          <AuthProvider>
-            <Router>
-              <InjectAxiosRespInterceptor />
-              <ThemeProvider theme={theme}>
-                <Navbar />
-                <Container className="pt-5">
-                  <Grid container>
+      <div className="flex flex-col min-h-screen">
+        {/* place Snackbar outside of React.StrictMode to suppress finddomnode is deprecated warning */}
+        <SnackbarProvider maxSnack={3}>
+          <React.StrictMode>
+            <AuthProvider>
+              <Router>
+                <InjectAxiosRespInterceptor />
+                <ThemeProvider theme={theme}>
+                  <Navbar />
+                  <Container className="flex flex-col flex-1 pt-5 ">
                     <Routes />
-                  </Grid>
-                </Container>
-              </ThemeProvider>
-            </Router>
-          </AuthProvider>
-        </React.StrictMode>
-      </SnackbarProvider>
+                  </Container>
+                </ThemeProvider>
+              </Router>
+            </AuthProvider>
+          </React.StrictMode>
+        </SnackbarProvider>
+      </div>
     </div>
   );
 }

@@ -210,11 +210,10 @@ export default function ControllerCanvasPage() {
 
   return (
     <Grid
-      item
       container
-      className={`mb-4 ${classes.disableMobileHoldInteraction}`}
+      className={`flex flex-col flex-1 ${classes.disableMobileHoldInteraction}`}
     >
-      <Grid item xs={12}>
+      <Grid item xs={12} className="mb-4">
         <Typography variant="h2">
           {
             {
