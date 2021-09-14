@@ -58,6 +58,14 @@ export default function ClassroomListPage() {
     setCreating(false);
   };
 
+  const handleDelete = (id: string) => {
+    // TODO: filter deleted item from list
+    if (classrooms)
+      classrooms.data = classrooms?.data?.filter(
+        (classroom) => classroom.id !== id
+      );
+  };
+
   useEffect(() => {
     executeGet();
   }, [executeGet]);
@@ -77,7 +85,10 @@ export default function ClassroomListPage() {
         <Grid container spacing={2}>
           {classrooms?.data?.map((classroom) => (
             <Grid item xs={12} sm={6} md={4} key={classroom.id}>
-              <ClassroomItem classroom={classroom} />
+              <ClassroomItem
+                classroom={classroom}
+                onDelete={() => handleDelete(classroom.id)}
+              />
             </Grid>
           ))}
           {creating ? (
@@ -116,19 +127,20 @@ export default function ClassroomListPage() {
                         />
                       </CardContent>
                       <CardActions>
-                        <Button
-                          size="small"
-                          disabled={postLoading}
-                          type="submit"
-                        >
-                          Create
-                        </Button>
+                        <div className="flex-grow" />
                         <Button
                           size="small"
                           disabled={postLoading}
                           onClick={handleCancel}
                         >
-                          Cancel
+                          <Icon fontSize="small">cancel</Icon>
+                        </Button>
+                        <Button
+                          size="small"
+                          disabled={postLoading}
+                          type="submit"
+                        >
+                          <Icon fontSize="small">save</Icon>
                         </Button>
                       </CardActions>
                     </form>
