@@ -41,6 +41,7 @@ const useStyles = makeStyles(() => ({
     right: -8,
     top: -8,
     background: colors.red.main,
+    color: colors.white,
   },
 }));
 

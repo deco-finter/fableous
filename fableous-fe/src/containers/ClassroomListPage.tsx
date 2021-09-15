@@ -7,6 +7,7 @@ import {
   Grid,
   Icon,
   IconButton,
+  makeStyles,
   Typography,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
@@ -15,9 +16,16 @@ import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import * as yup from "yup";
 import { restAPI } from "../api";
+import colors from "../colors";
 import ClassroomItem from "../components/ClassroomItem";
 import FormikTextField from "../components/FormikTextField";
 import { APIResponse, Classroom } from "../data";
+
+const useStyles = makeStyles(() => ({
+  addButton: {
+    color: colors.white,
+  },
+}));
 
 export default function ClassroomListPage() {
   const [creating, setCreating] = useState(false);
@@ -71,6 +79,8 @@ export default function ClassroomListPage() {
   useEffect(() => {
     executeGet();
   }, [executeGet]);
+
+  const classes = useStyles();
 
   return (
     <Grid container>
@@ -162,7 +172,7 @@ export default function ClassroomListPage() {
               justifyContent="center"
               alignItems="center"
             >
-              <IconButton onClick={handleCreate}>
+              <IconButton className={classes.addButton} onClick={handleCreate}>
                 <Icon fontSize="large">add</Icon>
               </IconButton>
             </Grid>
