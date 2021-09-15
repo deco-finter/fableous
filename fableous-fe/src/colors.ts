@@ -27,7 +27,7 @@ export const generateColor = (seed: string): string => {
     }, 0)
   );
   return `#${Math.floor(
-    Math.abs(Math.sin(hash / 1024) * 16777215) % 16777215
+    Math.abs(Math.cos(hash / Math.PI ** 2) * 16777215) % 16777215
   ).toString(16)}`;
 };
 
