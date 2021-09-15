@@ -29,7 +29,7 @@ const useStyles = makeStyles(() => ({
     overflow: "inherit",
   },
   cardContainer: {
-    minHeight: 140,
+    minHeight: 150,
     display: "flex",
     flexDirection: "column",
   },
@@ -133,7 +133,7 @@ export default function ClassroomItem(props: {
 
   return (
     <>
-      <Card className={classes.card}>
+      <Card className={classes.card} elevation={8}>
         <Formik
           initialValues={classroom as Classroom}
           validationSchema={yup.object().shape({
@@ -176,7 +176,11 @@ export default function ClassroomItem(props: {
                   />
                 ) : (
                   <>
-                    <Typography variant="h5" component="h2">
+                    <Typography
+                      variant="h5"
+                      component="h2"
+                      className="overflow-ellipsis overflow-hidden"
+                    >
                       {classroom.name}
                     </Typography>
                   </>

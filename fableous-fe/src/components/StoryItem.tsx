@@ -210,11 +210,11 @@ export default function StoryItem(props: {
                     }}
                   />
                 ) : (
-                  <div className="flex-grow flex flex-col justify-center">
+                  <div className="flex-grow flex">
                     <Typography
                       variant="h4"
                       component="h2"
-                      className={classes.title}
+                      className={`w-full overflow-ellipsis overflow-hidden ${classes.title}`}
                     >
                       {session.title}
                     </Typography>
@@ -265,9 +265,15 @@ export default function StoryItem(props: {
                 {!editing && (
                   <div className={classes.author}>
                     <ul>
-                      <li>{session.nameStory}</li>
-                      <li>{session.nameCharacter}</li>
-                      <li>{session.nameBackground}</li>
+                      <li className="overflow-ellipsis overflow-hidden">
+                        {session.nameStory}
+                      </li>
+                      <li className="overflow-ellipsis overflow-hidden">
+                        {session.nameCharacter}
+                      </li>
+                      <li className="overflow-ellipsis overflow-hidden">
+                        {session.nameBackground}
+                      </li>
                     </ul>
                   </div>
                 )}
