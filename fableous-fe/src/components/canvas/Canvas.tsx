@@ -33,6 +33,7 @@ import { Cursor } from "./CursorScreen";
 import { TextShape, TextShapeMap } from "./data";
 import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
 import { restAPI } from "../../api";
+import useContainRatio from "../../hooks/useContainRatio";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -79,6 +80,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const onScreenKeyboardRef = useRef<HTMLInputElement>(
       document.createElement("input")
     );
+    const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
+    const [canvasWidth] = useContainRatio<HTMLDivElement>({
+      containerRef,
+      ratio: 1 / ASPECT_RATIO,
+    });
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
@@ -842,7 +848,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     }, [editingTextId, textId, placeCheckpoint]);
 
     return (
-      <>
+      <div className="w-full h-full grid place-items-center" ref={containerRef}>
         <canvas
           ref={canvasRef}
           onPointerDown={wrapPointerHandler(onPointerDown)}
@@ -861,8 +867,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               showKeyboard(true);
           }}
           style={{
+            position: "absolute",
             borderWidth: 4,
-            width: "100%",
+            width: `${canvasWidth}px`,
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
@@ -1029,7 +1036,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             pointerEvents: "none",
           }}
         />
-      </>
+      </div>
     );
   }
 );

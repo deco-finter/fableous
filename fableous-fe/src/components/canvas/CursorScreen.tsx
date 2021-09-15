@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { scaleUpXY } from "./helpers";
 import { ASPECT_RATIO, SCALE } from "./constants";
 import { ToolMode } from "../../constant";
+import useContainRatio from "../../hooks/useContainRatio";
 
 export interface Cursor {
   normX: number;
@@ -23,6 +24,12 @@ interface CursorScreenProps {
 const CursorScreen = (props: CursorScreenProps) => {
   const { cursor, name, isShown } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
+  const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
+
+  const [canvasWidth] = useContainRatio<HTMLDivElement>({
+    containerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
 
   const refreshCursor = useCallback(() => {
     if (!canvasRef.current) return;
@@ -103,13 +110,14 @@ const CursorScreen = (props: CursorScreenProps) => {
   }, [refreshCursor]);
 
   return (
-    <>
+    <div className="w-full h-full grid place-items-center" ref={containerRef}>
       <canvas
         ref={canvasRef}
         style={{
+          position: "absolute",
           borderWidth: 4,
           borderColor: "blue",
-          width: "100%",
+          width: `${canvasWidth}px`,
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",
@@ -120,7 +128,7 @@ const CursorScreen = (props: CursorScreenProps) => {
           userSelect: "none",
         }}
       />
-    </>
+    </div>
   );
 };
 

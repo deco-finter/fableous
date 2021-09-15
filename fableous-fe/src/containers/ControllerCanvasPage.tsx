@@ -359,47 +359,50 @@ export default function ControllerCanvasPage() {
               </div>
             </>
           )}
+        </div>
+      </Grid>
+      <Grid item xs={12} className="flex-1 relative mb-4">
+        <div
+          className={`grid place-items-stretch w-full h-full absolute ${
+            controllerState !== ControllerState.DrawingSession && "invisible"
+          }`}
+          style={{
+            border: "3px solid black",
+          }}
+        >
           <div
-            className={
-              controllerState === ControllerState.DrawingSession
-                ? "grid"
-                : "hidden"
-            }
+            style={{
+              gridRowStart: 1,
+              gridColumnStart: 1,
+              zIndex: 20,
+              pointerEvents: "none", // forwards pointer events to next layer
+            }}
           >
-            <div
-              style={{
-                gridRowStart: 1,
-                gridColumnStart: 1,
-                zIndex: 20,
-                pointerEvents: "none", // forwards pointer events to next layer
-              }}
-            >
-              <CursorScreen
-                cursor={cursor}
-                isShown={controllerState === ControllerState.DrawingSession}
-              />
-            </div>
-            <div
-              style={{
-                gridRowStart: 1,
-                gridColumnStart: 1,
-                zIndex: 10,
-              }}
-            >
-              <Canvas
-                ref={canvasRef}
-                wsConn={wsConn}
-                role={role}
-                layer={role}
-                pageNum={currentPageIdx}
-                isShown={controllerState === ControllerState.DrawingSession}
-                setCursor={setCursor}
-                textShapes={textShapes}
-                setTextShapes={setTextShapes}
-                audioPaths={audioPaths}
-                setAudioPaths={setAudioPaths}
-              />
-            </div>
+            <CursorScreen
+              cursor={cursor}
+              isShown={controllerState === ControllerState.DrawingSession}
+            />
+          </div>
+          <div
+            style={{
+              gridRowStart: 1,
+              gridColumnStart: 1,
+              zIndex: 10,
+            }}
+          >
+            <Canvas
+              ref={canvasRef}
+              wsConn={wsConn}
+              role={role}
+              layer={role}
+              pageNum={currentPageIdx}
+              isShown={controllerState === ControllerState.DrawingSession}
+              setCursor={setCursor}
+              textShapes={textShapes}
+              setTextShapes={setTextShapes}
+              audioPaths={audioPaths}
+              setAudioPaths={setAudioPaths}
+            />
           </div>
         </div>
       </Grid>
