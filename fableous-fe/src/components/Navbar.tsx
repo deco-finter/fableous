@@ -1,3 +1,4 @@
+import { makeStyles } from "@material-ui/core";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
@@ -6,6 +7,12 @@ import { Link, useHistory } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "./AuthProvider";
 
+const useStyles = makeStyles(() => ({
+  home: {
+    fontSize: "1.5rem",
+  },
+}));
+
 export default function Navbar() {
   const history = useHistory();
   const [, isAuthenticated, , clearToken] = useContext(AuthContext);
@@ -13,11 +20,13 @@ export default function Navbar() {
     clearToken();
     history.push("/");
   };
+  const classes = useStyles();
+
   return (
     <AppBar position="static">
       <Toolbar>
         <Link to="/">
-          <Typography variant="h5" className="text-white">
+          <Typography variant="h1" className={classes.home}>
             Fableous
           </Typography>
         </Link>

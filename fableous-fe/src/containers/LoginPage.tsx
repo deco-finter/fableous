@@ -109,7 +109,7 @@ export default function LoginPage() {
                     />
                     <Button
                       variant="contained"
-                      color="primary"
+                      color="secondary"
                       disabled={loading}
                       type="submit"
                     >

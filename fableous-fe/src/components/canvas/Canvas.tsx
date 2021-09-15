@@ -294,7 +294,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           fontSize
         );
         ctx.fillStyle = isGallery ? "#00000000" : "#000000";
-        ctx.font = `${fontSize * SCALE}px Arial`;
+        ctx.font = `${fontSize * SCALE}px Comic Sans MS`;
         ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
           ctx.beginPath();

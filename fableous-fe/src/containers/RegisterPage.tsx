@@ -158,7 +158,7 @@ export default function RegisterPage() {
                       />
                       <Button
                         variant="contained"
-                        color="primary"
+                        color="secondary"
                         disabled={loading}
                         type="submit"
                       >
