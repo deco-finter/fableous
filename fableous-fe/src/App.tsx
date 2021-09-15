@@ -11,7 +11,7 @@ import AuthProvider from "./components/AuthProvider";
 import Navbar from "./components/Navbar";
 import Routes from "./Routes";
 import InjectAxiosRespInterceptor from "./components/InjectAxiosRespInterceptor";
-import colors from "./colors";
+import { colors } from "./colors";
 
 // generated background from https://www.svgbackgrounds.com/
 const useStyles = makeStyles({

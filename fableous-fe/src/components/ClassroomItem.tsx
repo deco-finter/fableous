@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 import * as yup from "yup";
 import FormikTextField from "./FormikTextField";
 import { restAPI } from "../api";
-import colors from "../colors";
+import { colors } from "../colors";
 import { APIResponse, Classroom, Session } from "../data";
 
 const useStyles = makeStyles(() => ({

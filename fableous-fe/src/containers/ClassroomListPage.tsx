@@ -16,7 +16,7 @@ import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import * as yup from "yup";
 import { restAPI } from "../api";
-import colors from "../colors";
+import { colors } from "../colors";
 import ClassroomItem from "../components/ClassroomItem";
 import FormikTextField from "../components/FormikTextField";
 import { APIResponse, Classroom } from "../data";
@@ -145,6 +145,8 @@ export default function ClassroomListPage() {
                           overrides={{
                             autoFocus: true,
                             disabled: postLoading,
+                            variant: "outlined",
+                            className: "mb-4",
                           }}
                         />
                       </CardContent>
