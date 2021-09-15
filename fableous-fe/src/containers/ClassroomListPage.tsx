@@ -32,7 +32,7 @@ const useStyles = makeStyles(() => ({
     opacity: 0.8,
   },
   heightBump: {
-    minHeight: 128,
+    minHeight: 150,
   },
 }));
 
@@ -103,7 +103,7 @@ export default function ClassroomListPage() {
       )}
       {getError && <Alert severity="error">Failed loading classrooms!</Alert>}
       {!getLoading && !getError && (
-        <Grid container spacing={2}>
+        <Grid container spacing={4}>
           {classrooms?.data?.map((classroom) => (
             <Grid item xs={12} sm={6} md={4} key={classroom.id}>
               <ClassroomItem
