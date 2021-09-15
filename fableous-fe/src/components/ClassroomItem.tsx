@@ -222,7 +222,7 @@ export default function ClassroomItem(props: {
                         disabled={deleteOngoingSessionLoading}
                         onClick={handleDeleteOngoingSession}
                       >
-                        Stop
+                        Stop <Icon fontSize="small">stop</Icon>
                       </Button>
                     ) : (
                       <Button
@@ -232,7 +232,7 @@ export default function ClassroomItem(props: {
                         component={Link}
                         to={`/classroom/${classroom.id}/hub`}
                       >
-                        Start
+                        Start <Icon fontSize="small">play_arrow</Icon>
                       </Button>
                     ))}
                 </CardActions>
