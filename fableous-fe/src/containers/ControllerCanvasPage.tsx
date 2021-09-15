@@ -211,9 +211,15 @@ export default function ControllerCanvasPage() {
   return (
     <Grid
       container
-      className={`flex flex-col flex-1 ${classes.disableMobileHoldInteraction}`}
+      className={`flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
     >
-      <Grid item xs={12} className="mb-4">
+      <Grid
+        item
+        xs={12}
+        className={`mb-4 ${
+          controllerState !== ControllerState.DrawingSession && "z-50"
+        }`}
+      >
         <Typography variant="h2">
           {
             {
@@ -303,31 +309,6 @@ export default function ControllerCanvasPage() {
             controllerState !== ControllerState.JoinForm ? "block" : "hidden"
           }
         >
-          {/* TODO keep it one row regardless of screen size */}
-          <div className="flex flex-wrap justify-between gap-y-4">
-            <div className="flex">
-              <Chip label={`Title: ${storyDetails?.title}`} color="primary" />
-              {storyDetails?.description.split(",").map((tag) => (
-                <Chip label={tag} color="secondary" key={tag} />
-              ))}
-            </div>
-            <div className="flex">
-              <Chip
-                label={`Role: ${
-                  role[0].toUpperCase() + role.slice(1).toLowerCase()
-                }`}
-                color="primary"
-                variant="outlined"
-              />
-              <Chip
-                label={`Page ${currentPageIdx} of ${
-                  storyDetails?.pages || "-"
-                }`}
-                color="primary"
-                variant="outlined"
-              />
-            </div>
-          </div>
           {controllerState === ControllerState.WaitingRoom && (
             <Typography variant="h6" component="p">
               waiting for hub to start..
@@ -361,51 +342,94 @@ export default function ControllerCanvasPage() {
           )}
         </div>
       </Grid>
-      <Grid item xs={12} className="flex-1 relative mb-4">
-        <div
-          className={`grid place-items-stretch w-full h-full absolute ${
-            controllerState !== ControllerState.DrawingSession && "invisible"
-          }`}
-          style={{
-            border: "3px solid black",
-          }}
-        >
-          <div
-            style={{
-              gridRowStart: 1,
-              gridColumnStart: 1,
-              zIndex: 20,
-              pointerEvents: "none", // forwards pointer events to next layer
-            }}
-          >
-            <CursorScreen
-              cursor={cursor}
-              isShown={controllerState === ControllerState.DrawingSession}
-            />
-          </div>
-          <div
-            style={{
-              gridRowStart: 1,
-              gridColumnStart: 1,
-              zIndex: 10,
-            }}
-          >
-            <Canvas
-              ref={canvasRef}
-              wsConn={wsConn}
-              role={role}
-              layer={role}
-              pageNum={currentPageIdx}
-              isShown={controllerState === ControllerState.DrawingSession}
-              setCursor={setCursor}
-              textShapes={textShapes}
-              setTextShapes={setTextShapes}
-              audioPaths={audioPaths}
-              setAudioPaths={setAudioPaths}
-            />
-          </div>
-        </div>
-      </Grid>
+      <div
+        className={`flex flex-col absolute w-full ${
+          controllerState !== ControllerState.DrawingSession && "invisible"
+        }`}
+        style={{
+          // navbar is 60px and there is a 24px padding
+          height: "calc(100vh - 84px)",
+        }}
+      >
+        <Grid container className="mb-4">
+          <Grid item xs={12}>
+            {/* TODO keep it one row regardless of screen size */}
+            <div className="flex flex-wrap justify-between gap-y-4">
+              <div className="flex">
+                <Chip label={`Title: ${storyDetails?.title}`} color="primary" />
+                {storyDetails?.description.split(",").map((tag) => (
+                  <Chip label={tag} color="secondary" key={tag} />
+                ))}
+              </div>
+              <div className="flex">
+                <Chip
+                  label={`Role: ${
+                    role[0].toUpperCase() + role.slice(1).toLowerCase()
+                  }`}
+                  color="primary"
+                  variant="outlined"
+                />
+                <Chip
+                  label={`Page ${currentPageIdx} of ${
+                    storyDetails?.pages || "-"
+                  }`}
+                  color="primary"
+                  variant="outlined"
+                />
+              </div>
+            </div>
+          </Grid>
+          {/* add more rows with <Grid item /> here */}
+        </Grid>
+        <Grid container className="flex-1 mb-4">
+          <Grid item xs={1}>
+            toolbar
+          </Grid>
+          <Grid item xs={11}>
+            <div
+              className="grid place-items-stretch h-full"
+              style={{
+                border: "3px solid black",
+              }}
+            >
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 20,
+                  pointerEvents: "none", // forwards pointer events to next layer
+                }}
+              >
+                <CursorScreen
+                  cursor={cursor}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                />
+              </div>
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 10,
+                }}
+              >
+                <Canvas
+                  ref={canvasRef}
+                  wsConn={wsConn}
+                  role={role}
+                  layer={role}
+                  pageNum={currentPageIdx}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                  setCursor={setCursor}
+                  textShapes={textShapes}
+                  setTextShapes={setTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
+                />
+              </div>
+            </div>
+          </Grid>
+        </Grid>
+      </div>
     </Grid>
   );
 }

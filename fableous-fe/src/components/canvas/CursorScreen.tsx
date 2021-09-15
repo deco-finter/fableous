@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef } from "react";
 import { scaleUpXY } from "./helpers";
 import { ASPECT_RATIO, SCALE } from "./constants";
 import { ToolMode } from "../../constant";
-import useContainRatio from "../../hooks/useContainRatio";
 
 export interface Cursor {
   normX: number;
@@ -25,11 +24,6 @@ const CursorScreen = (props: CursorScreenProps) => {
   const { cursor, name, isShown } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
-
-  const [canvasWidth] = useContainRatio<HTMLDivElement>({
-    containerRef,
-    ratio: 1 / ASPECT_RATIO,
-  });
 
   const refreshCursor = useCallback(() => {
     if (!canvasRef.current) return;
@@ -93,16 +87,25 @@ const CursorScreen = (props: CursorScreenProps) => {
     }
   }, [cursor, name]);
 
+  const getCanvasOffsetWidth = useCallback(() => {
+    const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
+      containerRef.current;
+    return contOffHeight / contOffWidth > ASPECT_RATIO
+      ? contOffWidth
+      : contOffHeight / ASPECT_RATIO;
+  }, [containerRef]);
+
   // set canvas size onmount and when canvas appears or becomes hidden
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.offsetWidth * SCALE;
+    const canvasOffsetWidth = getCanvasOffsetWidth();
+    canvas.width = canvasOffsetWidth * SCALE;
     canvas.height = canvas.width * ASPECT_RATIO;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
     }
-  }, [canvasRef, isShown]);
+  }, [canvasRef, isShown, getCanvasOffsetWidth]);
 
   // start cursor layer animation
   useEffect(() => {
@@ -117,7 +120,7 @@ const CursorScreen = (props: CursorScreenProps) => {
           position: "absolute",
           borderWidth: 4,
           borderColor: "blue",
-          width: `${canvasWidth}px`,
+          width: `${getCanvasOffsetWidth()}px`,
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",

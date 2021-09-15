@@ -33,7 +33,6 @@ import { Cursor } from "./CursorScreen";
 import { TextShape, TextShapeMap } from "./data";
 import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
 import { restAPI } from "../../api";
-import useContainRatio from "../../hooks/useContainRatio";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -81,10 +80,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       document.createElement("input")
     );
     const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
-    const [canvasWidth] = useContainRatio<HTMLDivElement>({
-      containerRef,
-      ratio: 1 / ASPECT_RATIO,
-    });
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
@@ -749,11 +744,20 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [allowDrawing, editingTextId, placeText]
     );
 
+    const getCanvasOffsetWidth = useCallback(() => {
+      const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
+        containerRef.current;
+      return contOffHeight / contOffWidth > ASPECT_RATIO
+        ? contOffWidth
+        : contOffHeight / ASPECT_RATIO;
+    }, [containerRef]);
+
     const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
-      canvas.width = canvas.offsetWidth * SCALE;
+      const canvasOffsetWidth = getCanvasOffsetWidth();
+      canvas.width = canvasOffsetWidth * SCALE;
       canvas.height = canvas.width * ASPECT_RATIO;
-    }, [canvasRef]);
+    }, [canvasRef, getCanvasOffsetWidth]);
 
     // setup on component mount
     useEffect(() => {
@@ -869,7 +873,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           style={{
             position: "absolute",
             borderWidth: 4,
-            width: `${canvasWidth}px`,
+            width: `${getCanvasOffsetWidth()}px`,
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
