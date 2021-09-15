@@ -53,9 +53,6 @@ export default function StoryDetailPage() {
   return (
     <Grid container>
       <Grid item xs={12} className="mb-4">
-        <Typography variant="h2">
-          {Object.keys(manifest?.texts || {}).length} texts
-        </Typography>
         <Typography variant="h2">{story?.data?.title}</Typography>
       </Grid>
       {getStoryLoading && (
@@ -68,7 +65,6 @@ export default function StoryDetailPage() {
         <Grid container spacing={2}>
           {story?.data && (
             <Grid item key={story.data.pages}>
-              <h1>{page}</h1>
               <div className="grid">
                 <div
                   style={{
