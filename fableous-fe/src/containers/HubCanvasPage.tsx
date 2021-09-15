@@ -383,7 +383,7 @@ export default function HubCanvasPage() {
           hubState !== HubState.DrawingSession && "invisible"
         }`}
         style={{
-          // navbar is 60px and there is a 24px padding
+          // navbar is 64px and there is a 20px padding
           height: "calc(100vh - 84px)",
         }}
       >
