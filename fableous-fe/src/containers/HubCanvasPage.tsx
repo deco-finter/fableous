@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
+import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
@@ -388,14 +389,16 @@ export default function HubCanvasPage() {
       >
         <Grid container className="mb-4">
           <Grid item xs={12}>
-            <Typography variant="h6">
-              Hub with token {classroomToken}; page {currentPageIdx} of{" "}
-              {storyPageCnt}
-            </Typography>
-            <Button onClick={() => exportCanvas()}>Export</Button>
-            <Button onClick={onNextPage}>
-              {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
-            </Button>
+            <Paper>
+              <Typography variant="h6">
+                Hub with token {classroomToken}; page {currentPageIdx} of{" "}
+                {storyPageCnt}
+              </Typography>
+              <Button onClick={() => exportCanvas()}>Export</Button>
+              <Button onClick={onNextPage}>
+                {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
+              </Button>
+            </Paper>
           </Grid>
         </Grid>
         <Grid container className="flex-1 mb-4">

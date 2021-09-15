@@ -120,6 +120,7 @@ const CursorScreen = (props: CursorScreenProps) => {
           position: "absolute",
           borderWidth: 4,
           borderColor: "blue",
+          borderRadius: "30px",
           width: `${getCanvasOffsetWidth()}px`,
           touchAction: "none",
           msTouchAction: "none",

@@ -874,6 +874,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             position: "absolute",
             borderWidth: 4,
             width: `${getCanvasOffsetWidth()}px`,
+            borderRadius: "30px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
