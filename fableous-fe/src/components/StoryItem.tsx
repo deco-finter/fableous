@@ -247,11 +247,7 @@ export default function StoryItem(props: {
                 ) : (
                   <>
                     <hr className={classes.splitter} />
-                    <Typography
-                      variant="caption"
-                      component="h2"
-                      className={classes.description}
-                    >
+                    <div className={classes.description}>
                       {session.description.split(",").map((tag) => (
                         <Chip
                           label={tag.trim()}
@@ -260,7 +256,7 @@ export default function StoryItem(props: {
                           className={classes.descriptionChip}
                         />
                       ))}
-                    </Typography>
+                    </div>
                     <hr className={classes.splitter} />
                   </>
                 )}
