@@ -21,6 +21,7 @@ import { APIResponse, Classroom } from "../data";
 
 export default function ClassroomListPage() {
   const [creating, setCreating] = useState(false);
+  const [, setTicker] = useState(0);
   const [
     { data: classrooms, loading: getLoading, error: getError },
     executeGet,
@@ -59,11 +60,12 @@ export default function ClassroomListPage() {
   };
 
   const handleDelete = (id: string) => {
-    // TODO: filter deleted item from list
-    if (classrooms)
+    if (classrooms) {
       classrooms.data = classrooms?.data?.filter(
         (classroom) => classroom.id !== id
       );
+      setTicker((prev) => prev + 1);
+    }
   };
 
   useEffect(() => {
