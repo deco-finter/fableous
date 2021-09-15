@@ -9,6 +9,9 @@ export default {
     main: "#1E5DDD",
     dark: "#0D44BA",
   },
+  red: {
+    main: "#DD2222",
+  },
   white: "#FFFFFF",
   gray: "#AAAAAA",
 };

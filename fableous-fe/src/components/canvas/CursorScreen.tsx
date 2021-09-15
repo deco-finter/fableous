@@ -23,6 +23,7 @@ interface CursorScreenProps {
 const CursorScreen = (props: CursorScreenProps) => {
   const { cursor, name, isShown } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
+  const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
 
   const refreshCursor = useCallback(() => {
     if (!canvasRef.current) return;
@@ -86,16 +87,25 @@ const CursorScreen = (props: CursorScreenProps) => {
     }
   }, [cursor, name]);
 
+  const getCanvasOffsetWidth = useCallback(() => {
+    const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
+      containerRef.current;
+    return contOffHeight / contOffWidth > ASPECT_RATIO
+      ? contOffWidth
+      : contOffHeight / ASPECT_RATIO;
+  }, [containerRef]);
+
   // set canvas size onmount and when canvas appears or becomes hidden
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.offsetWidth * SCALE;
+    const canvasOffsetWidth = getCanvasOffsetWidth();
+    canvas.width = canvasOffsetWidth * SCALE;
     canvas.height = canvas.width * ASPECT_RATIO;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
     }
-  }, [canvasRef, isShown]);
+  }, [canvasRef, isShown, getCanvasOffsetWidth]);
 
   // start cursor layer animation
   useEffect(() => {
@@ -103,13 +113,15 @@ const CursorScreen = (props: CursorScreenProps) => {
   }, [refreshCursor]);
 
   return (
-    <>
+    <div className="w-full h-full grid place-items-center" ref={containerRef}>
       <canvas
         ref={canvasRef}
         style={{
+          position: "absolute",
           borderWidth: 4,
           borderColor: "blue",
-          width: "100%",
+          borderRadius: "30px",
+          width: `${getCanvasOffsetWidth()}px`,
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",
@@ -120,7 +132,7 @@ const CursorScreen = (props: CursorScreenProps) => {
           userSelect: "none",
         }}
       />
-    </>
+    </div>
   );
 };
 

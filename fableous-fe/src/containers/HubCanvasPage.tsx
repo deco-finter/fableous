@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
+import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
@@ -259,26 +260,30 @@ export default function HubCanvasPage() {
   }, [currentPageIdx, storyPageCnt, clearWsConn]);
 
   return (
-    <>
-      <Grid item xs={12}>
-        <Button
-          onClick={() => history.goBack()}
-          startIcon={<Icon>arrow_backward</Icon>}
-        >
-          Back
-        </Button>
-      </Grid>
-      <Grid item xs={12} className="mb-4">
-        <Typography variant="h2">
-          {
-            {
-              [HubState.SessionForm]: "story",
-              [HubState.WaitingRoom]: "lobby",
-              [HubState.DrawingSession]: "draw",
-            }[hubState]
-          }
-        </Typography>
-      </Grid>
+    <Grid container className="relative">
+      {hubState !== HubState.DrawingSession && (
+        <>
+          <Grid item xs={12}>
+            <Button
+              onClick={() => history.goBack()}
+              startIcon={<Icon>arrow_backward</Icon>}
+            >
+              Back
+            </Button>
+          </Grid>
+          <Grid item xs={12} className="mb-4">
+            <Typography variant="h2">
+              {
+                {
+                  [HubState.SessionForm]: "story",
+                  [HubState.WaitingRoom]: "lobby",
+                  [HubState.DrawingSession]: "",
+                }[hubState]
+              }
+            </Typography>
+          </Grid>
+        </>
+      )}
       {hubState === HubState.SessionForm && (
         <Formik
           initialValues={
@@ -373,92 +378,113 @@ export default function HubCanvasPage() {
           </Button>
         </Grid>
       )}
-      {hubState === HubState.DrawingSession && (
-        <Grid item xs={12}>
-          <Typography variant="h6">Hub with token {classroomToken}</Typography>
-          <Typography variant="h6">
-            page {currentPageIdx} of {storyPageCnt}
-          </Typography>
-          <div style={{ display: "grid" }}>
-            <div
-              style={{
-                gridRowStart: 1,
-                gridColumnStart: 1,
-                zIndex: 22,
-                pointerEvents: "none",
-              }}
-            >
-              <CursorScreen cursor={storyCursor} name="Story" />
-            </div>
-            <div
-              style={{
-                gridRowStart: 1,
-                gridColumnStart: 1,
-                zIndex: 21,
-                pointerEvents: "none",
-              }}
-            >
-              <CursorScreen cursor={characterCursor} name="Character" />
-            </div>
-            <div
-              style={{
-                gridRowStart: 1,
-                gridColumnStart: 1,
-                zIndex: 20,
-                pointerEvents: "none",
-              }}
-            >
-              <CursorScreen cursor={backgroundCursor} name="Background" />
-            </div>
-            <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
-              <Canvas
-                ref={storyCanvasRef}
-                wsConn={wsConn}
-                role={ControllerRole.Hub}
-                layer={ControllerRole.Story}
-                pageNum={currentPageIdx}
-                setCursor={setStoryCursor}
-                setTextShapes={setStoryTextShapes}
-                textShapes={storyTextShapes}
-                audioPaths={audioPaths}
-                setAudioPaths={setAudioPaths}
-              />
-            </div>
-            <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
-              <Canvas
-                ref={characterCanvasRef}
-                wsConn={wsConn}
-                role={ControllerRole.Hub}
-                layer={ControllerRole.Character}
-                pageNum={currentPageIdx}
-                setCursor={setCharacterCursor}
-                setTextShapes={setCharacterTextShapes}
-                textShapes={CharacterTextShapes}
-                audioPaths={audioPaths}
-                setAudioPaths={setAudioPaths}
-              />
-            </div>
-            <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
-              <Canvas
-                ref={backgroundCanvasRef}
-                wsConn={wsConn}
-                role={ControllerRole.Hub}
-                layer={ControllerRole.Background}
-                pageNum={currentPageIdx}
-                setCursor={setBackgroundCursor}
-                setTextShapes={setBackgroundTextShapes}
-                textShapes={BackgroundTextShapes}
-                audioPaths={audioPaths}
-                setAudioPaths={setAudioPaths}
-              />
-            </div>
-          </div>
-          <Button onClick={() => exportCanvas()}>Export</Button>
-          <Button onClick={onNextPage}>
-            {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
-          </Button>
+      <div
+        className={`flex flex-col absolute w-full ${
+          hubState !== HubState.DrawingSession && "invisible"
+        }`}
+        style={{
+          // navbar is 60px and there is a 24px padding
+          height: "calc(100vh - 84px)",
+        }}
+      >
+        <Grid container className="mb-4">
+          <Grid item xs={12}>
+            <Paper>
+              <Typography variant="h6">
+                Hub with token {classroomToken}; page {currentPageIdx} of{" "}
+                {storyPageCnt}
+              </Typography>
+              <Button onClick={() => exportCanvas()}>Export</Button>
+              <Button onClick={onNextPage}>
+                {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
+              </Button>
+            </Paper>
+          </Grid>
         </Grid>
-      )}
-    </>
+        <Grid container className="flex-1 mb-4">
+          <Grid item xs={12}>
+            <div
+              className="grid place-items-stretch h-full"
+              style={{
+                border: "3px solid black",
+              }}
+            >
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 22,
+                  pointerEvents: "none",
+                }}
+              >
+                <CursorScreen cursor={storyCursor} name="Story" />
+              </div>
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 21,
+                  pointerEvents: "none",
+                }}
+              >
+                <CursorScreen cursor={characterCursor} name="Character" />
+              </div>
+              <div
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 20,
+                  pointerEvents: "none",
+                }}
+              >
+                <CursorScreen cursor={backgroundCursor} name="Background" />
+              </div>
+              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
+                <Canvas
+                  ref={storyCanvasRef}
+                  wsConn={wsConn}
+                  role={ControllerRole.Hub}
+                  layer={ControllerRole.Story}
+                  pageNum={currentPageIdx}
+                  setCursor={setStoryCursor}
+                  setTextShapes={setStoryTextShapes}
+                  textShapes={storyTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
+                />
+              </div>
+              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
+                <Canvas
+                  ref={characterCanvasRef}
+                  wsConn={wsConn}
+                  role={ControllerRole.Hub}
+                  layer={ControllerRole.Character}
+                  pageNum={currentPageIdx}
+                  setCursor={setCharacterCursor}
+                  setTextShapes={setCharacterTextShapes}
+                  textShapes={CharacterTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
+                />
+              </div>
+              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
+                <Canvas
+                  ref={backgroundCanvasRef}
+                  wsConn={wsConn}
+                  role={ControllerRole.Hub}
+                  layer={ControllerRole.Background}
+                  pageNum={currentPageIdx}
+                  setCursor={setBackgroundCursor}
+                  setTextShapes={setBackgroundTextShapes}
+                  textShapes={BackgroundTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
+                />
+              </div>
+            </div>
+          </Grid>
+        </Grid>
+      </div>
+    </Grid>
   );
 }

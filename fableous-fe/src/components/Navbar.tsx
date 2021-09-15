@@ -24,57 +24,55 @@ export default function Navbar() {
   const classes = useStyles();
 
   return (
-    <div className="flex-grow">
-      <AppBar position="static">
-        <Toolbar>
-          <Link to="/">
-            <Typography variant="h1" className={classes.home}>
-              Fableous
-            </Typography>
-          </Link>
-          <div className="flex-grow" /> {/* spacer */}
-          {isAuthenticated ? (
-            <>
-              <Button
-                variant="outlined"
-                className="text-white"
-                component={Link}
-                to="/profile"
-              >
-                <Icon fontSize="small">person</Icon>
-                &nbsp; Profile
-              </Button>
+    <AppBar position="static">
+      <Toolbar>
+        <Link to="/">
+          <Typography variant="h1" className={classes.home}>
+            Fableous
+          </Typography>
+        </Link>
+        <div className="flex-grow" /> {/* spacer */}
+        {isAuthenticated ? (
+          <>
+            <Button
+              variant="outlined"
+              className="text-white"
+              component={Link}
+              to="/profile"
+            >
+              <Icon fontSize="small">person</Icon>
+              &nbsp; Profile
+            </Button>
 
-              <Button
-                variant="outlined"
-                className="ml-4 text-white"
-                onClick={onLogout}
-              >
-                <Icon fontSize="small">logout</Icon>&nbsp; Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outlined"
-                className="text-white"
-                component={Link}
-                to="/login"
-              >
-                Login
-              </Button>
-              <Button
-                variant="outlined"
-                className="ml-4 text-white"
-                component={Link}
-                to="/register"
-              >
-                Register
-              </Button>
-            </>
-          )}
-        </Toolbar>
-      </AppBar>
-    </div>
+            <Button
+              variant="outlined"
+              className="ml-4 text-white"
+              onClick={onLogout}
+            >
+              <Icon fontSize="small">logout</Icon>&nbsp; Logout
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="outlined"
+              className="text-white"
+              component={Link}
+              to="/login"
+            >
+              Login
+            </Button>
+            <Button
+              variant="outlined"
+              className="ml-4 text-white"
+              component={Link}
+              to="/register"
+            >
+              Register
+            </Button>
+          </>
+        )}
+      </Toolbar>
+    </AppBar>
   );
 }

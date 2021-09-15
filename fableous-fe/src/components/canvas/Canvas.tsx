@@ -79,6 +79,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const onScreenKeyboardRef = useRef<HTMLInputElement>(
       document.createElement("input")
     );
+    const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
@@ -743,11 +744,20 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       [allowDrawing, editingTextId, placeText]
     );
 
+    const getCanvasOffsetWidth = useCallback(() => {
+      const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
+        containerRef.current;
+      return contOffHeight / contOffWidth > ASPECT_RATIO
+        ? contOffWidth
+        : contOffHeight / ASPECT_RATIO;
+    }, [containerRef]);
+
     const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
-      canvas.width = canvas.offsetWidth * SCALE;
+      const canvasOffsetWidth = getCanvasOffsetWidth();
+      canvas.width = canvasOffsetWidth * SCALE;
       canvas.height = canvas.width * ASPECT_RATIO;
-    }, [canvasRef]);
+    }, [canvasRef, getCanvasOffsetWidth]);
 
     // setup on component mount
     useEffect(() => {
@@ -842,7 +852,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     }, [editingTextId, textId, placeCheckpoint]);
 
     return (
-      <>
+      <div className="w-full h-full grid place-items-center" ref={containerRef}>
         <canvas
           ref={canvasRef}
           onPointerDown={wrapPointerHandler(onPointerDown)}
@@ -861,8 +871,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               showKeyboard(true);
           }}
           style={{
+            position: "absolute",
             borderWidth: 4,
-            width: "100%",
+            width: `${getCanvasOffsetWidth()}px`,
+            borderRadius: "30px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
@@ -1029,7 +1041,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             pointerEvents: "none",
           }}
         />
-      </>
+      </div>
     );
   }
 );
