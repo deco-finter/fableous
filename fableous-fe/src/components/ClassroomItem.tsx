@@ -141,7 +141,7 @@ export default function ClassroomItem(props: {
               .required("Name is required")
               .test("len", "Name too long", (val) => (val || "").length <= 32),
           })}
-          validateOnMount
+          validateOnBlur={false}
           onSubmit={handleEditSubmit}
         >
           {(formik) => (
@@ -186,7 +186,10 @@ export default function ClassroomItem(props: {
                   <Button
                     size="small"
                     disabled={putLoading || deleteLoading}
-                    onClick={handleCancel}
+                    onClick={() => {
+                      handleCancel();
+                      formik.resetForm();
+                    }}
                   >
                     <Icon fontSize="small">cancel</Icon>
                   </Button>
