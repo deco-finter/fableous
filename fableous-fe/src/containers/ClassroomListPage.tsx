@@ -111,6 +111,7 @@ export default function ClassroomListPage() {
                         (val) => (val || "").length <= 32
                       ),
                   })}
+                  validateOnBlur={false}
                   onSubmit={handleCreateSubmit}
                 >
                   {(formik) => (
@@ -132,6 +133,7 @@ export default function ClassroomListPage() {
                           size="small"
                           disabled={postLoading}
                           onClick={handleCancel}
+                          type="button"
                         >
                           <Icon fontSize="small">cancel</Icon>
                         </Button>
