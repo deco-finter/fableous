@@ -100,6 +100,8 @@ export default function StoryItem(props: {
     splitter: {
       borderColor: "black",
       opacity: 0.2,
+      marginLeft: 32,
+      marginRight: 32,
     },
     actionButton: {
       color: textColor,
