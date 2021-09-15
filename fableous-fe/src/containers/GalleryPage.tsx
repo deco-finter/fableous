@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import useAxios from "axios-hooks";
 import { Alert } from "@material-ui/lab";
 import { restAPI } from "../api";
-import { APIResponse, Session } from "../data";
+import { APIResponse, Classroom, Session } from "../data";
 import { AuthContext } from "../components/AuthProvider";
 import StoryItem from "../components/StoryItem";
 
@@ -12,11 +12,19 @@ export default function GalleryPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const [, setTicker] = useState(0);
   const [, isAuthenticated, ,] = useContext(AuthContext);
-  const [{ data: sessions, loading: getLoading, error: getError }, executeGet] =
-    useAxios<APIResponse<Session[]>, APIResponse<undefined>>(
-      restAPI.session.getList(classroomId),
-      { manual: true }
-    );
+  const [{ data: classroom }, executeGetClassroom] = useAxios<
+    APIResponse<Classroom>,
+    APIResponse<undefined>
+  >(restAPI.classroom.getOne(classroomId), {
+    manual: true,
+  });
+  const [
+    { data: sessions, loading: getLoading, error: getError },
+    executeGetSessions,
+  ] = useAxios<APIResponse<Session[]>, APIResponse<undefined>>(
+    restAPI.session.getList(classroomId),
+    { manual: true }
+  );
 
   const handleDelete = (sessionId: string) => {
     if (sessions) {
@@ -28,13 +36,15 @@ export default function GalleryPage() {
   };
 
   useEffect(() => {
-    executeGet();
-  }, [executeGet]);
+    executeGetClassroom().then(() => executeGetSessions());
+  }, [executeGetClassroom, executeGetSessions]);
 
   return (
     <Grid container>
       <Grid item xs={12} className="mb-4">
-        <Typography variant="h2">Gallery</Typography>
+        <Typography variant="h2">
+          {classroom && `${classroom?.data?.name}'s`} Gallery
+        </Typography>
       </Grid>
       {getLoading && (
         <Grid container justifyContent="center">
@@ -45,7 +55,7 @@ export default function GalleryPage() {
       {!getLoading && !getError && (
         <Grid container spacing={4}>
           {sessions?.data?.map((session) => (
-            <Grid item xs={12} sm={6} md={3} key={session.id}>
+            <Grid item xs={12} sm={6} md={4} lg={3} key={session.id}>
               <StoryItem
                 session={session}
                 classroomId={classroomId}
