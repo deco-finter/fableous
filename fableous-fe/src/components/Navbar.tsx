@@ -41,7 +41,8 @@ export default function Navbar() {
                 component={Link}
                 to="/profile"
               >
-                <Icon fontSize="small">person</Icon>Profile
+                <Icon fontSize="small">person</Icon>
+                &nbsp; Profile
               </Button>
 
               <Button
@@ -49,7 +50,7 @@ export default function Navbar() {
                 className="ml-4 text-white"
                 onClick={onLogout}
               >
-                <Icon fontSize="small">logout</Icon>Logout
+                <Icon fontSize="small">logout</Icon>&nbsp; Logout
               </Button>
             </>
           ) : (
