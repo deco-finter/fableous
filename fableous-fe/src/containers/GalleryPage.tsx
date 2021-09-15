@@ -54,6 +54,11 @@ export default function GalleryPage() {
               />
             </Grid>
           ))}
+          {!sessions?.data?.length && (
+            <Grid item xs={12}>
+              <Alert severity="info">No stories have been completed!</Alert>
+            </Grid>
+          )}
         </Grid>
       )}
     </Grid>
