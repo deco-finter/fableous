@@ -3,6 +3,7 @@ import {
   Card,
   CardActions,
   CardContent,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,30 +21,8 @@ import { useState } from "react";
 import * as yup from "yup";
 import FormikTextField from "./FormikTextField";
 import { restAPI } from "../api";
-import colors from "../colors";
+import { colors, generateColor, getBestTextColor } from "../colors";
 import { APIResponse, Session } from "../data";
-
-const useStyles = makeStyles(() => ({
-  card: {
-    position: "relative",
-    overflow: "inherit",
-  },
-  cardContainer: {
-    minHeight: 128,
-    display: "flex",
-    flexDirection: "column",
-  },
-  deleteButton: {
-    "&:hover": {
-      background: colors.red.main,
-    },
-    position: "absolute",
-    right: -8,
-    top: -8,
-    background: colors.red.main,
-    color: colors.white,
-  },
-}));
 
 export default function StoryItem(props: {
   session: Session;
@@ -68,6 +47,79 @@ export default function StoryItem(props: {
     APIResponse<string>,
     APIResponse<undefined>
   >(restAPI.session.delete(classroomId, session.id), { manual: true });
+
+  const bgColor = generateColor(session.id);
+  const textColor = getBestTextColor(bgColor);
+
+  const useStyles = makeStyles(() => ({
+    card: {
+      position: "relative",
+      overflow: "inherit",
+      borderRadius: 4,
+      borderLeftWidth: 24,
+      borderLeftColor: "#00000080",
+      background: bgColor,
+    },
+    cardContainer: {
+      minHeight: 400,
+      display: "flex",
+      flexDirection: "column",
+    },
+    deleteButton: {
+      "&:hover": {
+        background: colors.red.main,
+      },
+      position: "absolute",
+      right: -8,
+      top: -8,
+      background: colors.red.main,
+      color: colors.white,
+    },
+    title: {
+      fontFamily: "Courgette",
+      textAlign: "center",
+      alignSelf: "center",
+      color: textColor,
+    },
+    description: {
+      textAlign: "center",
+      marginTop: 16,
+      marginBottom: 16,
+    },
+    descriptionChip: {
+      margin: 4,
+      background: "#00000040",
+      color: textColor,
+    },
+    author: {
+      textAlign: "center",
+      marginTop: 16,
+      fontStyle: "italic",
+      color: textColor,
+    },
+    splitter: {
+      borderColor: "black",
+      opacity: 0.2,
+    },
+    actionButton: {
+      color: textColor,
+      opacity: 0.5,
+    },
+    inputInput: {
+      color: textColor,
+    },
+    inputRoot: {
+      color: textColor,
+      "& fieldset": {
+        color: textColor,
+        borderColor: textColor,
+      },
+      "&:hover fieldset": {
+        color: textColor,
+        borderColor: textColor,
+      },
+    },
+  }));
 
   const handleEditSubmit = (newSession: Session) => {
     executePut({
@@ -104,7 +156,7 @@ export default function StoryItem(props: {
 
   return (
     <>
-      <Card className={classes.card}>
+      <Card className={classes.card} elevation={8}>
         <Formik
           initialValues={session as Session}
           validationSchema={yup.object().shape({
@@ -133,39 +185,99 @@ export default function StoryItem(props: {
                   <Icon>delete</Icon>
                 </IconButton>
               )}
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow flex flex-col">
                 {editing ? (
-                  <>
-                    <FormikTextField
-                      formik={formik}
-                      name="title"
-                      label="Title"
-                      overrides={{
-                        autoFocus: true,
-                        disabled: putLoading,
-                      }}
-                    />
-                    <FormikTextField
-                      formik={formik}
-                      name="description"
-                      label="Description"
-                      overrides={{
-                        disabled: putLoading,
-                      }}
-                    />
-                  </>
+                  <FormikTextField
+                    formik={formik}
+                    name="title"
+                    label="Title"
+                    overrides={{
+                      autoFocus: true,
+                      disabled: putLoading,
+                      variant: "outlined",
+                      className: `mb-4 ${classes.inputInput}`,
+                      InputProps: {
+                        classes: {
+                          root: classes.inputRoot,
+                          input: classes.inputInput,
+                        },
+                      },
+                      InputLabelProps: {
+                        classes: {
+                          root: classes.inputInput,
+                        },
+                      },
+                    }}
+                  />
                 ) : (
-                  <Typography variant="h5" component="h2">
-                    {session.title}
-                  </Typography>
+                  <div className="flex-grow flex flex-col justify-center">
+                    <Typography
+                      variant="h4"
+                      component="h2"
+                      className={classes.title}
+                    >
+                      {session.title}
+                    </Typography>
+                  </div>
+                )}
+                {editing ? (
+                  <FormikTextField
+                    formik={formik}
+                    name="description"
+                    label="Description"
+                    overrides={{
+                      disabled: putLoading,
+                      variant: "outlined",
+                      className: "mb-4",
+                      InputProps: {
+                        classes: {
+                          root: classes.inputRoot,
+                          input: classes.inputInput,
+                        },
+                      },
+                      InputLabelProps: {
+                        classes: {
+                          root: classes.inputInput,
+                        },
+                      },
+                    }}
+                  />
+                ) : (
+                  <>
+                    <hr className={classes.splitter} />
+                    <Typography
+                      variant="caption"
+                      component="h2"
+                      className={classes.description}
+                    >
+                      {session.description.split(",").map((tag) => (
+                        <Chip
+                          label={tag.trim()}
+                          size="small"
+                          key={tag}
+                          className={classes.descriptionChip}
+                        />
+                      ))}
+                    </Typography>
+                    <hr className={classes.splitter} />
+                  </>
+                )}
+                {!editing && (
+                  <div className={classes.author}>
+                    <ul>
+                      <li>{session.nameStory}</li>
+                      <li>{session.nameCharacter}</li>
+                      <li>{session.nameBackground}</li>
+                    </ul>
+                  </div>
                 )}
               </CardContent>
-              <div className="flex-grow" />
               {editing ? (
                 <CardActions>
                   <div className="flex-grow" />
                   <Button
                     size="small"
+                    className={classes.actionButton}
                     disabled={putLoading || deleteLoading}
                     onClick={() => {
                       handleCancel();
@@ -178,6 +290,7 @@ export default function StoryItem(props: {
                   </Button>
                   <Button
                     size="small"
+                    className={classes.actionButton}
                     disabled={putLoading || deleteLoading}
                     type="submit"
                   >
@@ -187,7 +300,11 @@ export default function StoryItem(props: {
               ) : (
                 <CardActions>
                   {editable && (
-                    <Button size="small" onClick={handleEdit}>
+                    <Button
+                      size="small"
+                      onClick={handleEdit}
+                      className={classes.actionButton}
+                    >
                       <Icon fontSize="small">edit</Icon>
                     </Button>
                   )}
