@@ -49,9 +49,9 @@ export default function ClassroomItem(props: {
   onDelete: () => void;
 }) {
   const { classroom: classroomProp, onDelete: onDeleteCallback } = props;
-
   const [editing, setEditing] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [stopping, setStopping] = useState<boolean>(false);
   const [classroom, setClassroom] = useState<Classroom>(classroomProp);
   const [ongoingSession, setOngoingSession] = useState<Session>();
   const [{ loading: putLoading }, executePut] = useAxios<
@@ -109,6 +109,7 @@ export default function ClassroomItem(props: {
     executeDeleteOngoingSession()
       .then(() => {
         setOngoingSession(undefined);
+        setStopping(false);
       })
       .catch((error) => console.error(error));
   };
@@ -220,7 +221,7 @@ export default function ClassroomItem(props: {
                         size="small"
                         variant="outlined"
                         disabled={deleteOngoingSessionLoading}
-                        onClick={handleDeleteOngoingSession}
+                        onClick={() => setStopping(true)}
                       >
                         Stop <Icon fontSize="small">stop</Icon>
                       </Button>
@@ -256,6 +257,24 @@ export default function ClassroomItem(props: {
           </Button>
           <Button onClick={handleDelete} color="secondary">
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={stopping} onClose={() => setStopping(false)}>
+        <DialogTitle>Stop {classroom.name} drawing session?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to stop this classroom&apos;s session? This
+            classroom is currently drawing{" "}
+            <strong>{ongoingSession?.title}</strong>.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStopping(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteOngoingSession} color="secondary">
+            Stop <Icon fontSize="small">stop</Icon>
           </Button>
         </DialogActions>
       </Dialog>
