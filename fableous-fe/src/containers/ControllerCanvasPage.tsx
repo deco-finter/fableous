@@ -27,6 +27,7 @@ import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { ControllerRole, WSMessageType } from "../constant";
 import { TextShapeMap } from "../components/canvas/data";
+import CanvasToolbar from "../components/canvas/CanvasToolbar";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -383,7 +384,7 @@ export default function ControllerCanvasPage() {
         </Grid>
         <Grid container spacing={2} className="flex-1 mb-4">
           <Grid item xs={1}>
-            toolbar
+            <CanvasToolbar role={ControllerRole.Character} />
           </Grid>
           <Grid item xs={11}>
             <div
