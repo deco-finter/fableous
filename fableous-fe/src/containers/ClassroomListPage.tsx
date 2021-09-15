@@ -7,20 +7,38 @@ import {
   Grid,
   Icon,
   IconButton,
+  makeStyles,
   Typography,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import useAxios from "axios-hooks";
 import { Formik } from "formik";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI } from "../api";
+import colors from "../colors";
+import ClassroomItem from "../components/ClassroomItem";
 import FormikTextField from "../components/FormikTextField";
 import { APIResponse, Classroom } from "../data";
 
+const useStyles = makeStyles(() => ({
+  addButton: {
+    "&:hover": {
+      backgroundColor: colors.white,
+      opacity: 1,
+    },
+    color: colors.blue.main,
+    backgroundColor: colors.white,
+    opacity: 0.8,
+  },
+  heightBump: {
+    minHeight: 128,
+  },
+}));
+
 export default function ClassroomListPage() {
   const [creating, setCreating] = useState(false);
+  const [, setTicker] = useState(0);
   const [
     { data: classrooms, loading: getLoading, error: getError },
     executeGet,
@@ -58,9 +76,20 @@ export default function ClassroomListPage() {
     setCreating(false);
   };
 
+  const handleDelete = (id: string) => {
+    if (classrooms) {
+      classrooms.data = classrooms?.data?.filter(
+        (classroom) => classroom.id !== id
+      );
+      setTicker((prev) => prev + 1);
+    }
+  };
+
   useEffect(() => {
     executeGet();
   }, [executeGet]);
+
+  const classes = useStyles();
 
   return (
     <Grid container>
@@ -77,34 +106,15 @@ export default function ClassroomListPage() {
         <Grid container spacing={2}>
           {classrooms?.data?.map((classroom) => (
             <Grid item xs={12} sm={6} md={4} key={classroom.id}>
-              <Card className="flex flex-col h-full">
-                <CardContent className="flex-grow">
-                  <Typography variant="h5" component="h2">
-                    {classroom.name}
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    component={Link}
-                    to={`/classroom/${classroom.id}`}
-                  >
-                    View
-                  </Button>
-                  <Button
-                    size="small"
-                    component={Link}
-                    to={`/gallery/${classroom.id}`}
-                  >
-                    Gallery
-                  </Button>
-                </CardActions>
-              </Card>
+              <ClassroomItem
+                classroom={classroom}
+                onDelete={() => handleDelete(classroom.id)}
+              />
             </Grid>
           ))}
           {creating ? (
             <Grid item xs={12} sm={6} md={4}>
-              <Card className="flex flex-col h-full">
+              <Card className={`flex flex-col h-full ${classes.heightBump}`}>
                 <Formik
                   initialValues={
                     {
@@ -122,6 +132,7 @@ export default function ClassroomListPage() {
                         (val) => (val || "").length <= 32
                       ),
                   })}
+                  validateOnBlur={false}
                   onSubmit={handleCreateSubmit}
                 >
                   {(formik) => (
@@ -138,19 +149,21 @@ export default function ClassroomListPage() {
                         />
                       </CardContent>
                       <CardActions>
+                        <div className="flex-grow" />
+                        <Button
+                          size="small"
+                          disabled={postLoading}
+                          onClick={handleCancel}
+                          type="button"
+                        >
+                          <Icon fontSize="small">cancel</Icon>
+                        </Button>
                         <Button
                           size="small"
                           disabled={postLoading}
                           type="submit"
                         >
-                          Create
-                        </Button>
-                        <Button
-                          size="small"
-                          disabled={postLoading}
-                          onClick={handleCancel}
-                        >
-                          Cancel
+                          <Icon fontSize="small">save</Icon>
                         </Button>
                       </CardActions>
                     </form>
@@ -168,9 +181,16 @@ export default function ClassroomListPage() {
               justifyContent="center"
               alignItems="center"
             >
-              <IconButton onClick={handleCreate}>
-                <Icon fontSize="large">add</Icon>
-              </IconButton>
+              <div
+                className={`flex flex-col justify-center ${classes.heightBump}`}
+              >
+                <IconButton
+                  className={classes.addButton}
+                  onClick={handleCreate}
+                >
+                  <Icon fontSize="large">add</Icon>
+                </IconButton>
+              </div>
             </Grid>
           )}
         </Grid>
