@@ -23,7 +23,16 @@ import { APIResponse, Classroom } from "../data";
 
 const useStyles = makeStyles(() => ({
   addButton: {
-    color: colors.white,
+    "&:hover": {
+      backgroundColor: colors.white,
+      opacity: 1,
+    },
+    color: colors.blue.main,
+    backgroundColor: colors.white,
+    opacity: 0.8,
+  },
+  heightBump: {
+    minHeight: 128,
   },
 }));
 
@@ -105,7 +114,7 @@ export default function ClassroomListPage() {
           ))}
           {creating ? (
             <Grid item xs={12} sm={6} md={4}>
-              <Card className="flex flex-col h-full">
+              <Card className={`flex flex-col h-full ${classes.heightBump}`}>
                 <Formik
                   initialValues={
                     {
@@ -172,9 +181,16 @@ export default function ClassroomListPage() {
               justifyContent="center"
               alignItems="center"
             >
-              <IconButton className={classes.addButton} onClick={handleCreate}>
-                <Icon fontSize="large">add</Icon>
-              </IconButton>
+              <div
+                className={`flex flex-col justify-center ${classes.heightBump}`}
+              >
+                <IconButton
+                  className={classes.addButton}
+                  onClick={handleCreate}
+                >
+                  <Icon fontSize="large">add</Icon>
+                </IconButton>
+              </div>
             </Grid>
           )}
         </Grid>
