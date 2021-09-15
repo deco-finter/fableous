@@ -43,9 +43,9 @@ export default function GalleryPage() {
       )}
       {getError && <Alert severity="error">Failed loading Gallery!</Alert>}
       {!getLoading && !getError && (
-        <Grid container spacing={2}>
+        <Grid container spacing={4}>
           {sessions?.data?.map((session) => (
-            <Grid item xs={12} sm={6} md={4} key={session.id}>
+            <Grid item xs={12} sm={6} md={3} key={session.id}>
               <StoryItem
                 session={session}
                 classroomId={classroomId}
