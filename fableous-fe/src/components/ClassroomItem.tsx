@@ -29,7 +29,7 @@ const useStyles = makeStyles(() => ({
     overflow: "inherit",
   },
   cardContainer: {
-    minHeight: 128,
+    minHeight: 140,
     display: "flex",
     flexDirection: "column",
   },
@@ -162,7 +162,7 @@ export default function ClassroomItem(props: {
                   <Icon>delete</Icon>
                 </IconButton>
               )}
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow flex flex-col">
                 {editing ? (
                   <FormikTextField
                     formik={formik}
@@ -171,6 +171,7 @@ export default function ClassroomItem(props: {
                     overrides={{
                       autoFocus: true,
                       disabled: putLoading,
+                      variant: "outlined",
                     }}
                   />
                 ) : (
