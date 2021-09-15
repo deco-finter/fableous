@@ -189,7 +189,9 @@ export default function ClassroomItem(props: {
                     disabled={putLoading || deleteLoading}
                     onClick={() => {
                       handleCancel();
-                      formik.resetForm();
+                      formik.resetForm({
+                        values: classroom,
+                      });
                     }}
                   >
                     <Icon fontSize="small">cancel</Icon>
