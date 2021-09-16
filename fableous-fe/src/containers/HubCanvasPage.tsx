@@ -189,7 +189,13 @@ export default function HubCanvasPage() {
     ].every((role) => role in joinedControllers);
   };
 
+  const postCanvas = () => {
+    // TODO: transfer finishCanvas to postCanvas
+    console.log("posting this canvas page");
+  };
+
   const onNextPage = () => {
+    postCanvas();
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
@@ -197,7 +203,24 @@ export default function HubCanvasPage() {
   };
 
   const finishCanvas = () => {
-    wsConn?.send(JSON.stringify({ type: WSMessageType.Control, data: {} }));
+    // TODO: only use this function to finalize the canvas
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const { width, height } = storyCanvasRef.current;
+    if (!ctx) return;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(backgroundCanvasRef.current, 0, 0, width, height);
+    ctx.drawImage(characterCanvasRef.current, 0, 0, width, height);
+    ctx.drawImage(storyCanvasRef.current, 0, 0, width, height);
+    const link = document.createElement("a");
+    link.download = "output.png";
+    const dataUrl = canvas.toDataURL();
+    wsConn?.send(JSON.stringify({ type: WSMessageType.Image, data: dataUrl }));
+    // wsConn?.send(JSON.stringify({ type: WSMessageType.Manifest, data: {} }));
   };
 
   const onBeginDrawing = () => {
