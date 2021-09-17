@@ -43,7 +43,7 @@ export default function HubCanvasPage() {
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
-  const [canvasOffsetWidth] = useContainRatio({
+  const [canvasOffsetWidth, canvasOffsetHeight] = useContainRatio({
     containerRef: canvasContainerRef,
     ratio: 1 / ASPECT_RATIO,
   });
@@ -426,9 +426,6 @@ export default function HubCanvasPage() {
                 border: "3px solid black",
               }}
             >
-              {/* TODO add white background behind last canvas layer, must do in a level above Canvas component,
-                keep in mind story detail page will display transparent canvas above an HTML image element
-              */}
               <div
                 style={{
                   gridRowStart: 1,
@@ -502,6 +499,23 @@ export default function HubCanvasPage() {
                   textShapes={BackgroundTextShapes}
                   audioPaths={audioPaths}
                   setAudioPaths={setAudioPaths}
+                />
+              </div>
+              <div
+                className="grid"
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 1,
+                }}
+              >
+                <div
+                  className="bg-white place-self-center"
+                  style={{
+                    width: canvasOffsetWidth,
+                    height: canvasOffsetHeight,
+                    borderRadius: "30px",
+                  }}
                 />
               </div>
             </div>

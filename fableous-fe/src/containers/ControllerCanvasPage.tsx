@@ -463,6 +463,23 @@ export default function ControllerCanvasPage() {
                   offsetWidth={`${canvasOffsetWidth}px`}
                 />
               </div>
+              <div
+                className="grid"
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 1,
+                }}
+              >
+                <div
+                  className="bg-white place-self-center"
+                  style={{
+                    width: canvasOffsetWidth,
+                    height: canvasOffsetHeight,
+                    borderRadius: "30px",
+                  }}
+                />
+              </div>
             </div>
           </Grid>
         </Grid>

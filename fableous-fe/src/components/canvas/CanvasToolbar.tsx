@@ -39,8 +39,6 @@ const COLORS = [
 ];
 const ERASE_COLOR = "#00000000";
 
-// TODO to make toolbar height same as canvas, extract logic to calculate canvas width upwards to container
-// may consider using useContainRatio hook
 const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
   (props: CanvasToolbarProps, ref) => {
     const {
