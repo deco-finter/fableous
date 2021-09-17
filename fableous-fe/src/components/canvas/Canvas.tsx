@@ -41,6 +41,7 @@ interface CanvasProps {
   pageNum: number;
   isGallery?: boolean;
   isShown?: boolean;
+  offsetWidth?: string;
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
@@ -56,6 +57,7 @@ interface CanvasProps {
 const defaultProps = {
   isGallery: false,
   isShown: true,
+  offsetWidth: "100%",
   setCursor: undefined,
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
@@ -79,6 +81,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       pageNum,
       isGallery,
       isShown,
+      offsetWidth = defaultProps.offsetWidth,
       setCursor,
       setTextShapes,
       textShapes,
@@ -98,7 +101,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     const onScreenKeyboardRef = useRef<HTMLInputElement>(
       document.createElement("input")
     );
-    const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
     const [allowDrawing, setAllowDrawing] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [hasLifted, setHasLifted] = useState(false);
@@ -760,20 +762,12 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       [allowDrawing, editingTextId, placeText]
     );
 
-    const getCanvasOffsetWidth = useCallback(() => {
-      const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
-        containerRef.current;
-      return contOffHeight / contOffWidth > ASPECT_RATIO
-        ? contOffWidth
-        : contOffHeight / ASPECT_RATIO;
-    }, [containerRef]);
-
     const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
-      const canvasOffsetWidth = getCanvasOffsetWidth();
+      const canvasOffsetWidth = canvas.offsetWidth;
       canvas.width = canvasOffsetWidth * SCALE;
       canvas.height = canvas.width * ASPECT_RATIO;
-    }, [canvasRef, getCanvasOffsetWidth]);
+    }, [canvasRef]);
 
     // exposes callbacks to parent, to be used by toolbar
     useImperativeHandle(
@@ -883,7 +877,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     }, [editingTextId, textId, placeCheckpoint]);
 
     return (
-      <div className="w-full h-full grid place-items-center" ref={containerRef}>
+      <div className="w-full h-full grid place-items-center">
         <canvas
           ref={canvasRef}
           onPointerDown={wrapPointerHandler(onPointerDown)}
@@ -904,7 +898,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           style={{
             position: "absolute",
             borderWidth: 4,
-            width: `${getCanvasOffsetWidth()}px`,
+            width: offsetWidth,
             borderRadius: "30px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes

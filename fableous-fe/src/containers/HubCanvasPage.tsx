@@ -17,6 +17,8 @@ import { useAchievement, useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { WSMessageType, ControllerRole } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
+import useContainRatio from "../hooks/useContainRatio";
+import { ASPECT_RATIO } from "../components/canvas/constants";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -38,6 +40,13 @@ export default function HubCanvasPage() {
   >({});
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [storyPageCnt, setStoryPageCnt] = useState(0);
+  const canvasContainerRef = useRef<HTMLDivElement>(
+    document.createElement("div")
+  );
+  const [canvasOffsetWidth] = useContainRatio({
+    containerRef: canvasContainerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
 
   const [{ loading: postLoading }, executePostSession] = useAxios(
     restAPI.session.create(classroomId),
@@ -411,6 +420,7 @@ export default function HubCanvasPage() {
         <Grid container className="flex-1 mb-4">
           <Grid item xs={12}>
             <div
+              ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
               style={{
                 border: "3px solid black",
@@ -456,6 +466,7 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
                   pageNum={currentPageIdx}
+                  offsetWidth={`${canvasOffsetWidth}px`}
                   setCursor={setStoryCursor}
                   setTextShapes={setStoryTextShapes}
                   textShapes={storyTextShapes}
@@ -470,6 +481,7 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
                   pageNum={currentPageIdx}
+                  offsetWidth={`${canvasOffsetWidth}px`}
                   setCursor={setCharacterCursor}
                   setTextShapes={setCharacterTextShapes}
                   textShapes={CharacterTextShapes}
@@ -484,6 +496,7 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
                   pageNum={currentPageIdx}
+                  offsetWidth={`${canvasOffsetWidth}px`}
                   setCursor={setBackgroundCursor}
                   setTextShapes={setBackgroundTextShapes}
                   textShapes={BackgroundTextShapes}

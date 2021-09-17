@@ -28,7 +28,8 @@ import FormikTextField from "../components/FormikTextField";
 import { ControllerRole, ToolMode, WSMessageType } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
-import { SCALE } from "../components/canvas/constants";
+import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
+import useContainRatio from "../hooks/useContainRatio";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -64,6 +65,13 @@ export default function ControllerCanvasPage() {
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
+  const canvasContainerRef = useRef<HTMLDivElement>(
+    document.createElement("div")
+  );
+  const [canvasOffsetWidth, canvasOffsetHeight] = useContainRatio({
+    containerRef: canvasContainerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
   const classes = useStyles();
 
   const canvasRef = useRef<ImperativeCanvasRef>({
@@ -399,6 +407,7 @@ export default function ControllerCanvasPage() {
             <CanvasToolbar
               ref={canvasRef}
               role={role}
+              offsetHeight={`${canvasOffsetHeight}px`}
               toolColor={toolColor}
               setToolColor={setToolColor}
               toolMode={toolMode}
@@ -409,6 +418,7 @@ export default function ControllerCanvasPage() {
           </Grid>
           <Grid item xs={11}>
             <div
+              ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
               style={{
                 border: "3px solid black",
@@ -450,6 +460,7 @@ export default function ControllerCanvasPage() {
                   toolMode={toolMode}
                   setToolMode={setToolMode}
                   toolWidth={toolWidth}
+                  offsetWidth={`${canvasOffsetWidth}px`}
                 />
               </div>
             </div>
