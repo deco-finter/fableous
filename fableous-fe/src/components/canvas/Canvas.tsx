@@ -5,19 +5,13 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-case-declarations */
 import React, {
-  MutableRefObject,
   forwardRef,
   useCallback,
   useEffect,
   useState,
   useRef,
+  useImperativeHandle,
 } from "react";
-import Button from "@material-ui/core/Button";
-import Radio from "@material-ui/core/Radio";
-import RadioGroup from "@material-ui/core/RadioGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import Slider from "@material-ui/core/Slider";
 import cloneDeep from "lodash.clonedeep";
 import { WSMessage } from "../../data";
 
@@ -30,7 +24,7 @@ import {
 } from "./helpers";
 import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
 import { Cursor } from "./CursorScreen";
-import { TextShape, TextShapeMap } from "./data";
+import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
 import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
 import { restAPI } from "../../api";
 
@@ -52,14 +46,31 @@ interface CanvasProps {
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
   audioPaths: string[];
   setAudioPaths: React.Dispatch<React.SetStateAction<string[]>>;
+  // toolbar states
+  toolMode?: ToolMode;
+  setToolMode?: React.Dispatch<React.SetStateAction<ToolMode>>;
+  toolColor?: string;
+  toolWidth?: number;
 }
+
+const defaultProps = {
+  isGallery: false,
+  isShown: true,
+  setCursor: undefined,
+  toolColor: "#000000ff",
+  toolMode: ToolMode.None,
+  setToolMode: () => {},
+  toolWidth: 8 * SCALE,
+};
 
 interface SimplePointerEventData {
   clientX: number;
   clientY: number;
 }
 
-const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
+// TODO after width of canvas DOM element is dynamic, attempt to make canvas drawing scaling dynamic
+// that is, resizing screen allows drawing without issue (no translation error)
+const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
   (props: CanvasProps, ref) => {
     let FRAME_COUNTER = 0;
     const {
@@ -73,9 +84,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       textShapes,
       setAudioPaths,
       audioPaths,
+      // make variables not optional
+      toolMode = defaultProps.toolMode,
+      setToolMode = defaultProps.setToolMode,
+      toolColor = defaultProps.toolColor,
+      toolWidth = defaultProps.toolWidth,
       wsConn,
     } = props;
-    const canvasRef = ref as MutableRefObject<HTMLCanvasElement>;
+    // useImperativeHandle of type ImperativeCanvasRef defined at bottom
+    const canvasRef = useRef<HTMLCanvasElement>(
+      document.createElement("canvas")
+    );
     const onScreenKeyboardRef = useRef<HTMLInputElement>(
       document.createElement("input")
     );
@@ -94,9 +113,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [editingTextId, setEditingTextId] = useState(0);
     const editingTextIdRef = useRef(editingTextId);
     editingTextIdRef.current = editingTextId;
-    const [toolColor, setToolColor] = useState("#000000ff");
-    const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
-    const [toolWidth, setToolWidth] = useState(8 * SCALE);
     const [, setCheckpointHistory] = useState<Checkpoint[]>([]);
 
     const showKeyboard = (show: boolean) => {
@@ -759,6 +775,21 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       canvas.height = canvas.width * ASPECT_RATIO;
     }, [canvasRef, getCanvasOffsetWidth]);
 
+    // exposes callbacks to parent, to be used by toolbar
+    useImperativeHandle(
+      ref,
+      () => ({
+        getCanvas: () => canvasRef.current,
+        runUndo: () => {
+          placeUndo();
+        },
+        runAudio: () => {
+          recordAudio();
+        },
+      }),
+      [canvasRef, placeUndo, recordAudio]
+    );
+
     // setup on component mount
     useEffect(() => {
       adjustCanvasSize();
@@ -891,142 +922,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
                 : "none",
           }}
         />
+        {/* TODO do not show list of audios, consider only 1 most recent audio, in hub autoplay it on receive */}
         {role === ControllerRole.Hub &&
           audioPaths.map((path) => (
             <audio src={restAPI.gallery.getAssetByPath(path).url} controls />
           ))}
-        {toolMode !== ToolMode.None && (
-          <div>
-            <FormControl component="fieldset">
-              <RadioGroup
-                row
-                value={toolMode}
-                onChange={(e) => setToolMode(e.target.value as ToolMode)}
-              >
-                {role === ControllerRole.Story && (
-                  <>
-                    <FormControlLabel
-                      value={ToolMode.Text}
-                      control={<Radio />}
-                      label="Text"
-                      disabled={audioRecording}
-                    />
-                    <FormControlLabel
-                      value={ToolMode.Audio}
-                      control={<Radio />}
-                      label="Audio"
-                      disabled={audioRecording}
-                    />
-                  </>
-                )}
-                {(role === ControllerRole.Character ||
-                  role === ControllerRole.Background) && (
-                  <>
-                    <FormControlLabel
-                      value={ToolMode.Paint}
-                      control={<Radio />}
-                      label="Paint"
-                    />
-                    <FormControlLabel
-                      value={ToolMode.Fill}
-                      control={<Radio />}
-                      label="Fill"
-                    />
-                  </>
-                )}
-              </RadioGroup>
-            </FormControl>
-          </div>
-        )}
-        {toolMode === ToolMode.Text && (
-          <div>
-            Click on canvas insert text. Press ESC or ENTER when finished. Click
-            on text again to edit text.
-          </div>
-        )}
-        {role !== ControllerRole.Hub && role !== ControllerRole.Story && (
-          <div>
-            <Slider
-              disabled={toolMode !== ToolMode.Paint}
-              defaultValue={8}
-              valueLabelDisplay="auto"
-              value={toolWidth}
-              onChange={(e, width) => setToolWidth(width as number)}
-              step={4 * SCALE}
-              marks
-              min={4 * SCALE}
-              max={32 * SCALE}
-            />
-          </div>
-        )}
-        {(toolMode === ToolMode.Fill || toolMode === ToolMode.Paint) && (
-          <div>
-            <FormControl component="fieldset">
-              <RadioGroup
-                row
-                value={toolColor}
-                onChange={(e) => setToolColor(e.target.value)}
-              >
-                <FormControlLabel
-                  value="#000000ff"
-                  control={<Radio />}
-                  label="Black"
-                />
-                <FormControlLabel
-                  value="#ff0000ff"
-                  control={<Radio />}
-                  label="Red"
-                />
-                <FormControlLabel
-                  value="#ffff00ff"
-                  control={<Radio />}
-                  label="Yellow"
-                />
-                <FormControlLabel
-                  value="#00ff00ff"
-                  control={<Radio />}
-                  label="Green"
-                />
-                <FormControlLabel
-                  value="#00ffffff"
-                  control={<Radio />}
-                  label="Cyan"
-                />
-                <FormControlLabel
-                  value="#0000ffff"
-                  control={<Radio />}
-                  label="Blue"
-                />
-                <FormControlLabel
-                  value="#00000000"
-                  control={<Radio />}
-                  label="Erase"
-                />
-              </RadioGroup>
-            </FormControl>
-          </div>
-        )}
-        {toolMode === ToolMode.Audio && (
-          <div>
-            <FormControl component="fieldset">
-              <Button onClick={recordAudio}>
-                {audioRecording ? "Stop" : "Record"}
-              </Button>
-            </FormControl>
-          </div>
-        )}
-        {role !== ControllerRole.Hub && (
-          <div>
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                placeUndo();
-              }}
-            >
-              Undo
-            </Button>
-          </div>
-        )}
         <input
           ref={onScreenKeyboardRef}
           value={textShapesRef.current[editingTextId]?.text || ""}
@@ -1046,10 +946,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
   }
 );
 
-Canvas.defaultProps = {
-  isGallery: false,
-  isShown: true,
-  setCursor: undefined,
-};
+Canvas.defaultProps = defaultProps;
 
 export default Canvas;

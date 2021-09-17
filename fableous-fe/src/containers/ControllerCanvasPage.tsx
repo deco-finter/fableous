@@ -25,9 +25,10 @@ import {
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
-import { ControllerRole, WSMessageType } from "../constant";
-import { TextShapeMap } from "../components/canvas/data";
+import { ControllerRole, ToolMode, WSMessageType } from "../constant";
+import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
+import { SCALE } from "../components/canvas/constants";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -60,11 +61,18 @@ export default function ControllerCanvasPage() {
     APIResponse<Session>,
     APIResponse<undefined>
   >({});
+  const [toolColor, setToolColor] = useState("#000000ff");
+  const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
+  const [toolWidth, setToolWidth] = useState(8 * SCALE);
   const classes = useStyles();
 
+  const canvasRef = useRef<ImperativeCanvasRef>({
+    getCanvas: () => document.createElement("canvas"),
+    runUndo: () => {},
+    runAudio: () => {},
+  });
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
   const wsMessageHandler = useCallback(
@@ -343,10 +351,14 @@ export default function ControllerCanvasPage() {
           )}
         </div>
       </Grid>
+      {/* TODO consider extracting the layout structure to display canvas in full screen to a component
+        as this is replicated across 3 areas: hub, controller and story detail
+      */}
       <div
         className={`flex flex-col absolute w-full ${
           controllerState !== ControllerState.DrawingSession && "invisible"
         }`}
+        // TODO check if exist better way to not hardcode 84px here, maybe with bounding client from ref?
         style={{
           // navbar is 64px and there is a 20px padding
           height: "calc(100vh - 84px)",
@@ -384,7 +396,16 @@ export default function ControllerCanvasPage() {
         </Grid>
         <Grid container spacing={2} className="flex-1 mb-4">
           <Grid item xs={1}>
-            <CanvasToolbar role={ControllerRole.Character} />
+            <CanvasToolbar
+              ref={canvasRef}
+              role={role}
+              toolColor={toolColor}
+              setToolColor={setToolColor}
+              toolMode={toolMode}
+              setToolMode={setToolMode}
+              toolWidth={toolWidth}
+              setToolWidth={setToolWidth}
+            />
           </Grid>
           <Grid item xs={11}>
             <div
@@ -425,6 +446,10 @@ export default function ControllerCanvasPage() {
                   setTextShapes={setTextShapes}
                   audioPaths={audioPaths}
                   setAudioPaths={setAudioPaths}
+                  toolColor={toolColor}
+                  toolMode={toolMode}
+                  setToolMode={setToolMode}
+                  toolWidth={toolWidth}
                 />
               </div>
             </div>

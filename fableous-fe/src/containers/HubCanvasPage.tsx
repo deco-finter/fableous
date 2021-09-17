@@ -16,7 +16,7 @@ import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { WSMessageType, ControllerRole } from "../constant";
-import { TextShapeMap } from "../components/canvas/data";
+import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -46,15 +46,21 @@ export default function HubCanvasPage() {
     }
   );
 
-  const storyCanvasRef = useRef<HTMLCanvasElement>(
-    document.createElement("canvas")
-  );
-  const characterCanvasRef = useRef<HTMLCanvasElement>(
-    document.createElement("canvas")
-  );
-  const backgroundCanvasRef = useRef<HTMLCanvasElement>(
-    document.createElement("canvas")
-  );
+  const storyCanvasRef = useRef<ImperativeCanvasRef>({
+    getCanvas: () => document.createElement("canvas"),
+    runUndo: () => {},
+    runAudio: () => {},
+  });
+  const characterCanvasRef = useRef<ImperativeCanvasRef>({
+    getCanvas: () => document.createElement("canvas"),
+    runUndo: () => {},
+    runAudio: () => {},
+  });
+  const backgroundCanvasRef = useRef<ImperativeCanvasRef>({
+    getCanvas: () => document.createElement("canvas"),
+    runUndo: () => {},
+    runAudio: () => {},
+  });
   const [storyTextShapes, setStoryTextShapes] = useState<TextShapeMap>({});
   const [CharacterTextShapes, setCharacterTextShapes] = useState<TextShapeMap>(
     {}
@@ -171,16 +177,16 @@ export default function HubCanvasPage() {
   const exportCanvas = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    const { width, height } = storyCanvasRef.current;
+    const { width, height } = storyCanvasRef.current.getCanvas();
     if (!ctx) return;
     canvas.width = width;
     canvas.height = height;
     ctx.beginPath();
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(backgroundCanvasRef.current, 0, 0, width, height);
-    ctx.drawImage(characterCanvasRef.current, 0, 0, width, height);
-    ctx.drawImage(storyCanvasRef.current, 0, 0, width, height);
+    ctx.drawImage(backgroundCanvasRef.current.getCanvas(), 0, 0, width, height);
+    ctx.drawImage(characterCanvasRef.current.getCanvas(), 0, 0, width, height);
+    ctx.drawImage(storyCanvasRef.current.getCanvas(), 0, 0, width, height);
     const link = document.createElement("a");
     link.download = "output.png";
     link.href = canvas
@@ -387,6 +393,7 @@ export default function HubCanvasPage() {
           height: "calc(100vh - 84px)",
         }}
       >
+        {/* TODO tidy up to match style in controller page */}
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <Paper>
@@ -409,6 +416,9 @@ export default function HubCanvasPage() {
                 border: "3px solid black",
               }}
             >
+              {/* TODO add white background behind last canvas layer, must do in a level above Canvas component,
+                keep in mind story detail page will display transparent canvas above an HTML image element
+              */}
               <div
                 style={{
                   gridRowStart: 1,
