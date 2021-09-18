@@ -276,7 +276,7 @@ export default function HubCanvasPage() {
   }, [currentPageIdx, storyPageCnt, clearWsConn]);
 
   return (
-    <Grid container className="relative">
+    <Grid container className="flex-col flex-1 relative">
       {hubState !== HubState.DrawingSession && (
         <>
           <Grid item xs={12}>
@@ -505,8 +505,9 @@ export default function HubCanvasPage() {
                 <div
                   className="bg-white place-self-center"
                   style={{
-                    width: canvasOffsetWidth,
-                    height: canvasOffsetHeight,
+                    width: `${canvasOffsetWidth}px`,
+                    // if not decrement by 1, canvas will be larger than screen height
+                    height: `${canvasOffsetHeight - 1}px`,
                     borderRadius: "30px",
                   }}
                 />
