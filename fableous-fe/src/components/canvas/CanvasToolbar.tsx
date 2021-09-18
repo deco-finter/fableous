@@ -15,6 +15,7 @@ import {
 import EraserIcon from "../EraserIcon";
 import { ControllerRole, ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
+import BrushWidthIcon from "../BrushWidthIcon";
 
 interface CanvasToolbarProps {
   role: ControllerRole;
@@ -23,9 +24,7 @@ interface CanvasToolbarProps {
   setToolMode: React.Dispatch<React.SetStateAction<ToolMode>>;
   toolColor: string;
   setToolColor: React.Dispatch<React.SetStateAction<string>>;
-  // eslint-disable-next-line react/no-unused-prop-types
   toolWidth: number;
-  // eslint-disable-next-line react/no-unused-prop-types
   setToolWidth: React.Dispatch<React.SetStateAction<number>>;
 }
 
@@ -38,6 +37,8 @@ const COLORS = [
   "#0000ffff", // blue
 ];
 const ERASE_COLOR = "#00000000";
+const BRUSH_WIDTHS = [4, 8, 12, 16, 20];
+const ICON_STROKE_WIDTH_RATIO = 1 / 4;
 
 const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
   (props: CanvasToolbarProps, ref) => {
@@ -47,10 +48,13 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
       setToolMode,
       toolColor,
       setToolColor,
+      toolWidth,
+      setToolWidth,
       offsetHeight,
     } = props;
     const imperativeCanvasRef = ref as MutableRefObject<ImperativeCanvasRef>;
     const [prevColor, setPrevColor] = useState(toolColor);
+    const [isWidthPickerOpen, setIsWidthPickerOpen] = useState(false);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [isRecordingAudio, setIsRecordingAudio] = useState(false);
 
@@ -76,22 +80,73 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
             role
           ) && (
             <>
-              {/* TODO add UI to adjust tool width */}
-              <IconButton
-                onClick={() => {
-                  if (toolColor === ERASE_COLOR) {
-                    setToolColor(prevColor);
-                  }
-                  setToolMode(ToolMode.Paint);
-                }}
-                color={
-                  toolMode === ToolMode.Paint && toolColor !== "#00000000"
-                    ? "secondary"
-                    : "primary"
-                }
+              <ClickAwayListener
+                onClickAway={() => setIsWidthPickerOpen(false)}
               >
-                <BrushIcon fontSize="large" />
-              </IconButton>
+                <Tooltip
+                  interactive
+                  classes={{
+                    tooltip: "max-w-md",
+                  }}
+                  PopperProps={{
+                    disablePortal: true,
+                  }}
+                  onClose={() => setIsWidthPickerOpen(false)}
+                  open={isWidthPickerOpen}
+                  arrow
+                  placement="right"
+                  leaveTouchDelay={60000}
+                  disableFocusListener
+                  disableHoverListener
+                  disableTouchListener
+                  title={
+                    <div className="flex">
+                      {BRUSH_WIDTHS.map((brushWidth) => (
+                        <IconButton
+                          onClick={() => {
+                            setToolWidth(brushWidth);
+                            setIsWidthPickerOpen(false);
+                          }}
+                          color="primary"
+                        >
+                          <BrushWidthIcon
+                            fontSize="medium"
+                            strokeWidth={brushWidth * ICON_STROKE_WIDTH_RATIO}
+                          />
+                        </IconButton>
+                      ))}
+                    </div>
+                  }
+                >
+                  <IconButton
+                    className="relative"
+                    onClick={() => {
+                      if (toolColor === ERASE_COLOR) {
+                        setToolColor(prevColor);
+                      }
+                      setToolMode(ToolMode.Paint);
+                      setIsWidthPickerOpen((prev) => !prev);
+                    }}
+                    color={
+                      toolMode === ToolMode.Paint && toolColor !== "#00000000"
+                        ? "secondary"
+                        : "primary"
+                    }
+                  >
+                    <BrushIcon fontSize="large" />
+                    <BrushWidthIcon
+                      fontSize="small"
+                      className="absolute bottom-1 right-1"
+                      color={
+                        toolMode === ToolMode.Paint && toolColor !== "#00000000"
+                          ? "secondary"
+                          : "primary"
+                      }
+                      strokeWidth={toolWidth * ICON_STROKE_WIDTH_RATIO}
+                    />
+                  </IconButton>
+                </Tooltip>
+              </ClickAwayListener>
               <IconButton
                 onClick={() => {
                   setToolColorRememberPrev(ERASE_COLOR);
