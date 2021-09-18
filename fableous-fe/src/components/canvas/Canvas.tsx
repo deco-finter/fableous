@@ -45,6 +45,7 @@ interface CanvasProps {
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
+  // eslint-disable-next-line react/no-unused-prop-types
   audioPaths: string[];
   setAudioPaths: React.Dispatch<React.SetStateAction<string[]>>;
   // toolbar states
@@ -86,7 +87,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       setTextShapes,
       textShapes,
       setAudioPaths,
-      audioPaths,
       // make variables not optional
       toolMode = defaultProps.toolMode,
       setToolMode = defaultProps.setToolMode,
@@ -916,11 +916,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 : "none",
           }}
         />
-        {/* TODO do not show list of audios, consider only 1 most recent audio, in hub autoplay it on receive */}
-        {role === ControllerRole.Hub &&
-          audioPaths.map((path) => (
-            <audio src={restAPI.gallery.getAssetByPath(path).url} controls />
-          ))}
         <input
           ref={onScreenKeyboardRef}
           value={textShapesRef.current[editingTextId]?.text || ""}

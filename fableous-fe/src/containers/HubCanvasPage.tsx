@@ -229,6 +229,18 @@ export default function HubCanvasPage() {
     setHubState(HubState.DrawingSession);
   };
 
+  const playAudio = useCallback(() => {
+    if (audioPaths.length === 0) {
+      return;
+    }
+
+    const player = document.createElement("audio");
+    player.src =
+      restAPI.gallery.getAssetByPath(audioPaths[audioPaths.length - 1]).url ||
+      "";
+    player.play();
+  }, [audioPaths]);
+
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
@@ -406,6 +418,9 @@ export default function HubCanvasPage() {
               <Button onClick={() => exportCanvas()}>Export</Button>
               <Button onClick={onNextPage}>
                 {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
+              </Button>
+              <Button onClick={playAudio} disabled={audioPaths.length === 0}>
+                play audio
               </Button>
             </Paper>
           </Grid>
