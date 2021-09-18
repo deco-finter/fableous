@@ -5,6 +5,7 @@ import MicIcon from "@material-ui/icons/Mic";
 import PaletteIcon from "@material-ui/icons/Palette";
 import UndoIcon from "@material-ui/icons/Undo";
 import BrushIcon from "@material-ui/icons/Brush";
+import StopIcon from "@material-ui/icons/Stop";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
 import {
   Button,
@@ -108,6 +109,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                             setIsWidthPickerOpen(false);
                           }}
                           color="primary"
+                          key={brushWidth}
                         >
                           <BrushWidthIcon
                             fontSize="medium"
@@ -214,12 +216,20 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                     </div>
                   }
                 >
-                  {/* TODO show in toolbar current color */}
                   <IconButton
                     onClick={() => setIsColorPickerOpen((prev) => !prev)}
                     color="primary"
+                    className="relative"
                   >
                     <PaletteIcon fontSize="large" />
+                    <StopIcon
+                      style={{
+                        color:
+                          toolColor === ERASE_COLOR ? prevColor : toolColor,
+                      }}
+                      fontSize="small"
+                      className="absolute bottom-1 right-1"
+                    />
                   </IconButton>
                 </Tooltip>
               </ClickAwayListener>
