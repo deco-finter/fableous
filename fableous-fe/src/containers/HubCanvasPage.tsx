@@ -19,6 +19,7 @@ import { WSMessageType, ControllerRole } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
+import FillScreen from "../components/FillScreen";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -393,15 +394,7 @@ export default function HubCanvasPage() {
           </Button>
         </Grid>
       )}
-      <div
-        className={`flex flex-col absolute w-full ${
-          hubState !== HubState.DrawingSession && "invisible"
-        }`}
-        style={{
-          // navbar is 64px and there is a 20px padding
-          height: "calc(100vh - 84px)",
-        }}
-      >
+      <FillScreen isShown={hubState === HubState.DrawingSession}>
         {/* TODO tidy up to match style in controller page */}
         <Grid container className="mb-4">
           <Grid item xs={12}>
@@ -521,7 +514,7 @@ export default function HubCanvasPage() {
             </div>
           </Grid>
         </Grid>
-      </div>
+      </FillScreen>
     </Grid>
   );
 }

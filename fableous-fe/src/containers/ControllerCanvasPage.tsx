@@ -30,6 +30,7 @@ import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
+import FillScreen from "../components/FillScreen";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -230,13 +231,7 @@ export default function ControllerCanvasPage() {
       container
       className={`flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
     >
-      <Grid
-        item
-        xs={12}
-        className={`mb-4 ${
-          controllerState !== ControllerState.DrawingSession && "z-50"
-        }`}
-      >
+      <Grid item xs={12} className="mb-4">
         <Typography variant="h2">
           {
             {
@@ -359,19 +354,7 @@ export default function ControllerCanvasPage() {
           )}
         </div>
       </Grid>
-      {/* TODO consider extracting the layout structure to display canvas in full screen to a component
-        as this is replicated across 3 areas: hub, controller and story detail
-      */}
-      <div
-        className={`flex flex-col absolute w-full ${
-          controllerState !== ControllerState.DrawingSession && "invisible"
-        }`}
-        // TODO check if exist better way to not hardcode 84px here, maybe with bounding client from ref?
-        style={{
-          // navbar is 64px and there is a 20px padding
-          height: "calc(100vh - 84px)",
-        }}
-      >
+      <FillScreen isShown={controllerState === ControllerState.DrawingSession}>
         <Grid container className="mb-4">
           <Grid item xs={12}>
             {/* TODO keep it one row regardless of screen size */}
@@ -483,7 +466,7 @@ export default function ControllerCanvasPage() {
             </div>
           </Grid>
         </Grid>
-      </div>
+      </FillScreen>
     </Grid>
   );
 }
