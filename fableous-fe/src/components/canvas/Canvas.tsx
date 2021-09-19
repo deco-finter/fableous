@@ -736,15 +736,12 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       switch (toolMode) {
         case ToolMode.Paint:
-          if (!dragging || !allowDrawing) return;
-          if (
-            Math.round(lastX) !== Math.round(x) ||
-            Math.round(lastY) !== Math.round(y)
-          )
+          if (dragging) {
             placePaint(lastX, lastY, x, y, toolColor, toolWidth);
-          placeCheckpoint(toolMode);
+            placeCheckpoint(toolMode);
+          }
           break;
-        case ToolMode.Text:
+        case ToolMode.Fill:
           placeCheckpoint(toolMode);
           break;
         default:
@@ -754,7 +751,13 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       }
       setDragging(false);
       setHasLifted(true);
-      if (setCursor && event.pointerType !== "mouse") setCursor(undefined);
+    };
+
+    const onPointerOut = (event: SimplePointerEventData) => {
+      onPointerUp(event);
+      if (setCursor) {
+        setCursor(undefined);
+      }
     };
 
     const wrapPointerHandler =
@@ -903,8 +906,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           onPointerUp={wrapPointerHandler(onPointerUp)}
           onPointerCancel={wrapPointerHandler(onPointerUp)}
           onPointerEnter={wrapPointerHandler(undefined)}
-          onPointerLeave={wrapPointerHandler(onPointerUp)}
-          onPointerOut={wrapPointerHandler(undefined)}
+          onPointerLeave={wrapPointerHandler(undefined)}
+          onPointerOut={wrapPointerHandler(onPointerOut)}
           onPointerOver={wrapPointerHandler(undefined)}
           onContextMenu={(e) => {
             e.preventDefault();
