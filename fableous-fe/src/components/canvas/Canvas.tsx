@@ -729,10 +729,24 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       if (allowDrawing) setLastPos([x, y]);
     };
 
-    const onPointerUp = (_event: SimplePointerEventData) => {
+    const onPointerUp = (event: SimplePointerEventData) => {
       if (!allowDrawing) return;
-      if (toolMode === ToolMode.Paint || toolMode === ToolMode.Fill) {
-        placeCheckpoint(toolMode);
+      const [lastX, lastY] = lastPos;
+      const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
+      switch (toolMode) {
+        case ToolMode.Paint:
+          if (!dragging || !allowDrawing) return;
+          if (
+            Math.round(lastX) !== Math.round(x) ||
+            Math.round(lastY) !== Math.round(y)
+          )
+            placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+          placeCheckpoint(toolMode);
+          break;
+        case ToolMode.Text:
+          placeCheckpoint(toolMode);
+          break;
+        default:
       }
       if (dragging) {
         setEditingTextId(0);
@@ -854,7 +868,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     // start text layer animation
     useEffect(() => {
       if (isShown && layer === ControllerRole.Story) {
-        console.log("render");
         const anim = window.requestAnimationFrame(refreshText);
         return () => {
           window.cancelAnimationFrame(anim);
@@ -883,9 +896,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           onPointerDown={wrapPointerHandler(onPointerDown)}
           onPointerMove={wrapPointerHandler(onPointerMove)}
           onPointerUp={wrapPointerHandler(onPointerUp)}
-          onPointerCancel={wrapPointerHandler(undefined)}
+          onPointerCancel={wrapPointerHandler(onPointerUp)}
           onPointerEnter={wrapPointerHandler(undefined)}
-          onPointerLeave={wrapPointerHandler(undefined)}
+          onPointerLeave={wrapPointerHandler(onPointerUp)}
           onPointerOut={wrapPointerHandler(undefined)}
           onPointerOver={wrapPointerHandler(undefined)}
           onContextMenu={(e) => {
