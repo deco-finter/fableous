@@ -24,14 +24,17 @@ const CursorScreen = (props: CursorScreenProps) => {
   const { cursor, name, isShown } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
+  const cursorRef = useRef<Cursor>(cursor as Cursor);
+  cursorRef.current = cursor as Cursor;
 
-  const refreshCursor = useCallback(() => {
+  const refreshCursor = () => {
+    window.requestAnimationFrame(refreshCursor);
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
     const { width, height } = canvasRef.current;
     ctx.clearRect(0, 0, width, height);
-    if (!cursor) return;
-    const { normX, normY, normWidth, toolMode } = cursor;
+    if (!cursorRef.current) return;
+    const { normX, normY, normWidth, toolMode } = cursorRef.current;
     const [x, y] = scaleUpXY(canvasRef, normX, normY);
     const [toolWidth] = scaleUpXY(canvasRef, normWidth, 0);
     switch (toolMode) {
@@ -85,7 +88,7 @@ const CursorScreen = (props: CursorScreenProps) => {
         break;
       default:
     }
-  }, [cursor, name]);
+  };
 
   const getCanvasOffsetWidth = useCallback(() => {
     const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
@@ -110,7 +113,8 @@ const CursorScreen = (props: CursorScreenProps) => {
   // start cursor layer animation
   useEffect(() => {
     window.requestAnimationFrame(refreshCursor);
-  }, [refreshCursor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="w-full h-full grid place-items-center" ref={containerRef}>
