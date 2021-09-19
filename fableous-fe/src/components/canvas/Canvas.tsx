@@ -69,6 +69,7 @@ const defaultProps = {
 interface SimplePointerEventData {
   clientX: number;
   clientY: number;
+  pointerType: "mouse" | "pen" | "touch";
 }
 
 // TODO after width of canvas DOM element is dynamic, attempt to make canvas drawing scaling dynamic
@@ -753,7 +754,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       }
       setDragging(false);
       setHasLifted(true);
-      if (setCursor) setCursor(undefined);
+      if (setCursor && event.pointerType !== "mouse") setCursor(undefined);
     };
 
     const wrapPointerHandler =
@@ -762,7 +763,11 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         event.preventDefault();
         event.stopPropagation();
         if (event.isPrimary && handler) {
-          handler({ clientX: event.clientX, clientY: event.clientY });
+          handler({
+            clientX: event.clientX,
+            clientY: event.clientY,
+            pointerType: event.pointerType,
+          });
         }
       };
 
