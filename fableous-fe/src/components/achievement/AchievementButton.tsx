@@ -49,7 +49,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-export default function AchievementModal(props: {
+export default function AchievementButton(props: {
   achievements: Achievement;
   confetti?: boolean;
   notify?: boolean;
@@ -177,7 +177,7 @@ export default function AchievementModal(props: {
   );
 }
 
-AchievementModal.defaultProps = {
+AchievementButton.defaultProps = {
   confetti: false,
   notify: true,
 };

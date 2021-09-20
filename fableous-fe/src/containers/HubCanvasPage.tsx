@@ -1,22 +1,22 @@
-import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
-import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
-import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
 import { useSnackbar } from "notistack";
-import Canvas from "../components/canvas/Canvas";
-import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
-import FormikTextField from "../components/FormikTextField";
-import { useAchievement, useWsConn } from "../hooks";
+import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import AchievementButton from "../components/achievement/AchievementButton";
+import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
-import { WSMessageType, ControllerRole } from "../constant";
 import { TextShapeMap } from "../components/canvas/data";
-import AchievementModal from "../components/achievement/AchievementModal";
+import FormikTextField from "../components/FormikTextField";
+import { WSMessageType, ControllerRole } from "../constant";
+import { useAchievement, useWsConn } from "../hooks";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -381,7 +381,7 @@ export default function HubCanvasPage() {
           <Typography variant="h6">
             page {currentPageIdx} of {storyPageCnt}
           </Typography>
-          <AchievementModal achievements={achievements} />
+          <AchievementButton achievements={achievements} confetti notify />
           <div style={{ display: "grid" }}>
             <div
               style={{
