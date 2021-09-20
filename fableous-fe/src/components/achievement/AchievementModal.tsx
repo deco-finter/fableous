@@ -115,27 +115,34 @@ export default function AchievementModal(props: { achievements: Achievement }) {
           <DialogContentText id="alert-dialog-description">
             {Object.entries(achievements).map(([type, progress]) => (
               <div key={type} className={classes.achievementItem}>
-                <Typography
-                  variant="subtitle1"
-                  className={
-                    progress >= 1
-                      ? classes.achievementComplete
-                      : classes.achievementIncomplete
-                  }
-                >
-                  <Icon>palette</Icon>
-                  {AchievementDetail[type as AchievementType].name}
-                </Typography>
-                <Typography
-                  variant="subtitle2"
-                  className={
-                    progress >= 1
-                      ? classes.achievementComplete
-                      : classes.achievementIncomplete
-                  }
-                >
-                  {AchievementDetail[type as AchievementType].description}
-                </Typography>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <Icon fontSize="large" style={{ marginRight: 8 }}>
+                    {AchievementDetail[type as AchievementType].icon}
+                  </Icon>
+                  <div>
+                    <Typography
+                      variant="subtitle1"
+                      className={
+                        progress >= 1
+                          ? classes.achievementComplete
+                          : classes.achievementIncomplete
+                      }
+                    >
+                      {AchievementDetail[type as AchievementType].name}
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      className={
+                        progress >= 1
+                          ? classes.achievementComplete
+                          : classes.achievementIncomplete
+                      }
+                    >
+                      {AchievementDetail[type as AchievementType].description}
+                    </Typography>
+                  </div>
+                </div>
+
                 <LinearProgress
                   variant="determinate"
                   color={progress >= 1 ? "secondary" : "primary"}
