@@ -1,3 +1,4 @@
+import { AchievementType } from "./achievement";
 import { TextShapeMap } from "./components/canvas/data";
 import { ControllerRole, WSMessageType } from "./constant";
 
@@ -82,7 +83,7 @@ export interface ControllerJoin {
 export interface Manifest {
   texts: TextShapeMap;
   audios: { text: string }[];
-  achievements: string[];
+  achievements: { [key in AchievementType]: number };
 }
 
 export interface Story {
