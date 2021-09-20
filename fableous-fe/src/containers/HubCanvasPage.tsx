@@ -260,6 +260,18 @@ export default function HubCanvasPage() {
     }
   }, [currentPageIdx, storyPageCnt, clearWsConn]);
 
+  // broadcast achievement to all joined controllers
+  useEffect(() => {
+    if (hubState === HubState.DrawingSession) {
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Achievement,
+          data: achievements,
+        })
+      );
+    }
+  }, [achievements, hubState, wsConn]);
+
   return (
     <>
       <Grid item xs={12}>
