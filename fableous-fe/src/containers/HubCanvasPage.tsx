@@ -73,6 +73,17 @@ export default function HubCanvasPage() {
       debug: true,
     });
 
+  const broadcastAchievement = useCallback(() => {
+    if (hubState === HubState.DrawingSession) {
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Achievement,
+          data: achievements,
+        })
+      );
+    }
+  }, [achievements, hubState, wsConn]);
+
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
       try {
@@ -100,6 +111,7 @@ export default function HubCanvasPage() {
                   ...prev,
                   [role]: name,
                 }));
+                broadcastAchievement();
               } else if (!joining) {
                 setJoinedControllers((prev) => {
                   const prevCopy = { ...prev };
@@ -123,7 +135,7 @@ export default function HubCanvasPage() {
         console.error(e);
       }
     },
-    [hubState, enqueueSnackbar]
+    [hubState, broadcastAchievement, enqueueSnackbar]
   );
 
   const wsErrorHandler = useCallback(
@@ -196,7 +208,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].some((role) => role in joinedControllers);
+    ].every((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -260,17 +272,10 @@ export default function HubCanvasPage() {
     }
   }, [currentPageIdx, storyPageCnt, clearWsConn]);
 
-  // broadcast achievement to all joined controllers
+  // broadcast achievement to all joined controllers on achievement update
   useEffect(() => {
-    if (hubState === HubState.DrawingSession) {
-      wsConn?.send(
-        JSON.stringify({
-          type: WSMessageType.Achievement,
-          data: achievements,
-        })
-      );
-    }
-  }, [achievements, hubState, wsConn]);
+    broadcastAchievement();
+  }, [achievements, broadcastAchievement]);
 
   return (
     <>
