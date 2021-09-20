@@ -15,6 +15,7 @@ import {
   CreateTypes as ConfettiTypes,
   Options as ConfettiOptions,
 } from "canvas-confetti";
+import { useSnackbar } from "notistack";
 import { Achievement, AchievementDetail, AchievementType } from "./achievement";
 
 const useStyles = makeStyles(() => ({
@@ -48,9 +49,14 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-export default function AchievementModal(props: { achievements: Achievement }) {
-  const { achievements } = props;
+export default function AchievementModal(props: {
+  achievements: Achievement;
+  confetti?: boolean;
+  notify?: boolean;
+}) {
+  const { achievements, confetti, notify } = props;
   const prevAchievementsRef = useRef<Achievement>(achievements);
+  const { enqueueSnackbar } = useSnackbar();
   const [showing, setShowing] = useState(false);
   const confettiRef = useRef<ConfettiTypes | null>(null);
 
@@ -62,19 +68,29 @@ export default function AchievementModal(props: { achievements: Achievement }) {
     drift: -0.1,
   };
 
+  const notifyAchievement = (type: AchievementType) => {
+    enqueueSnackbar(`${AchievementDetail[type].name} achievement get!`, {
+      variant: "success",
+    });
+  };
+
+  const sparkConfetti = () => {
+    if (confettiRef.current) confettiRef.current(confettiOptions);
+  };
+
   useEffect(() => {
     Object.entries(achievements).forEach(([type, progress]) => {
       if (
         prevAchievementsRef.current[type as AchievementType] !== progress &&
         progress >= 1
       ) {
-        console.log(type, progress);
-        if (confettiRef.current) confettiRef.current(confettiOptions);
+        if (notify) notifyAchievement(type as AchievementType);
+        if (confetti) sparkConfetti();
       }
     });
     prevAchievementsRef.current = achievements;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [achievements]);
+  }, [achievements, confetti, notify]);
 
   const classes = useStyles();
 
@@ -160,3 +176,8 @@ export default function AchievementModal(props: { achievements: Achievement }) {
     </>
   );
 }
+
+AchievementModal.defaultProps = {
+  confetti: false,
+  notify: true,
+};
