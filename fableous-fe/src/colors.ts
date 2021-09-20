@@ -13,5 +13,8 @@ export default {
     main: "#DD2222",
   },
   white: "#FFFFFF",
-  gray: "#AAAAAA",
+  gray: {
+    light: "#DDDDDD",
+    main: "#AAAAAA",
+  },
 };

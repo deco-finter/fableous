@@ -1,13 +1,15 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import Paper from "@material-ui/core/Paper";
+import { ChipProps, IconButton } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
+import MusicNoteIcon from "@material-ui/icons/MusicNote";
+import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
 import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
@@ -20,6 +22,7 @@ import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
 import FillScreen from "../components/FillScreen";
+import ChipRow from "../components/ChipRow";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -40,7 +43,7 @@ export default function HubCanvasPage() {
     }
   >({});
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
-  const [storyPageCnt, setStoryPageCnt] = useState(0);
+  const [story, setStory] = useState<Story | undefined>();
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
@@ -174,7 +177,7 @@ export default function HubCanvasPage() {
         // ws event handlers added in useEffect
         setNewWsConn(new WebSocket(wsAPI.hub.main(classroomId)));
         setCurrentPageIdx(0);
-        setStoryPageCnt(values.pages);
+        setStory(values);
         setHubState(HubState.WaitingRoom);
         actions.resetForm();
       })
@@ -184,6 +187,7 @@ export default function HubCanvasPage() {
       });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exportCanvas = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -272,7 +276,7 @@ export default function HubCanvasPage() {
   useEffect(() => {
     if (hubState === HubState.SessionForm) {
       setCurrentPageIdx(0);
-      setStoryPageCnt(0);
+      setStory(undefined);
       setClassroomToken("");
       setJoinedControllers({});
     }
@@ -280,12 +284,12 @@ export default function HubCanvasPage() {
 
   // go back to session form once all pages in story completed
   useEffect(() => {
-    if (currentPageIdx && storyPageCnt && currentPageIdx > storyPageCnt) {
+    if (currentPageIdx && story && currentPageIdx > story.pages) {
       // TODO send canvas result to backend here
       // assume backend will close ws conn
       setHubState(HubState.SessionForm);
     }
-  }, [currentPageIdx, storyPageCnt, clearWsConn]);
+  }, [currentPageIdx, story, clearWsConn]);
 
   return (
     <Grid container className="flex-col flex-1 relative">
@@ -407,22 +411,40 @@ export default function HubCanvasPage() {
         </Grid>
       )}
       <FillScreen isShown={hubState === HubState.DrawingSession}>
-        {/* TODO tidy up to match style in controller page */}
         <Grid container className="mb-4">
           <Grid item xs={12}>
-            <Paper>
-              <Typography variant="h6">
-                Hub with token {classroomToken}; page {currentPageIdx} of{" "}
-                {storyPageCnt}
-              </Typography>
-              <Button onClick={() => exportCanvas()}>Export</Button>
-              <Button onClick={onNextPage}>
-                {currentPageIdx >= storyPageCnt ? "Finish" : "Next page"}
-              </Button>
-              <Button onClick={playAudio} disabled={audioPaths.length === 0}>
-                play audio
-              </Button>
-            </Paper>
+            <ChipRow
+              left={story?.description.split(",") || []}
+              middle={`Title: ${story?.title}`}
+              right={[
+                {
+                  label:
+                    currentPageIdx >= (story?.pages || -1)
+                      ? "Finish"
+                      : "Next page",
+                  onClick: onNextPage,
+                } as ChipProps,
+                `Page ${currentPageIdx} of ${story?.pages || "-"}`,
+                {
+                  label: (
+                    <IconButton
+                      className="relative p-0"
+                      color="primary"
+                      disableRipple
+                    >
+                      <MusicNoteIcon fontSize="medium" />
+                      <PlayArrowIcon
+                        fontSize="small"
+                        color="primary"
+                        className="absolute -bottom-1 -right-1.5"
+                      />
+                    </IconButton>
+                  ),
+                  onClick: playAudio,
+                  disabled: audioPaths.length === 0,
+                } as ChipProps,
+              ]}
+            />
           </Grid>
         </Grid>
         <Grid container className="flex-1 mb-4">

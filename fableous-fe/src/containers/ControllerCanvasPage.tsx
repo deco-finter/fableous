@@ -11,7 +11,6 @@ import Typography from "@material-ui/core/Typography";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
-import { Chip } from "@material-ui/core";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import {
@@ -31,6 +30,7 @@ import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import FillScreen from "../components/FillScreen";
+import ChipRow from "../components/ChipRow";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -357,31 +357,14 @@ export default function ControllerCanvasPage() {
       <FillScreen isShown={controllerState === ControllerState.DrawingSession}>
         <Grid container className="mb-4">
           <Grid item xs={12}>
-            {/* TODO keep it one row regardless of screen size */}
-            <div className="flex flex-wrap justify-between gap-y-4">
-              <div className="flex">
-                <Chip label={`Title: ${storyDetails?.title}`} color="primary" />
-                {storyDetails?.description.split(",").map((tag) => (
-                  <Chip label={tag} color="secondary" key={tag} />
-                ))}
-              </div>
-              <div className="flex">
-                <Chip
-                  label={`Role: ${
-                    role[0].toUpperCase() + role.slice(1).toLowerCase()
-                  }`}
-                  color="primary"
-                  variant="outlined"
-                />
-                <Chip
-                  label={`Page ${currentPageIdx} of ${
-                    storyDetails?.pages || "-"
-                  }`}
-                  color="primary"
-                  variant="outlined"
-                />
-              </div>
-            </div>
+            <ChipRow
+              left={storyDetails?.description.split(",") || []}
+              middle={`Title: ${storyDetails?.title}`}
+              right={[
+                `Role: ${role[0].toUpperCase() + role.slice(1).toLowerCase()}`,
+                `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
+              ]}
+            />
           </Grid>
           {/* add more rows with <Grid item /> here */}
         </Grid>

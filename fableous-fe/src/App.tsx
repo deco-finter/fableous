@@ -77,6 +77,14 @@ export default function App() {
           backgroundColor: colors.white,
           color: colors.blue.light,
         },
+        clickable: {
+          "&:hover": {
+            backgroundColor: `${colors.gray.light} !important`,
+          },
+          "&:focus": {
+            backgroundColor: `${colors.gray.light} !important`,
+          },
+        },
       },
       MuiPaper: {
         rounded: {
