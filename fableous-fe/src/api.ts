@@ -127,6 +127,10 @@ export const restAPI = {
       url: `/api/classroom/${classroomId}/session`,
       method: "post",
     }),
+    update: (classroomId: string, sessionId: string) => ({
+      url: `/api/classroom/${classroomId}/session/${sessionId}`,
+      method: "put",
+    }),
     delete: (classroomId: string, sessionId: string) => ({
       url: `/api/classroom/${classroomId}/session/${sessionId}`,
       method: "delete",

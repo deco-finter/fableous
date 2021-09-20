@@ -16,7 +16,7 @@ import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import * as yup from "yup";
 import { restAPI } from "../api";
-import colors from "../colors";
+import { colors } from "../colors";
 import ClassroomItem from "../components/ClassroomItem";
 import FormikTextField from "../components/FormikTextField";
 import { APIResponse, Classroom } from "../data";
@@ -32,7 +32,7 @@ const useStyles = makeStyles(() => ({
     opacity: 0.8,
   },
   heightBump: {
-    minHeight: 128,
+    minHeight: 150,
   },
 }));
 
@@ -103,7 +103,7 @@ export default function ClassroomListPage() {
       )}
       {getError && <Alert severity="error">Failed loading classrooms!</Alert>}
       {!getLoading && !getError && (
-        <Grid container spacing={2}>
+        <Grid container spacing={4}>
           {classrooms?.data?.map((classroom) => (
             <Grid item xs={12} sm={6} md={4} key={classroom.id}>
               <ClassroomItem
@@ -145,6 +145,8 @@ export default function ClassroomListPage() {
                           overrides={{
                             autoFocus: true,
                             disabled: postLoading,
+                            variant: "outlined",
+                            className: "mb-4",
                           }}
                         />
                       </CardContent>
