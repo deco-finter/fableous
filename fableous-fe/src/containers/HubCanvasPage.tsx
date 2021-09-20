@@ -16,6 +16,7 @@ import { useAchievement, useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { WSMessageType, ControllerRole } from "../constant";
 import { TextShapeMap } from "../components/canvas/data";
+import AchievementModal from "../components/achievement/AchievementModal";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -67,9 +68,10 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
-  const [, wsAchievementHandler, achievementNextPage] = useAchievement({
-    debug: true,
-  });
+  const [achievements, wsAchievementHandler, achievementNextPage] =
+    useAchievement({
+      debug: true,
+    });
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -194,7 +196,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    ].some((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -379,6 +381,7 @@ export default function HubCanvasPage() {
           <Typography variant="h6">
             page {currentPageIdx} of {storyPageCnt}
           </Typography>
+          <AchievementModal achievements={achievements} />
           <div style={{ display: "grid" }}>
             <div
               style={{
