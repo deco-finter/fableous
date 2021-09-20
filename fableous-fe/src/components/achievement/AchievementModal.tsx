@@ -9,7 +9,12 @@ import {
   makeStyles,
   LinearProgress,
 } from "@material-ui/core";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import ReactCanvasConfetti from "react-canvas-confetti";
+import {
+  CreateTypes as ConfettiTypes,
+  Options as ConfettiOptions,
+} from "canvas-confetti";
 import { Achievement, AchievementDetail, AchievementType } from "./achievement";
 
 const useStyles = makeStyles(() => ({
@@ -37,18 +42,57 @@ const useStyles = makeStyles(() => ({
   achievementProgressBar: {
     borderRadius: 8,
   },
+  confetti: {
+    pointerEvents: "none",
+    position: "absolute",
+  },
 }));
 
 export default function AchievementModal(props: { achievements: Achievement }) {
   const { achievements } = props;
+  const prevAchievementsRef = useRef<Achievement>(achievements);
   const [showing, setShowing] = useState(false);
+  const confettiRef = useRef<ConfettiTypes | null>(null);
+
+  const confettiOptions: ConfettiOptions = {
+    startVelocity: 12,
+    scalar: 0.75,
+    gravity: 0.4,
+    ticks: 300,
+    drift: -0.1,
+  };
+
+  useEffect(() => {
+    Object.entries(achievements).forEach(([type, progress]) => {
+      if (
+        prevAchievementsRef.current[type as AchievementType] !== progress &&
+        progress >= 1
+      ) {
+        console.log(type, progress);
+        if (confettiRef.current) confettiRef.current(confettiOptions);
+      }
+    });
+    prevAchievementsRef.current = achievements;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [achievements]);
 
   const classes = useStyles();
 
   return (
     <>
-      <IconButton onClick={() => setShowing(true)}>
+      <IconButton onClick={() => setShowing(true)} style={{ zIndex: 100 }}>
         <Icon>emoji_events</Icon>
+        <ReactCanvasConfetti
+          resize
+          width={1024}
+          height={1024}
+          zIndex={101}
+          useWorker
+          refConfetti={(ref) => {
+            confettiRef.current = ref;
+          }}
+          className={classes.confetti}
+        />
       </IconButton>
       <Dialog
         open={showing}
@@ -79,6 +123,7 @@ export default function AchievementModal(props: { achievements: Achievement }) {
                       : classes.achievementIncomplete
                   }
                 >
+                  <Icon>palette</Icon>
                   {AchievementDetail[type as AchievementType].name}
                 </Typography>
                 <Typography
