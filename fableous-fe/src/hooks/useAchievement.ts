@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Achievement,
   AchievementType,
+  EmptyAchievement,
 } from "../components/achievement/achievement";
 import { WSMessage } from "../data";
 import { ControllerRole, WSMessageType } from "../constant";
@@ -11,14 +12,8 @@ export default function useAchievement(config?: {
   debug?: boolean;
 }): [Achievement, (ev: MessageEvent) => void, () => void] {
   const { debug } = config || { debug: false };
-  const [achievements, setAchievements] = useState<Achievement>({
-    [AchievementType.AllColor]: 0,
-    [AchievementType.FiveText]: 0,
-    [AchievementType.TenText]: 0,
-    [AchievementType.OnePage]: 0,
-    [AchievementType.ThreePage]: 0,
-    [AchievementType.FivePage]: 0,
-  });
+  const [achievements, setAchievements] =
+    useState<Achievement>(EmptyAchievement);
 
   const [allColorColors, setAllColorColors] = useState<Set<string>>(
     new Set<string>()

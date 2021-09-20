@@ -48,3 +48,12 @@ export const AchievementDetail: { [key in AchievementType]: AchievementItem } =
   };
 
 export type Achievement = { [key in AchievementType]: number };
+
+export const EmptyAchievement: Achievement = {
+  [AchievementType.AllColor]: 0,
+  [AchievementType.FiveText]: 0,
+  [AchievementType.TenText]: 0,
+  [AchievementType.OnePage]: 0,
+  [AchievementType.ThreePage]: 0,
+  [AchievementType.FivePage]: 0,
+};

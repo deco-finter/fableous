@@ -27,6 +27,11 @@ import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { ControllerRole, WSMessageType } from "../constant";
 import { TextShapeMap } from "../components/canvas/data";
+import {
+  Achievement,
+  EmptyAchievement,
+} from "../components/achievement/achievement";
+import AchievementButton from "../components/achievement/AchievementButton";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -65,6 +70,8 @@ export default function ControllerCanvasPage() {
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
+  const [achievements, setAchievements] =
+    useState<Achievement>(EmptyAchievement);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -109,6 +116,9 @@ export default function ControllerCanvasPage() {
                 setControllerState(ControllerState.JoinForm);
               }
             }
+            break;
+          case WSMessageType.Achievement:
+            setAchievements(msg.data as Achievement);
             break;
           default:
         }
@@ -313,6 +323,7 @@ export default function ControllerCanvasPage() {
               ))}
             </div>
             <div className="flex">
+              <AchievementButton achievements={achievements} confetti notify />
               <Chip
                 label={`Role: ${
                   role[0].toUpperCase() + role.slice(1).toLowerCase()
