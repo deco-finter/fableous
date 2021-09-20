@@ -123,6 +123,8 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			break
 		}
 		switch message.Type {
+		case constants.WSMessageTypeAchievement:
+			_ = sess.BroadcastJSON(message)
 		case constants.WSMessageTypeControl:
 			if message.Data.WSControlMessageData.NextPage != nil && *message.Data.WSControlMessageData.NextPage {
 				sess.currentPage++
@@ -218,8 +220,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 		}
 		switch message.Type {
 		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText,
-			constants.WSMessageTypeCheckpoint, constants.WSMessageTypeUndo, constants.WSMessageTypeCursor,
-			constants.WSMessageTypeAchievement:
+			constants.WSMessageTypeCheckpoint, constants.WSMessageTypeUndo, constants.WSMessageTypeCursor:
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
 			go func() {
