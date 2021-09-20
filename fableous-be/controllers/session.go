@@ -104,6 +104,7 @@ func PUTSession(c *gin.Context) {
 		return
 	}
 	sessionUpdate.ClassroomID = classroomInfo.ID
+	sessionUpdate.ID = c.Param("session_id")
 	if err = handlers.Handler.SessionUpdate(sessionUpdate); err != nil {
 		c.JSON(http.StatusNotModified, datatransfers.Response{Error: "cannot update session"})
 		return

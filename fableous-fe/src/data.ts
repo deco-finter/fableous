@@ -67,6 +67,9 @@ export interface Session {
   title: string;
   description: string;
   pages: number;
+  nameStory: string;
+  nameCharacter: string;
+  nameBackground: string;
   completed: boolean;
   createdAt: string;
 }
