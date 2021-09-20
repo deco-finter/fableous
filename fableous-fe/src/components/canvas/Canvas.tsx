@@ -69,6 +69,7 @@ const defaultProps = {
 interface SimplePointerEventData {
   clientX: number;
   clientY: number;
+  pointerType: "mouse" | "pen" | "touch";
 }
 
 // TODO after width of canvas DOM element is dynamic, attempt to make canvas drawing scaling dynamic
@@ -729,17 +730,34 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       if (allowDrawing) setLastPos([x, y]);
     };
 
-    const onPointerUp = (_event: SimplePointerEventData) => {
+    const onPointerUp = (event: SimplePointerEventData) => {
       if (!allowDrawing) return;
-      if (toolMode === ToolMode.Paint || toolMode === ToolMode.Fill) {
-        placeCheckpoint(toolMode);
+      const [lastX, lastY] = lastPos;
+      const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
+      switch (toolMode) {
+        case ToolMode.Paint:
+          if (dragging) {
+            placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+            placeCheckpoint(toolMode);
+          }
+          break;
+        case ToolMode.Fill:
+          placeCheckpoint(toolMode);
+          break;
+        default:
       }
       if (dragging) {
         setEditingTextId(0);
       }
       setDragging(false);
       setHasLifted(true);
-      if (setCursor) setCursor(undefined);
+    };
+
+    const onPointerOut = (event: SimplePointerEventData) => {
+      onPointerUp(event);
+      if (setCursor) {
+        setCursor(undefined);
+      }
     };
 
     const wrapPointerHandler =
@@ -748,7 +766,11 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         event.preventDefault();
         event.stopPropagation();
         if (event.isPrimary && handler) {
-          handler({ clientX: event.clientX, clientY: event.clientY });
+          handler({
+            clientX: event.clientX,
+            clientY: event.clientY,
+            pointerType: event.pointerType,
+          });
         }
       };
 
@@ -854,7 +876,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     // start text layer animation
     useEffect(() => {
       if (isShown && layer === ControllerRole.Story) {
-        console.log("render");
         const anim = window.requestAnimationFrame(refreshText);
         return () => {
           window.cancelAnimationFrame(anim);
@@ -883,10 +904,10 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           onPointerDown={wrapPointerHandler(onPointerDown)}
           onPointerMove={wrapPointerHandler(onPointerMove)}
           onPointerUp={wrapPointerHandler(onPointerUp)}
-          onPointerCancel={wrapPointerHandler(undefined)}
+          onPointerCancel={wrapPointerHandler(onPointerUp)}
           onPointerEnter={wrapPointerHandler(undefined)}
           onPointerLeave={wrapPointerHandler(undefined)}
-          onPointerOut={wrapPointerHandler(undefined)}
+          onPointerOut={wrapPointerHandler(onPointerOut)}
           onPointerOver={wrapPointerHandler(undefined)}
           onContextMenu={(e) => {
             e.preventDefault();
