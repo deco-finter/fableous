@@ -19,6 +19,14 @@ import { useSnackbar } from "notistack";
 import { Achievement, AchievementDetail, AchievementType } from "./achievement";
 
 const useStyles = makeStyles(() => ({
+  button: {
+    "&:hover": {
+      backgroundColor: "#ffffff",
+    },
+    backgroundColor: "#ffffff",
+    marginRight: 16,
+    zIndex: 100,
+  },
   modal: {
     minWidth: "400px",
   },
@@ -96,7 +104,11 @@ export default function AchievementButton(props: {
 
   return (
     <>
-      <IconButton onClick={() => setShowing(true)} style={{ zIndex: 100 }}>
+      <IconButton
+        onClick={() => setShowing(true)}
+        color="primary"
+        className={classes.button}
+      >
         <Icon>emoji_events</Icon>
         <ReactCanvasConfetti
           resize
