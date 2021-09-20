@@ -361,7 +361,7 @@ export default function ControllerCanvasPage() {
               left={storyDetails?.description.split(",") || []}
               middle={`Title: ${storyDetails?.title}`}
               right={[
-                `Role: ${role[0].toUpperCase() + role.slice(1).toLowerCase()}`,
+                role[0].toUpperCase() + role.slice(1).toLowerCase(),
                 `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
               ]}
             />

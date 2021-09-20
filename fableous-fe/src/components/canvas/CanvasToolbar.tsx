@@ -1,4 +1,4 @@
-import { forwardRef, MutableRefObject, useState } from "react";
+import { forwardRef, MutableRefObject, useEffect, useState } from "react";
 import Paper from "@material-ui/core/Paper";
 import TextFieldsIcon from "@material-ui/icons/TextFields";
 import MicIcon from "@material-ui/icons/Mic";
@@ -12,6 +12,7 @@ import {
   ClickAwayListener,
   IconButton,
   Tooltip,
+  Typography,
 } from "@material-ui/core";
 import EraserIcon from "../EraserIcon";
 import { ControllerRole, ToolMode } from "../../constant";
@@ -58,6 +59,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
     const [isWidthPickerOpen, setIsWidthPickerOpen] = useState(false);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+    const [recordingTimeElapsed, setRecordingTimeElapsed] = useState(0);
 
     const setToolColorRememberPrev = (nextColor: string) => {
       setToolColor((prev) => {
@@ -67,6 +69,24 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
         return nextColor;
       });
     };
+
+    const showMmSsFromSeconds = (seconds: number) =>
+      new Date(seconds * 1000).toISOString().substr(14, 5);
+
+    useEffect(() => {
+      if (!isRecordingAudio) {
+        setRecordingTimeElapsed(0);
+        return () => {};
+      }
+
+      const interval = setInterval(
+        () => setRecordingTimeElapsed((prev) => prev + 1),
+        1000
+      );
+      return () => {
+        clearInterval(interval);
+      };
+    }, [isRecordingAudio]);
 
     return (
       <div className="h-full flex flex-col justify-center">
@@ -96,7 +116,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   open={isWidthPickerOpen}
                   arrow
                   placement="right"
-                  leaveTouchDelay={60000}
+                  leaveTouchDelay={undefined}
                   disableFocusListener
                   disableHoverListener
                   disableTouchListener
@@ -188,7 +208,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   open={isColorPickerOpen}
                   arrow
                   placement="right"
-                  leaveTouchDelay={60000}
+                  leaveTouchDelay={undefined}
                   disableFocusListener
                   disableHoverListener
                   disableTouchListener
@@ -249,19 +269,46 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
               >
                 <TextFieldsIcon fontSize="large" />
               </IconButton>
-              {/* TODO think about better UI e.g. tooltip for recording audio */}
-              <IconButton
-                onClick={() => {
-                  setToolMode(ToolMode.Audio);
-                  setIsRecordingAudio((prev) => !prev);
-                  // need to exec func directly from imperativeCanvasRef
-                  // to get up-to-date callback
-                  imperativeCanvasRef.current.runAudio();
+              <Tooltip
+                interactive
+                classes={{
+                  tooltip: "max-w-md",
                 }}
-                color={isRecordingAudio ? "secondary" : "primary"}
+                PopperProps={{
+                  disablePortal: true,
+                }}
+                open={isRecordingAudio}
+                arrow
+                placement="right"
+                leaveTouchDelay={undefined}
+                disableFocusListener
+                disableHoverListener
+                disableTouchListener
+                title={
+                  <Typography variant="body1">
+                    {showMmSsFromSeconds(recordingTimeElapsed)}
+                  </Typography>
+                }
               >
-                <MicIcon fontSize="large" />
-              </IconButton>
+                <IconButton
+                  onClick={() => {
+                    setToolMode(ToolMode.Audio);
+                    setIsRecordingAudio((prev) => {
+                      // need to exec func directly from imperativeCanvasRef
+                      // to get up-to-date callback
+                      imperativeCanvasRef.current.runAudio();
+                      return !prev;
+                    });
+                  }}
+                  color={toolMode === ToolMode.Audio ? "secondary" : "primary"}
+                >
+                  {isRecordingAudio ? (
+                    <StopIcon fontSize="large" />
+                  ) : (
+                    <MicIcon fontSize="large" />
+                  )}
+                </IconButton>
+              </Tooltip>
               <IconButton
                 onClick={imperativeCanvasRef.current.runUndo}
                 color="primary"
