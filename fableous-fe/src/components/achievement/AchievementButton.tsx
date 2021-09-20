@@ -36,6 +36,9 @@ const useStyles = makeStyles(() => ({
   achievementItem: {
     marginBottom: 24,
   },
+  achievementDescription: {
+    marginTop: -6,
+  },
   achievementComplete: {
     color: "#000000",
   },
@@ -144,12 +147,16 @@ export default function AchievementButton(props: {
             {Object.entries(achievements).map(([type, progress]) => (
               <div key={type} className={classes.achievementItem}>
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <Icon fontSize="large" style={{ marginRight: 8 }}>
+                  <Icon
+                    fontSize="large"
+                    color={progress >= 1 ? "secondary" : "disabled"}
+                    style={{ marginRight: 8 }}
+                  >
                     {AchievementDetail[type as AchievementType].icon}
                   </Icon>
                   <div>
                     <Typography
-                      variant="subtitle1"
+                      variant="h6"
                       className={
                         progress >= 1
                           ? classes.achievementComplete
@@ -160,11 +167,11 @@ export default function AchievementButton(props: {
                     </Typography>
                     <Typography
                       variant="subtitle2"
-                      className={
+                      className={`${classes.achievementDescription} ${
                         progress >= 1
                           ? classes.achievementComplete
                           : classes.achievementIncomplete
-                      }
+                      }`}
                     >
                       {AchievementDetail[type as AchievementType].description}
                     </Typography>
