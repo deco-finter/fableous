@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AchievementType } from "../achievement";
+import { AchievementType } from "../components/achievement/achievement";
 import { WSMessage } from "../data";
 import { ControllerRole, WSMessageType } from "../constant";
 

@@ -1,4 +1,4 @@
-import { AchievementType } from "./achievement";
+import { AchievementType } from "./components/achievement/achievement";
 import { TextShapeMap } from "./components/canvas/data";
 import { ControllerRole, WSMessageType } from "./constant";
 
