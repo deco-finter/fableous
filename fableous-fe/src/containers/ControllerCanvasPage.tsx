@@ -371,7 +371,7 @@ export default function ControllerCanvasPage() {
           </Grid>
         </Grid>
         <Grid container spacing={2} className="flex-1 mb-4">
-          <Grid item xs={1}>
+          <Grid item xs={2} md={1}>
             <CanvasToolbar
               ref={canvasRef}
               role={role}
@@ -384,7 +384,7 @@ export default function ControllerCanvasPage() {
               setToolWidth={setToolWidth}
             />
           </Grid>
-          <Grid item xs={11}>
+          <Grid item xs={10} md={11}>
             <div
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
