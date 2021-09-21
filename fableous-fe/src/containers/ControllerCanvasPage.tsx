@@ -112,11 +112,11 @@ export default function ControllerCanvasPage() {
                   })
                   .catch((error) => {
                     if (error.response.status === 404) {
-                      enqueueSnackbar("no on going session", {
+                      enqueueSnackbar("No on going session!", {
                         variant: "error",
                       });
                     } else {
-                      enqueueSnackbar("unknown error", { variant: "error" });
+                      enqueueSnackbar("Unknown error!", { variant: "error" });
                     }
                     console.error("get ongoing session", error);
                   });
@@ -127,7 +127,7 @@ export default function ControllerCanvasPage() {
             {
               const msgData = msg.data as WSJoinMessageData;
               if (!msgData.joining && msgData.role === ControllerRole.Hub) {
-                enqueueSnackbar(`Room closed!`, {
+                enqueueSnackbar("Room closed!", {
                   variant: "error",
                 });
                 // assume backend will close ws conn
