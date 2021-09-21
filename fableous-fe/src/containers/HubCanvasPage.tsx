@@ -1,7 +1,13 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import { Card, CardContent, ChipProps, IconButton } from "@material-ui/core";
+import {
+  Card,
+  CardContent,
+  Chip,
+  ChipProps,
+  IconButton,
+} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
@@ -317,7 +323,7 @@ export default function HubCanvasPage() {
         </>
       )}
       {hubState === HubState.SessionForm && (
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={8} md={6} lg={4}>
           <Card>
             <Formik
               initialValues={
@@ -397,28 +403,111 @@ export default function HubCanvasPage() {
         </Grid>
       )}
       {hubState === HubState.WaitingRoom && (
-        <Grid item xs={12}>
-          <Typography variant="h6">
-            token: <span>{classroomToken || "-"}</span>
-          </Typography>
-          <Typography variant="h6">
-            Joined Students ({Object.keys(joinedControllers).length}/3)
-          </Typography>
-          <ul>
-            {Object.entries(joinedControllers).map(([role, name]) => (
-              <li key={role}>
-                {role} - {name}
-              </li>
-            ))}
-          </ul>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={onBeginDrawing}
-            disabled={!isAllControllersJoined()}
-          >
-            begin drawing
-          </Button>
+        <Grid item xs={12} sm={8} md={6} lg={4}>
+          <Card>
+            <CardContent>
+              <Grid container spacing={1}>
+                <Grid item xs={12}>
+                  <Typography variant="h6">
+                    Joined Students ({Object.keys(joinedControllers).length}/3)
+                  </Typography>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  style={{
+                    color: joinedControllers[ControllerRole.Story]
+                      ? "inherit"
+                      : "gray",
+                  }}
+                >
+                  <Grid container>
+                    <Grid item xs={4}>
+                      <Icon fontSize="small" className="align-middle">
+                        text_fields
+                      </Icon>
+                      Story
+                    </Grid>
+                    <Grid item xs={8}>
+                      <div className="ml-4">
+                        {joinedControllers[ControllerRole.Story] ? (
+                          <>{joinedControllers[ControllerRole.Story]}</>
+                        ) : (
+                          <>not connected</>
+                        )}
+                      </div>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  style={{
+                    color: joinedControllers[ControllerRole.Character]
+                      ? "inherit"
+                      : "gray",
+                  }}
+                >
+                  <Grid container>
+                    <Grid item xs={4}>
+                      <Icon fontSize="small" className="align-middle">
+                        directions_run
+                      </Icon>
+                      Character
+                    </Grid>
+                    <Grid item xs={8}>
+                      <div className="ml-4">
+                        {joinedControllers[ControllerRole.Character] ? (
+                          <>{joinedControllers[ControllerRole.Character]}</>
+                        ) : (
+                          <>not connected</>
+                        )}
+                      </div>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  style={{
+                    color: joinedControllers[ControllerRole.Background]
+                      ? "inherit"
+                      : "gray",
+                  }}
+                >
+                  <Grid container>
+                    <Grid item xs={4}>
+                      <Icon fontSize="small" className="align-middle">
+                        image
+                      </Icon>
+                      Background
+                    </Grid>
+                    <Grid item xs={8}>
+                      <div className="ml-4">
+                        {joinedControllers[ControllerRole.Background] ? (
+                          <>{joinedControllers[ControllerRole.Background]}</>
+                        ) : (
+                          <>not connected</>
+                        )}
+                      </div>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid item xs={12} className="flex mt-2">
+                  <Chip color="primary" label={classroomToken} />
+                  <div className="flex flex-grow" />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={onBeginDrawing}
+                    disabled={!isAllControllersJoined()}
+                  >
+                    Begin Drawing <Icon>brush</Icon>
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
         </Grid>
       )}
       <FillScreen isShown={hubState === HubState.DrawingSession}>
