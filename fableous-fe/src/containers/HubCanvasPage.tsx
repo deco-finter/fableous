@@ -6,6 +6,7 @@ import {
   CardContent,
   Chip,
   ChipProps,
+  CircularProgress,
   IconButton,
 } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
@@ -433,7 +434,14 @@ export default function HubCanvasPage() {
                         {joinedControllers[ControllerRole.Story] ? (
                           <>{joinedControllers[ControllerRole.Story]}</>
                         ) : (
-                          <>not connected</>
+                          <>
+                            waiting to join{" "}
+                            <CircularProgress
+                              size={12}
+                              thickness={8}
+                              className="ml-1"
+                            />
+                          </>
                         )}
                       </div>
                     </Grid>
@@ -460,7 +468,14 @@ export default function HubCanvasPage() {
                         {joinedControllers[ControllerRole.Character] ? (
                           <>{joinedControllers[ControllerRole.Character]}</>
                         ) : (
-                          <>not connected</>
+                          <>
+                            waiting to join{" "}
+                            <CircularProgress
+                              size={12}
+                              thickness={8}
+                              className="ml-1"
+                            />
+                          </>
                         )}
                       </div>
                     </Grid>
@@ -487,7 +502,14 @@ export default function HubCanvasPage() {
                         {joinedControllers[ControllerRole.Background] ? (
                           <>{joinedControllers[ControllerRole.Background]}</>
                         ) : (
-                          <>not connected</>
+                          <>
+                            waiting to join{" "}
+                            <CircularProgress
+                              size={12}
+                              thickness={8}
+                              className="ml-1"
+                            />
+                          </>
                         )}
                       </div>
                     </Grid>
