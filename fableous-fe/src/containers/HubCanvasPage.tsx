@@ -1,4 +1,3 @@
-import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import {
@@ -11,24 +10,25 @@ import {
 } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
-import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
-import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
 import MusicNoteIcon from "@material-ui/icons/MusicNote";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { useSnackbar } from "notistack";
-import Canvas from "../components/canvas/Canvas";
-import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
+import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import AchievementButton from "../components/achievement/AchievementButton";
+import Canvas from "../components/canvas/Canvas";
+import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
-import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { WSMessageType, ControllerRole } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
-import FillScreen from "../components/FillScreen";
 import ChipRow from "../components/ChipRow";
 
 enum HubState {
@@ -94,9 +94,25 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
-  const [, wsAchievementHandler, achievementNextPage] = useAchievement({
+  const [
+    achievements,
+    wsAchievementHandler,
+    achievementNextPage,
+    achievementReset,
+  ] = useAchievement({
     debug: true,
   });
+
+  const broadcastAchievement = useCallback(() => {
+    if (hubState === HubState.DrawingSession) {
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Achievement,
+          data: achievements,
+        })
+      );
+    }
+  }, [achievements, hubState, wsConn]);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -125,6 +141,7 @@ export default function HubCanvasPage() {
                   ...prev,
                   [role]: name,
                 }));
+                broadcastAchievement();
               } else if (!joining) {
                 setJoinedControllers((prev) => {
                   const prevCopy = { ...prev };
@@ -153,7 +170,7 @@ export default function HubCanvasPage() {
         console.error(e);
       }
     },
-    [hubState, enqueueSnackbar]
+    [hubState, broadcastAchievement, enqueueSnackbar]
   );
 
   const wsErrorHandler = useCallback(
@@ -301,8 +318,14 @@ export default function HubCanvasPage() {
       // assume backend will close ws conn
       enqueueSnackbar("Story completed!", { variant: "success" });
       setHubState(HubState.SessionForm);
+      achievementReset();
     }
-  }, [currentPageIdx, story, clearWsConn, enqueueSnackbar]);
+  }, [currentPageIdx, story, clearWsConn, enqueueSnackbar, achievementReset]);
+
+  // broadcast achievement to all joined controllers on achievement update
+  useEffect(() => {
+    broadcastAchievement();
+  }, [achievements, broadcastAchievement]);
 
   return (
     <Grid container className="flex-col flex-1 relative">
@@ -540,13 +563,21 @@ export default function HubCanvasPage() {
           </Card>
         </Grid>
       )}
-      <FillScreen isShown={hubState === HubState.DrawingSession}>
+      <div
+        className={`flex flex-col absolute w-full h-full ${
+          hubState !== HubState.DrawingSession && "invisible"
+        }`}
+      >
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <ChipRow
-              left={story?.description.split(",") || []}
-              middle={`Title: ${story?.title}`}
-              right={[
+              left={`Title: ${story?.title}`}
+              middle={[
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
                 {
                   label:
                     currentPageIdx >= (story?.pages || -1)
@@ -574,6 +605,7 @@ export default function HubCanvasPage() {
                   disabled: audioPaths.length === 0,
                 } as ChipProps,
               ]}
+              right={story?.description.split(",") || []}
             />
           </Grid>
         </Grid>
@@ -587,6 +619,7 @@ export default function HubCanvasPage() {
               }}
             >
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -594,9 +627,15 @@ export default function HubCanvasPage() {
                   pointerEvents: "none",
                 }}
               >
-                <CursorScreen cursor={storyCursor} name="Story" />
+                <CursorScreen
+                  cursor={storyCursor}
+                  name="Story"
+                  isShown={hubState === HubState.DrawingSession}
+                  offsetWidth={canvasOffsetWidth}
+                />
               </div>
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -604,9 +643,15 @@ export default function HubCanvasPage() {
                   pointerEvents: "none",
                 }}
               >
-                <CursorScreen cursor={characterCursor} name="Character" />
+                <CursorScreen
+                  cursor={characterCursor}
+                  name="Character"
+                  isShown={hubState === HubState.DrawingSession}
+                  offsetWidth={canvasOffsetWidth}
+                />
               </div>
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -614,16 +659,24 @@ export default function HubCanvasPage() {
                   pointerEvents: "none",
                 }}
               >
-                <CursorScreen cursor={backgroundCursor} name="Background" />
+                <CursorScreen
+                  cursor={backgroundCursor}
+                  name="Background"
+                  isShown={hubState === HubState.DrawingSession}
+                  offsetWidth={canvasOffsetWidth}
+                />
               </div>
-              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}>
+              <div
+                className="grid"
+                style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}
+              >
                 <Canvas
                   ref={storyCanvasRef}
                   wsConn={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
                   pageNum={currentPageIdx}
-                  offsetWidth={`${canvasOffsetWidth}px`}
+                  offsetWidth={canvasOffsetWidth}
                   setCursor={setStoryCursor}
                   setTextShapes={setStoryTextShapes}
                   textShapes={storyTextShapes}
@@ -631,14 +684,17 @@ export default function HubCanvasPage() {
                   setAudioPaths={setAudioPaths}
                 />
               </div>
-              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}>
+              <div
+                className="grid"
+                style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}
+              >
                 <Canvas
                   ref={characterCanvasRef}
                   wsConn={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
                   pageNum={currentPageIdx}
-                  offsetWidth={`${canvasOffsetWidth}px`}
+                  offsetWidth={canvasOffsetWidth}
                   setCursor={setCharacterCursor}
                   setTextShapes={setCharacterTextShapes}
                   textShapes={CharacterTextShapes}
@@ -646,14 +702,17 @@ export default function HubCanvasPage() {
                   setAudioPaths={setAudioPaths}
                 />
               </div>
-              <div style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}>
+              <div
+                className="grid"
+                style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}
+              >
                 <Canvas
                   ref={backgroundCanvasRef}
                   wsConn={wsConn}
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
                   pageNum={currentPageIdx}
-                  offsetWidth={`${canvasOffsetWidth}px`}
+                  offsetWidth={canvasOffsetWidth}
                   setCursor={setBackgroundCursor}
                   setTextShapes={setBackgroundTextShapes}
                   textShapes={BackgroundTextShapes}
@@ -682,7 +741,7 @@ export default function HubCanvasPage() {
             </div>
           </Grid>
         </Grid>
-      </FillScreen>
+      </div>
     </Grid>
   );
 }

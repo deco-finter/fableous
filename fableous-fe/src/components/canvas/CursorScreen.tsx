@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-case-declarations */
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { scaleUpXY } from "./helpers";
 import { ASPECT_RATIO, SCALE } from "./constants";
 import { ToolMode } from "../../constant";
@@ -18,12 +18,12 @@ interface CursorScreenProps {
   cursor: Cursor | undefined;
   name?: string;
   isShown?: boolean;
+  offsetWidth?: number;
 }
 
 const CursorScreen = (props: CursorScreenProps) => {
-  const { cursor, name, isShown } = props;
+  const { cursor, name, isShown, offsetWidth = 0 } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
-  const containerRef = useRef<HTMLDivElement>(document.createElement("div"));
   const cursorRef = useRef<Cursor>(cursor as Cursor);
   cursorRef.current = cursor as Cursor;
 
@@ -90,25 +90,17 @@ const CursorScreen = (props: CursorScreenProps) => {
     }
   };
 
-  const getCanvasOffsetWidth = useCallback(() => {
-    const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
-      containerRef.current;
-    return contOffHeight / contOffWidth > ASPECT_RATIO
-      ? contOffWidth
-      : contOffHeight / ASPECT_RATIO;
-  }, [containerRef]);
-
   // set canvas size onmount and when canvas appears or becomes hidden
   useEffect(() => {
     const canvas = canvasRef.current;
-    const canvasOffsetWidth = getCanvasOffsetWidth();
+    const canvasOffsetWidth = canvas.offsetWidth;
     canvas.width = canvasOffsetWidth * SCALE;
     canvas.height = canvas.width * ASPECT_RATIO;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
     }
-  }, [canvasRef, isShown, getCanvasOffsetWidth]);
+  }, [canvasRef, isShown]);
 
   // start cursor layer animation
   useEffect(() => {
@@ -117,7 +109,13 @@ const CursorScreen = (props: CursorScreenProps) => {
   }, []);
 
   return (
-    <div className="w-full h-full grid place-items-center" ref={containerRef}>
+    <div
+      className="place-self-center"
+      style={{
+        width: offsetWidth,
+        height: offsetWidth * ASPECT_RATIO,
+      }}
+    >
       <canvas
         ref={canvasRef}
         style={{
@@ -125,7 +123,7 @@ const CursorScreen = (props: CursorScreenProps) => {
           borderWidth: 4,
           borderColor: "blue",
           borderRadius: "30px",
-          width: `${getCanvasOffsetWidth()}px`,
+          width: offsetWidth,
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",
@@ -143,6 +141,7 @@ const CursorScreen = (props: CursorScreenProps) => {
 CursorScreen.defaultProps = {
   name: "",
   isShown: true,
+  offsetWidth: 0,
 };
 
 export default CursorScreen;

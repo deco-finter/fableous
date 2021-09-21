@@ -1,20 +1,20 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
 import {
+  Button,
   Card,
   CardContent,
   CircularProgress,
   FormControl,
+  Grid,
   Icon,
   InputLabel,
   MenuItem,
   Select,
+  Typography,
+  makeStyles,
 } from "@material-ui/core";
 import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
-import Typography from "@material-ui/core/Typography";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
@@ -31,12 +31,16 @@ import {
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
+import {
+  Achievement,
+  EmptyAchievement,
+} from "../components/achievement/achievement";
+import AchievementButton from "../components/achievement/AchievementButton";
 import { ControllerRole, ToolMode, WSMessageType } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
-import FillScreen from "../components/FillScreen";
 import ChipRow from "../components/ChipRow";
 
 enum ControllerState {
@@ -90,6 +94,8 @@ export default function ControllerCanvasPage() {
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const [cursor, setCursor] = useState<Cursor | undefined>();
+  const [achievements, setAchievements] =
+    useState<Achievement>(EmptyAchievement);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -134,6 +140,9 @@ export default function ControllerCanvasPage() {
                 setControllerState(ControllerState.JoinForm);
               }
             }
+            break;
+          case WSMessageType.Achievement:
+            setAchievements(msg.data as Achievement);
             break;
           default:
         }
@@ -407,22 +416,30 @@ export default function ControllerCanvasPage() {
           </Grid>
         </>
       )}
-      <FillScreen isShown={controllerState === ControllerState.DrawingSession}>
+      <div
+        className={`flex flex-col absolute w-full h-full ${
+          controllerState !== ControllerState.DrawingSession && "invisible"
+        }`}
+      >
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <ChipRow
-              left={storyDetails?.description.split(",") || []}
-              middle={`Title: ${storyDetails?.title}`}
-              right={[
+              left={`Title: ${storyDetails?.title}`}
+              middle={[
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
                 role[0].toUpperCase() + role.slice(1).toLowerCase(),
                 `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
               ]}
+              right={storyDetails?.description.split(",") || []}
             />
           </Grid>
-          {/* add more rows with <Grid item /> here */}
         </Grid>
         <Grid container spacing={2} className="flex-1 mb-4">
-          <Grid item xs={1}>
+          <Grid item xs={2} md={1}>
             <CanvasToolbar
               ref={canvasRef}
               role={role}
@@ -435,7 +452,7 @@ export default function ControllerCanvasPage() {
               setToolWidth={setToolWidth}
             />
           </Grid>
-          <Grid item xs={11}>
+          <Grid item xs={10} md={11}>
             <div
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
@@ -444,6 +461,7 @@ export default function ControllerCanvasPage() {
               }}
             >
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -454,9 +472,11 @@ export default function ControllerCanvasPage() {
                 <CursorScreen
                   cursor={cursor}
                   isShown={controllerState === ControllerState.DrawingSession}
+                  offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -479,7 +499,7 @@ export default function ControllerCanvasPage() {
                   toolMode={toolMode}
                   setToolMode={setToolMode}
                   toolWidth={toolWidth}
-                  offsetWidth={`${canvasOffsetWidth}px`}
+                  offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
@@ -502,7 +522,7 @@ export default function ControllerCanvasPage() {
             </div>
           </Grid>
         </Grid>
-      </FillScreen>
+      </div>
     </Grid>
   );
 }

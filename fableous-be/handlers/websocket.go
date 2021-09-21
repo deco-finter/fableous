@@ -123,6 +123,8 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			break
 		}
 		switch message.Type {
+		case constants.WSMessageTypeAchievement:
+			_ = sess.BroadcastJSON(message)
 		case constants.WSMessageTypeControl:
 			if message.Data.WSControlMessageData.NextPage != nil && *message.Data.WSControlMessageData.NextPage {
 				sess.currentPage++

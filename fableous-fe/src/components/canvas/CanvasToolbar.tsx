@@ -7,17 +7,12 @@ import UndoIcon from "@material-ui/icons/Undo";
 import BrushIcon from "@material-ui/icons/Brush";
 import StopIcon from "@material-ui/icons/Stop";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
-import {
-  Button,
-  ClickAwayListener,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@material-ui/core";
-import EraserIcon from "../EraserIcon";
+import { Button, IconButton, makeStyles, Typography } from "@material-ui/core";
+import EraserIcon from "./EraserIcon";
 import { ControllerRole, ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
-import BrushWidthIcon from "../BrushWidthIcon";
+import BrushWidthIcon from "./BrushWidthIcon";
+import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
 
 interface CanvasToolbarProps {
   role: ControllerRole;
@@ -41,6 +36,20 @@ const COLORS = [
 const ERASE_COLOR = "#00000000";
 const BRUSH_WIDTHS = [4, 8, 12, 16, 20];
 const ICON_STROKE_WIDTH_RATIO = 1 / 4;
+
+const useStyles = makeStyles({
+  hideScrollbar: {
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    "&::-webkit-scrollbar": {
+      width: 0,
+      height: 0,
+    },
+  },
+  unsetMaxWidth: {
+    maxWidth: "none",
+  },
+});
 
 const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
   (props: CanvasToolbarProps, ref) => {
@@ -88,39 +97,27 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
       };
     }, [isRecordingAudio]);
 
+    const classes = useStyles();
+
     return (
-      <div className="h-full flex flex-col justify-center">
-        <Paper
-          className="p-1 flex flex-col justify-around items-center"
+      <div className="h-full flex flex-col justify-center items-center">
+        <div
+          className={`overflow-y-scroll overflow-x-hidden ${classes.hideScrollbar}`}
           style={{
             height: offsetHeight || "100%",
             maxHeight: "100%",
+            maxWidth: "80px",
           }}
         >
-          {[ControllerRole.Character, ControllerRole.Background].includes(
-            role
-          ) && (
-            <>
-              <ClickAwayListener
-                onClickAway={() => setIsWidthPickerOpen(false)}
-              >
-                <Tooltip
-                  interactive
-                  classes={{
-                    tooltip: "max-w-md",
-                  }}
-                  PopperProps={{
-                    disablePortal: true,
-                  }}
-                  onClose={() => setIsWidthPickerOpen(false)}
-                  open={isWidthPickerOpen}
-                  arrow
-                  placement="right"
-                  leaveTouchDelay={undefined}
-                  disableFocusListener
-                  disableHoverListener
-                  disableTouchListener
-                  title={
+          <Paper className="p-1 flex flex-col justify-around items-center min-h-full">
+            {[ControllerRole.Character, ControllerRole.Background].includes(
+              role
+            ) && (
+              <>
+                <CanvasToolbarTooltip
+                  isOpen={isWidthPickerOpen}
+                  setIsOpen={setIsWidthPickerOpen}
+                  tooltipTitle={
                     <div className="flex">
                       {BRUSH_WIDTHS.map((brushWidth) => (
                         <IconButton
@@ -167,53 +164,41 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       strokeWidth={toolWidth * ICON_STROKE_WIDTH_RATIO}
                     />
                   </IconButton>
-                </Tooltip>
-              </ClickAwayListener>
-              <IconButton
-                onClick={() => {
-                  setToolColorRememberPrev(ERASE_COLOR);
-                  setToolMode(ToolMode.Paint);
-                }}
-                color={
-                  toolMode === ToolMode.Paint && toolColor === "#00000000"
-                    ? "secondary"
-                    : "primary"
-                }
-              >
-                <EraserIcon fontSize="medium" />
-              </IconButton>
-              <IconButton
-                onClick={() => {
-                  if (toolColor === ERASE_COLOR) {
-                    setToolColor(prevColor);
+                </CanvasToolbarTooltip>
+                <IconButton
+                  onClick={() => {
+                    setToolColorRememberPrev(ERASE_COLOR);
+                    setToolMode(ToolMode.Paint);
+                  }}
+                  color={
+                    toolMode === ToolMode.Paint && toolColor === "#00000000"
+                      ? "secondary"
+                      : "primary"
                   }
-                  setToolMode(ToolMode.Fill);
-                }}
-                color={toolMode === ToolMode.Fill ? "secondary" : "primary"}
-              >
-                <FormatColorFillIcon fontSize="large" />
-              </IconButton>
-              <ClickAwayListener
-                onClickAway={() => setIsColorPickerOpen(false)}
-              >
-                <Tooltip
-                  interactive
-                  classes={{
-                    tooltip: "max-w-md",
+                >
+                  <EraserIcon fontSize="medium" />
+                </IconButton>
+                <IconButton
+                  onClick={() => {
+                    if (toolColor === ERASE_COLOR) {
+                      setToolColor(prevColor);
+                    }
+                    setToolMode(ToolMode.Fill);
                   }}
-                  PopperProps={{
-                    disablePortal: true,
-                  }}
-                  onClose={() => setIsColorPickerOpen(false)}
-                  open={isColorPickerOpen}
-                  arrow
-                  placement="right"
-                  leaveTouchDelay={undefined}
-                  disableFocusListener
-                  disableHoverListener
-                  disableTouchListener
-                  title={
-                    <div className="flex">
+                  color={toolMode === ToolMode.Fill ? "secondary" : "primary"}
+                >
+                  <FormatColorFillIcon fontSize="large" />
+                </IconButton>
+                <CanvasToolbarTooltip
+                  isOpen={isColorPickerOpen}
+                  setIsOpen={setIsColorPickerOpen}
+                  // cannot use tailwind classes due to using mui portal so tooltip works corrrectly eventhough overflow set in parent
+                  tooltipTitle={
+                    <div
+                      style={{
+                        display: "flex",
+                      }}
+                    >
                       {COLORS.map((color) => (
                         <Button
                           component="div"
@@ -251,73 +236,63 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       className="absolute bottom-1 right-1"
                     />
                   </IconButton>
-                </Tooltip>
-              </ClickAwayListener>
-              <IconButton
-                onClick={imperativeCanvasRef.current.runUndo}
-                color="primary"
-              >
-                <UndoIcon fontSize="large" />
-              </IconButton>
-            </>
-          )}
-          {role === ControllerRole.Story && (
-            <>
-              <IconButton
-                onClick={() => setToolMode(ToolMode.Text)}
-                color={toolMode === ToolMode.Text ? "secondary" : "primary"}
-              >
-                <TextFieldsIcon fontSize="large" />
-              </IconButton>
-              <Tooltip
-                interactive
-                classes={{
-                  tooltip: "max-w-md",
-                }}
-                PopperProps={{
-                  disablePortal: true,
-                }}
-                open={isRecordingAudio}
-                arrow
-                placement="right"
-                leaveTouchDelay={undefined}
-                disableFocusListener
-                disableHoverListener
-                disableTouchListener
-                title={
-                  <Typography variant="body1">
-                    {showMmSsFromSeconds(recordingTimeElapsed)}
-                  </Typography>
-                }
-              >
+                </CanvasToolbarTooltip>
                 <IconButton
-                  onClick={() => {
-                    setToolMode(ToolMode.Audio);
-                    setIsRecordingAudio((prev) => {
-                      // need to exec func directly from imperativeCanvasRef
-                      // to get up-to-date callback
-                      imperativeCanvasRef.current.runAudio();
-                      return !prev;
-                    });
-                  }}
-                  color={toolMode === ToolMode.Audio ? "secondary" : "primary"}
+                  onClick={imperativeCanvasRef.current.runUndo}
+                  color="primary"
                 >
-                  {isRecordingAudio ? (
-                    <StopIcon fontSize="large" />
-                  ) : (
-                    <MicIcon fontSize="large" />
-                  )}
+                  <UndoIcon fontSize="large" />
                 </IconButton>
-              </Tooltip>
-              <IconButton
-                onClick={imperativeCanvasRef.current.runUndo}
-                color="primary"
-              >
-                <UndoIcon fontSize="large" />
-              </IconButton>
-            </>
-          )}
-        </Paper>
+              </>
+            )}
+            {role === ControllerRole.Story && (
+              <>
+                <IconButton
+                  onClick={() => setToolMode(ToolMode.Text)}
+                  color={toolMode === ToolMode.Text ? "secondary" : "primary"}
+                >
+                  <TextFieldsIcon fontSize="large" />
+                </IconButton>
+                <CanvasToolbarTooltip
+                  isOpen={isRecordingAudio}
+                  setIsOpen={setIsRecordingAudio}
+                  tooltipTitle={
+                    <Typography variant="body1">
+                      {showMmSsFromSeconds(recordingTimeElapsed)}
+                    </Typography>
+                  }
+                >
+                  <IconButton
+                    onClick={() => {
+                      setToolMode(ToolMode.Audio);
+                      setIsRecordingAudio((prev) => {
+                        // need to exec func directly from imperativeCanvasRef
+                        // to get up-to-date callback
+                        imperativeCanvasRef.current.runAudio();
+                        return !prev;
+                      });
+                    }}
+                    color={
+                      toolMode === ToolMode.Audio ? "secondary" : "primary"
+                    }
+                  >
+                    {isRecordingAudio ? (
+                      <StopIcon fontSize="large" />
+                    ) : (
+                      <MicIcon fontSize="large" />
+                    )}
+                  </IconButton>
+                </CanvasToolbarTooltip>
+                <IconButton
+                  onClick={imperativeCanvasRef.current.runUndo}
+                  color="primary"
+                >
+                  <UndoIcon fontSize="large" />
+                </IconButton>
+              </>
+            )}
+          </Paper>
+        </div>
       </div>
     );
   }
