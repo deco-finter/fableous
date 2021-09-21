@@ -79,10 +79,10 @@ export default function App() {
         },
         clickable: {
           "&:hover": {
-            backgroundColor: `${colors.gray.light} !important`,
+            backgroundColor: `${colors.white} !important`,
           },
           "&:focus": {
-            backgroundColor: `${colors.gray.light} !important`,
+            backgroundColor: `${colors.white} !important`,
           },
         },
       },
