@@ -1,58 +1,56 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { Chip, ChipProps } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
+import React from "react";
 
 interface ChipRowProps {
-  left: (ChipProps | string)[];
-  middle: ChipProps | string;
-  right: (ChipProps | string)[];
+  left: ChipProps | string;
+  middle: (React.ReactNode | ChipProps | string)[];
+  right: (React.ReactNode | ChipProps | string)[];
 }
-
-const useStyles = makeStyles({
-  hideScrollbar: {
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    "&::-webkit-scrollbar": {
-      width: 0,
-      height: 0,
-    },
-  },
-});
 
 export default function ChipRow(props: ChipRowProps) {
   const { left, middle, right } = props;
-  const classes = useStyles();
 
   return (
-    <div
-      className={`flex justify-between items-stretch overflow-x-scroll ${classes.hideScrollbar}`}
-    >
-      <div className="flex flex-1">
-        {left.map((leftProp) => (
-          <Chip
-            className="flex-initial"
-            label={typeof leftProp === "string" ? leftProp : leftProp.label}
-            color="secondary"
-            {...leftProp}
-          />
-        ))}
+    <div className="flex flex-wrap gap-y-4">
+      <div className="flex justify-evenly flex-grow flex-wrap gap-y-4">
+        <Chip
+          className="flex-initial ml-4"
+          label={typeof left === "string" ? left : left.label}
+          color="primary"
+          {...left}
+        />
+        {middle.map((item) =>
+          React.isValidElement(item) ? (
+            item
+          ) : (
+            <Chip
+              className="flex-initial"
+              label={
+                typeof item === "string" ? item : (item as ChipProps).label
+              }
+              color="primary"
+              variant="outlined"
+              {...item}
+            />
+          )
+        )}
       </div>
-      <Chip
-        className="flex-initial ml-4"
-        label={typeof middle === "string" ? middle : middle.label}
-        color="primary"
-        {...middle}
-      />
-      <div className="flex flex-1 justify-end">
-        {right.map((rightProp) => (
-          <Chip
-            className="flex-initial"
-            label={typeof rightProp === "string" ? rightProp : rightProp.label}
-            color="primary"
-            variant="outlined"
-            {...rightProp}
-          />
-        ))}
+      <div className="flex justify-evenly flex-shrink flex-grow flex-wrap gap-y-4">
+        {right.map((item) =>
+          React.isValidElement(item) ? (
+            item
+          ) : (
+            <Chip
+              className="flex-initial"
+              label={
+                typeof item === "string" ? item : (item as ChipProps).label
+              }
+              color="secondary"
+              {...item}
+            />
+          )
+        )}
       </div>
     </div>
   );

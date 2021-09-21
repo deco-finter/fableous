@@ -57,7 +57,7 @@ export default function App() {
         root: {
           borderRadius: "1.5rem",
           padding: "0.25rem 1rem",
-          marginRight: "1rem",
+          marginRight: "0.25rem",
           height: "auto",
           fontWeight: "bold",
           "&:last-of-type": {

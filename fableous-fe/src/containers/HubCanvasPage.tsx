@@ -228,7 +228,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    ].some((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -436,18 +436,14 @@ export default function HubCanvasPage() {
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <ChipRow
-              left={story?.description.split(",") || []}
-              middle={`Title: ${story?.title}`}
+              left={`Title: ${story?.title}`}
+              middle={story?.description.split(",") || []}
               right={[
-                {
-                  label: (
-                    <AchievementButton
-                      achievements={achievements}
-                      confetti
-                      notify
-                    />
-                  ),
-                },
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
                 {
                   label:
                     currentPageIdx >= (story?.pages || -1)

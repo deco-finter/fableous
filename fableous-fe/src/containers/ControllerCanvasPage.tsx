@@ -371,23 +371,18 @@ export default function ControllerCanvasPage() {
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <ChipRow
-              left={storyDetails?.description.split(",") || []}
-              middle={`Title: ${storyDetails?.title}`}
+              left={`Title: ${storyDetails?.title}`}
+              middle={storyDetails?.description.split(",") || []}
               right={[
-                {
-                  label: (
-                    <AchievementButton
-                      achievements={achievements}
-                      confetti
-                      notify
-                    />
-                  ),
-                },
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
                 role[0].toUpperCase() + role.slice(1).toLowerCase(),
                 `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
               ]}
             />
-            <AchievementButton achievements={achievements} confetti notify />
           </Grid>
         </Grid>
         <Grid container spacing={2} className="flex-1 mb-4">
