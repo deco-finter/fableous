@@ -41,7 +41,7 @@ interface CanvasProps {
   pageNum: number;
   isGallery?: boolean;
   isShown?: boolean;
-  offsetWidth?: string;
+  offsetWidth?: number;
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
@@ -58,7 +58,7 @@ interface CanvasProps {
 const defaultProps = {
   isGallery: false,
   isShown: true,
-  offsetWidth: "100%",
+  offsetWidth: 0,
   setCursor: undefined,
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
@@ -898,7 +898,13 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     }, [editingTextId, textId, placeCheckpoint]);
 
     return (
-      <div className="w-full h-full grid place-items-center">
+      <div
+        className="place-self-center"
+        style={{
+          width: offsetWidth,
+          height: offsetWidth * ASPECT_RATIO,
+        }}
+      >
         <canvas
           ref={canvasRef}
           onPointerDown={wrapPointerHandler(onPointerDown)}

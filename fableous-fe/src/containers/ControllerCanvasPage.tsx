@@ -29,7 +29,6 @@ import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
-import FillScreen from "../components/FillScreen";
 import ChipRow from "../components/ChipRow";
 
 enum ControllerState {
@@ -354,7 +353,11 @@ export default function ControllerCanvasPage() {
           )}
         </div>
       </Grid>
-      <FillScreen isShown={controllerState === ControllerState.DrawingSession}>
+      <div
+        className={`flex flex-col absolute w-full h-full ${
+          controllerState !== ControllerState.DrawingSession && "invisible"
+        }`}
+      >
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <ChipRow
@@ -366,7 +369,6 @@ export default function ControllerCanvasPage() {
               ]}
             />
           </Grid>
-          {/* add more rows with <Grid item /> here */}
         </Grid>
         <Grid container spacing={2} className="flex-1 mb-4">
           <Grid item xs={1}>
@@ -391,6 +393,7 @@ export default function ControllerCanvasPage() {
               }}
             >
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -401,9 +404,11 @@ export default function ControllerCanvasPage() {
                 <CursorScreen
                   cursor={cursor}
                   isShown={controllerState === ControllerState.DrawingSession}
+                  offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -426,7 +431,7 @@ export default function ControllerCanvasPage() {
                   toolMode={toolMode}
                   setToolMode={setToolMode}
                   toolWidth={toolWidth}
-                  offsetWidth={`${canvasOffsetWidth}px`}
+                  offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
@@ -449,7 +454,7 @@ export default function ControllerCanvasPage() {
             </div>
           </Grid>
         </Grid>
-      </FillScreen>
+      </div>
     </Grid>
   );
 }
