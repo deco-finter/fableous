@@ -5,8 +5,7 @@ import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
-import { useHistory, useParams } from "react-router-dom";
-import Icon from "@material-ui/core/Icon";
+import { useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
 import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
@@ -16,6 +15,7 @@ import { useAchievement, useWsConn } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { WSMessageType, ControllerRole } from "../constant";
 import { TextShapeMap } from "../components/canvas/data";
+import BackButton from "../components/BackButton";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -25,7 +25,6 @@ enum HubState {
 
 export default function HubCanvasPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
-  const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
@@ -260,15 +259,8 @@ export default function HubCanvasPage() {
 
   return (
     <>
-      <Grid item xs={12}>
-        <Button
-          onClick={() => history.goBack()}
-          startIcon={<Icon>arrow_backward</Icon>}
-        >
-          Back
-        </Button>
-      </Grid>
       <Grid item xs={12} className="mb-4">
+        <BackButton />
         <Typography variant="h2">
           {
             {
