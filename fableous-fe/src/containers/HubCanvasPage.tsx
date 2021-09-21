@@ -136,9 +136,14 @@ export default function HubCanvasPage() {
 
               // show error if controller disconnects during drawing session
               if (!joining && hubState === HubState.DrawingSession) {
-                enqueueSnackbar(`${role} got disconnected`, {
-                  variant: "error",
-                });
+                enqueueSnackbar(
+                  `${
+                    role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
+                  } got disconnected`,
+                  {
+                    variant: "error",
+                  }
+                );
               }
             }
             break;
@@ -153,7 +158,7 @@ export default function HubCanvasPage() {
 
   const wsErrorHandler = useCallback(
     (err: Event) => {
-      enqueueSnackbar("connection error", { variant: "error" });
+      enqueueSnackbar("Connection error!", { variant: "error" });
       console.error("ws conn error", err);
       clearWsConn();
       setHubState(HubState.SessionForm);
@@ -189,7 +194,7 @@ export default function HubCanvasPage() {
         actions.resetForm();
       })
       .catch((err: any) => {
-        enqueueSnackbar("failed to create session", { variant: "error" });
+        enqueueSnackbar("Failed to start session!", { variant: "error" });
         console.error("post session error", err);
       });
   };
@@ -222,7 +227,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].some((role) => role in joinedControllers);
+    ].every((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -294,9 +299,10 @@ export default function HubCanvasPage() {
     if (currentPageIdx && story && currentPageIdx > story.pages) {
       // TODO send canvas result to backend here
       // assume backend will close ws conn
+      enqueueSnackbar("Story completed!", { variant: "success" });
       setHubState(HubState.SessionForm);
     }
-  }, [currentPageIdx, story, clearWsConn]);
+  }, [currentPageIdx, story, clearWsConn, enqueueSnackbar]);
 
   return (
     <Grid container className="flex-col flex-1 relative">
@@ -339,6 +345,8 @@ export default function HubCanvasPage() {
                 description: yup.string().required("Description required"),
                 pages: yup
                   .number()
+                  .required("Number of pages required")
+                  .integer("Invalid numbergit")
                   .positive("Must have at least one page")
                   .lessThan(21, "Maximum is 20 pages"),
               })}
@@ -360,7 +368,7 @@ export default function HubCanvasPage() {
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12} className="flex-grow flex flex-col">
+                      <Grid item xs={6} className="flex-grow flex flex-col">
                         <FormikTextField
                           formik={formik}
                           name="description"
@@ -371,7 +379,7 @@ export default function HubCanvasPage() {
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12} className="flex-grow flex flex-col">
+                      <Grid item xs={6} className="flex-grow flex flex-col">
                         <FormikTextField
                           formik={formik}
                           name="pages"
