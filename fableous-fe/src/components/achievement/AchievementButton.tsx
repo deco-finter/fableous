@@ -9,6 +9,7 @@ import {
   makeStyles,
   LinearProgress,
   Grid,
+  Chip,
 } from "@material-ui/core";
 import { useEffect, useRef, useState } from "react";
 import ReactCanvasConfetti from "react-canvas-confetti";
@@ -18,18 +19,8 @@ import {
 } from "canvas-confetti";
 import { useSnackbar } from "notistack";
 import { Achievement, AchievementDetail, AchievementType } from "./achievement";
-import { colors } from "../../colors";
 
 const useStyles = makeStyles(() => ({
-  button: {
-    "&:hover": {
-      backgroundColor: "#ffffff",
-    },
-    backgroundColor: "#ffffff",
-    color: colors.blue.light,
-    marginRight: 16,
-    zIndex: 100,
-  },
   modal: {
     maxWidth: "640px",
   },
@@ -56,7 +47,8 @@ const useStyles = makeStyles(() => ({
   },
   confetti: {
     pointerEvents: "none",
-    position: "absolute",
+    position: "fixed",
+    zIndex: 1200,
   },
 }));
 
@@ -107,20 +99,24 @@ export default function AchievementButton(props: {
 
   return (
     <>
-      <IconButton onClick={() => setShowing(true)} className={classes.button}>
-        <Icon>emoji_events</Icon>
-        <ReactCanvasConfetti
-          resize
-          width={1024}
-          height={1024}
-          zIndex={101}
-          useWorker
-          refConfetti={(ref) => {
-            confettiRef.current = ref;
-          }}
-          className={classes.confetti}
-        />
-      </IconButton>
+      <Chip
+        onClick={() => setShowing(true)}
+        label={
+          <IconButton className="p-0" color="primary" disableRipple>
+            <Icon fontSize="medium">emoji_events</Icon>
+            <ReactCanvasConfetti
+              resize
+              width={1024}
+              height={1024}
+              useWorker
+              refConfetti={(ref) => {
+                confettiRef.current = ref;
+              }}
+              className={classes.confetti}
+            />
+          </IconButton>
+        }
+      />
       <Dialog
         open={showing}
         onClose={() => setShowing(false)}
