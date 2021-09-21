@@ -24,6 +24,11 @@ import {
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
+import {
+  Achievement,
+  EmptyAchievement,
+} from "../components/achievement/achievement";
+import AchievementButton from "../components/achievement/AchievementButton";
 import { ControllerRole, ToolMode, WSMessageType } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
@@ -82,6 +87,8 @@ export default function ControllerCanvasPage() {
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const [cursor, setCursor] = useState<Cursor | undefined>();
+  const [achievements, setAchievements] =
+    useState<Achievement>(EmptyAchievement);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -126,6 +133,9 @@ export default function ControllerCanvasPage() {
                 setControllerState(ControllerState.JoinForm);
               }
             }
+            break;
+          case WSMessageType.Achievement:
+            setAchievements(msg.data as Achievement);
             break;
           default:
         }
@@ -334,6 +344,7 @@ export default function ControllerCanvasPage() {
                   className="mb-2"
                   onClick={() => {
                     setControllerState(ControllerState.JoinForm);
+                    setAchievements(EmptyAchievement);
                   }}
                 >
                   Join another session
@@ -361,12 +372,17 @@ export default function ControllerCanvasPage() {
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <ChipRow
-              left={storyDetails?.description.split(",") || []}
-              middle={`Title: ${storyDetails?.title}`}
-              right={[
+              left={`Title: ${storyDetails?.title}`}
+              middle={[
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
                 role[0].toUpperCase() + role.slice(1).toLowerCase(),
                 `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
               ]}
+              right={storyDetails?.description.split(",") || []}
             />
           </Grid>
         </Grid>

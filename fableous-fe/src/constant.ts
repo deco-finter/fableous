@@ -6,6 +6,7 @@ export enum WSMessageType {
   Checkpoint = "CHECKPOINT",
   Undo = "UNDO",
   Cursor = "CURSOR",
+  Achievement = "ACHIEVEMENT",
   Connect = "CONNECT",
   Join = "JOIN",
   Control = "CONTROL",

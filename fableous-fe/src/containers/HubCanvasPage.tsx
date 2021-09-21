@@ -1,22 +1,23 @@
-import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import { ChipProps, IconButton } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
-import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
-import { useHistory, useParams } from "react-router-dom";
 import Icon from "@material-ui/core/Icon";
 import MusicNoteIcon from "@material-ui/icons/MusicNote";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { useSnackbar } from "notistack";
-import Canvas from "../components/canvas/Canvas";
-import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
+import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import AchievementButton from "../components/achievement/AchievementButton";
+import Canvas from "../components/canvas/Canvas";
+import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
-import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import { WSMessageType, ControllerRole } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
@@ -86,9 +87,25 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
-  const [, wsAchievementHandler, achievementNextPage] = useAchievement({
+  const [
+    achievements,
+    wsAchievementHandler,
+    achievementNextPage,
+    achievementReset,
+  ] = useAchievement({
     debug: true,
   });
+
+  const broadcastAchievement = useCallback(() => {
+    if (hubState === HubState.DrawingSession) {
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Achievement,
+          data: achievements,
+        })
+      );
+    }
+  }, [achievements, hubState, wsConn]);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -117,6 +134,7 @@ export default function HubCanvasPage() {
                   ...prev,
                   [role]: name,
                 }));
+                broadcastAchievement();
               } else if (!joining) {
                 setJoinedControllers((prev) => {
                   const prevCopy = { ...prev };
@@ -140,7 +158,7 @@ export default function HubCanvasPage() {
         console.error(e);
       }
     },
-    [hubState, enqueueSnackbar]
+    [hubState, broadcastAchievement, enqueueSnackbar]
   );
 
   const wsErrorHandler = useCallback(
@@ -214,7 +232,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    ].some((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -287,8 +305,14 @@ export default function HubCanvasPage() {
       // TODO send canvas result to backend here
       // assume backend will close ws conn
       setHubState(HubState.SessionForm);
+      achievementReset();
     }
-  }, [currentPageIdx, story, clearWsConn]);
+  }, [currentPageIdx, story, clearWsConn, achievementReset]);
+
+  // broadcast achievement to all joined controllers on achievement update
+  useEffect(() => {
+    broadcastAchievement();
+  }, [achievements, broadcastAchievement]);
 
   return (
     <Grid container className="flex-col flex-1 relative">
@@ -417,9 +441,13 @@ export default function HubCanvasPage() {
         <Grid container className="mb-4">
           <Grid item xs={12}>
             <ChipRow
-              left={story?.description.split(",") || []}
-              middle={`Title: ${story?.title}`}
-              right={[
+              left={`Title: ${story?.title}`}
+              middle={[
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
                 {
                   label:
                     currentPageIdx >= (story?.pages || -1)
@@ -447,6 +475,7 @@ export default function HubCanvasPage() {
                   disabled: audioPaths.length === 0,
                 } as ChipProps,
               ]}
+              right={story?.description.split(",") || []}
             />
           </Grid>
         </Grid>

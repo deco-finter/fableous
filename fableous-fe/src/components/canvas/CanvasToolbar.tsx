@@ -8,10 +8,10 @@ import BrushIcon from "@material-ui/icons/Brush";
 import StopIcon from "@material-ui/icons/Stop";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
 import { Button, IconButton, makeStyles, Typography } from "@material-ui/core";
-import EraserIcon from "../EraserIcon";
+import EraserIcon from "./EraserIcon";
 import { ControllerRole, ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
-import BrushWidthIcon from "../BrushWidthIcon";
+import BrushWidthIcon from "./BrushWidthIcon";
 import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
 
 interface CanvasToolbarProps {
