@@ -15,7 +15,10 @@ export const colors = {
     main: "#DD2222",
   },
   white: "#FFFFFF",
-  gray: "#AAAAAA",
+  gray: {
+    light: "#DDDDDD",
+    main: "#AAAAAA",
+  },
   black: "#000000",
 };
 
