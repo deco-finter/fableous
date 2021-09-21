@@ -344,6 +344,7 @@ export default function ControllerCanvasPage() {
                   className="mb-2"
                   onClick={() => {
                     setControllerState(ControllerState.JoinForm);
+                    setAchievements(EmptyAchievement);
                   }}
                 >
                   Join another session

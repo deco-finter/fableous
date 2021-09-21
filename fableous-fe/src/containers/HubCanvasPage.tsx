@@ -87,10 +87,14 @@ export default function HubCanvasPage() {
   const [backgroundCursor, setBackgroundCursor] = useState<
     Cursor | undefined
   >();
-  const [achievements, wsAchievementHandler, achievementNextPage] =
-    useAchievement({
-      debug: true,
-    });
+  const [
+    achievements,
+    wsAchievementHandler,
+    achievementNextPage,
+    achievementReset,
+  ] = useAchievement({
+    debug: true,
+  });
 
   const broadcastAchievement = useCallback(() => {
     if (hubState === HubState.DrawingSession) {
@@ -301,8 +305,9 @@ export default function HubCanvasPage() {
       // TODO send canvas result to backend here
       // assume backend will close ws conn
       setHubState(HubState.SessionForm);
+      achievementReset();
     }
-  }, [currentPageIdx, story, clearWsConn]);
+  }, [currentPageIdx, story, clearWsConn, achievementReset]);
 
   // broadcast achievement to all joined controllers on achievement update
   useEffect(() => {

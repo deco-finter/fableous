@@ -10,7 +10,7 @@ import { ControllerRole, WSMessageType } from "../constant";
 
 export default function useAchievement(config?: {
   debug?: boolean;
-}): [Achievement, (ev: MessageEvent) => void, () => void] {
+}): [Achievement, (ev: MessageEvent) => void, () => void, () => void] {
   const { debug } = config || { debug: false };
   const [achievements, setAchievements] =
     useState<Achievement>(EmptyAchievement);
@@ -152,9 +152,20 @@ export default function useAchievement(config?: {
     setPage(page + 1);
   };
 
+  const resetAchievements = () => {
+    setAchievements(EmptyAchievement);
+    setPage(0);
+    setAllColorColors(new Set<string>());
+    setFiveTextIds(new Set<string>());
+    setTenTextIds(new Set<string>());
+    setOnePageCount(0);
+    setThreePageCount(0);
+    setFivePageCount(0);
+  };
+
   useEffect(() => {
     if (debug) console.log(achievements);
   }, [achievements, debug]);
 
-  return [achievements, achievementHandler, nextPageHandler];
+  return [achievements, achievementHandler, nextPageHandler, resetAchievements];
 }
