@@ -437,8 +437,7 @@ export default function HubCanvasPage() {
           <Grid item xs={12}>
             <ChipRow
               left={`Title: ${story?.title}`}
-              middle={story?.description.split(",") || []}
-              right={[
+              middle={[
                 <AchievementButton
                   achievements={achievements}
                   confetti
@@ -471,6 +470,7 @@ export default function HubCanvasPage() {
                   disabled: audioPaths.length === 0,
                 } as ChipProps,
               ]}
+              right={story?.description.split(",") || []}
             />
           </Grid>
         </Grid>

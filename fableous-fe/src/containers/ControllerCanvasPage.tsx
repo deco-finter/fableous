@@ -372,8 +372,7 @@ export default function ControllerCanvasPage() {
           <Grid item xs={12}>
             <ChipRow
               left={`Title: ${storyDetails?.title}`}
-              middle={storyDetails?.description.split(",") || []}
-              right={[
+              middle={[
                 <AchievementButton
                   achievements={achievements}
                   confetti
@@ -382,6 +381,7 @@ export default function ControllerCanvasPage() {
                 role[0].toUpperCase() + role.slice(1).toLowerCase(),
                 `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
               ]}
+              right={storyDetails?.description.split(",") || []}
             />
           </Grid>
         </Grid>
