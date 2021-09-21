@@ -11,6 +11,7 @@ import {
   Button,
   ClickAwayListener,
   IconButton,
+  makeStyles,
   Tooltip,
   Typography,
 } from "@material-ui/core";
@@ -41,6 +42,20 @@ const COLORS = [
 const ERASE_COLOR = "#00000000";
 const BRUSH_WIDTHS = [4, 8, 12, 16, 20];
 const ICON_STROKE_WIDTH_RATIO = 1 / 4;
+
+const useStyles = makeStyles({
+  hideScrollbar: {
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    "&::-webkit-scrollbar": {
+      width: 0,
+      height: 0,
+    },
+  },
+  unsetMaxWidth: {
+    maxWidth: "none",
+  },
+});
 
 const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
   (props: CanvasToolbarProps, ref) => {
@@ -88,10 +103,12 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
       };
     }, [isRecordingAudio]);
 
+    const classes = useStyles();
+
     return (
       <div className="h-full flex flex-col justify-center items-center">
         <div
-          className="overflow-y-scroll overflow-x-hidden"
+          className={`overflow-y-scroll overflow-x-hidden ${classes.hideScrollbar}`}
           style={{
             height: offsetHeight || "100%",
             maxHeight: "100%",
@@ -109,10 +126,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   <Tooltip
                     interactive
                     classes={{
-                      tooltip: "max-w-md",
-                    }}
-                    PopperProps={{
-                      disablePortal: true,
+                      tooltip: classes.unsetMaxWidth,
                     }}
                     onClose={() => setIsWidthPickerOpen(false)}
                     open={isWidthPickerOpen}
@@ -202,10 +216,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   <Tooltip
                     interactive
                     classes={{
-                      tooltip: "max-w-md",
-                    }}
-                    PopperProps={{
-                      disablePortal: true,
+                      tooltip: classes.unsetMaxWidth,
                     }}
                     onClose={() => setIsColorPickerOpen(false)}
                     open={isColorPickerOpen}
@@ -216,7 +227,11 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                     disableHoverListener
                     disableTouchListener
                     title={
-                      <div className="flex">
+                      <div
+                        style={{
+                          display: "flex",
+                        }}
+                      >
                         {COLORS.map((color) => (
                           <Button
                             component="div"
@@ -275,10 +290,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 <Tooltip
                   interactive
                   classes={{
-                    tooltip: "max-w-md",
-                  }}
-                  PopperProps={{
-                    disablePortal: true,
+                    tooltip: classes.unsetMaxWidth,
                   }}
                   open={isRecordingAudio}
                   arrow
