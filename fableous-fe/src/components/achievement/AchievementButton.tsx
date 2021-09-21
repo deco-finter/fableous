@@ -8,6 +8,7 @@ import {
   Typography,
   makeStyles,
   LinearProgress,
+  Grid,
 } from "@material-ui/core";
 import { useEffect, useRef, useState } from "react";
 import ReactCanvasConfetti from "react-canvas-confetti";
@@ -17,6 +18,7 @@ import {
 } from "canvas-confetti";
 import { useSnackbar } from "notistack";
 import { Achievement, AchievementDetail, AchievementType } from "./achievement";
+import { colors } from "../../colors";
 
 const useStyles = makeStyles(() => ({
   button: {
@@ -24,17 +26,15 @@ const useStyles = makeStyles(() => ({
       backgroundColor: "#ffffff",
     },
     backgroundColor: "#ffffff",
+    color: colors.blue.light,
     marginRight: 16,
     zIndex: 100,
   },
   modal: {
-    minWidth: "400px",
+    maxWidth: "640px",
   },
   closeButton: {
     float: "right",
-  },
-  achievementItem: {
-    marginBottom: 24,
   },
   achievementDescription: {
     marginTop: -6,
@@ -107,11 +107,7 @@ export default function AchievementButton(props: {
 
   return (
     <>
-      <IconButton
-        onClick={() => setShowing(true)}
-        color="primary"
-        className={classes.button}
-      >
+      <IconButton onClick={() => setShowing(true)} className={classes.button}>
         <Icon>emoji_events</Icon>
         <ReactCanvasConfetti
           resize
@@ -143,52 +139,54 @@ export default function AchievementButton(props: {
           </Typography>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            {Object.entries(achievements).map(([type, progress]) => (
-              <div key={type} className={classes.achievementItem}>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <Icon
-                    fontSize="large"
-                    color={progress >= 1 ? "secondary" : "disabled"}
-                    style={{ marginRight: 8 }}
-                  >
-                    {AchievementDetail[type as AchievementType].icon}
-                  </Icon>
-                  <div>
-                    <Typography
-                      variant="h6"
-                      className={
-                        progress >= 1
-                          ? classes.achievementComplete
-                          : classes.achievementIncomplete
-                      }
+          <DialogContentText>
+            <Grid container spacing={4}>
+              {Object.entries(achievements).map(([type, progress]) => (
+                <Grid item xs={12} sm={6} key={type}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <Icon
+                      fontSize="large"
+                      color={progress >= 1 ? "secondary" : "disabled"}
+                      style={{ marginRight: 8 }}
                     >
-                      {AchievementDetail[type as AchievementType].name}
-                    </Typography>
-                    <Typography
-                      variant="subtitle2"
-                      className={`${classes.achievementDescription} ${
-                        progress >= 1
-                          ? classes.achievementComplete
-                          : classes.achievementIncomplete
-                      }`}
-                    >
-                      {AchievementDetail[type as AchievementType].description}
-                    </Typography>
+                      {AchievementDetail[type as AchievementType].icon}
+                    </Icon>
+                    <div>
+                      <Typography
+                        variant="h6"
+                        className={
+                          progress >= 1
+                            ? classes.achievementComplete
+                            : classes.achievementIncomplete
+                        }
+                      >
+                        {AchievementDetail[type as AchievementType].name}
+                      </Typography>
+                      <Typography
+                        variant="subtitle2"
+                        className={`${classes.achievementDescription} ${
+                          progress >= 1
+                            ? classes.achievementComplete
+                            : classes.achievementIncomplete
+                        }`}
+                      >
+                        {AchievementDetail[type as AchievementType].description}
+                      </Typography>
+                    </div>
                   </div>
-                </div>
 
-                <LinearProgress
-                  variant="determinate"
-                  color={progress >= 1 ? "secondary" : "primary"}
-                  value={progress * 100}
-                  classes={{
-                    root: classes.achievementProgressRoot,
-                    bar: classes.achievementProgressBar,
-                  }}
-                />
-              </div>
-            ))}
+                  <LinearProgress
+                    variant="determinate"
+                    color={progress >= 1 ? "secondary" : "primary"}
+                    value={progress * 100}
+                    classes={{
+                      root: classes.achievementProgressRoot,
+                      bar: classes.achievementProgressBar,
+                    }}
+                  />
+                </Grid>
+              ))}
+            </Grid>
           </DialogContentText>
         </DialogContent>
       </Dialog>
