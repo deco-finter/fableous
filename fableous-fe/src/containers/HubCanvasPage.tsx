@@ -317,7 +317,7 @@ export default function HubCanvasPage() {
         </>
       )}
       {hubState === HubState.SessionForm && (
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <Card>
             <Formik
               initialValues={
@@ -338,9 +338,9 @@ export default function HubCanvasPage() {
               onSubmit={handleCreateSession}
             >
               {(formik) => (
-                <form onSubmit={formik.handleSubmit}>
+                <form onSubmit={formik.handleSubmit} autoComplete="off">
                   <CardContent>
-                    <Grid container>
+                    <Grid container spacing={2}>
                       <Grid item xs={12} className="flex-grow flex flex-col">
                         <FormikTextField
                           formik={formik}
@@ -350,7 +350,6 @@ export default function HubCanvasPage() {
                             autoFocus: true,
                             variant: "outlined",
                             disabled: postLoading,
-                            className: "mb-4",
                           }}
                         />
                       </Grid>
@@ -362,37 +361,32 @@ export default function HubCanvasPage() {
                           overrides={{
                             variant: "outlined",
                             disabled: postLoading,
-                            className: "mb-4",
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12}>
-                        <Grid container spacing={2}>
-                          <Grid item xs={8} className="flex-grow flex flex-col">
-                            <FormikTextField
-                              formik={formik}
-                              name="pages"
-                              label="Pages"
-                              overrides={{
-                                type: "number",
-                                variant: "outlined",
-                                disabled: postLoading,
-                              }}
-                            />
-                          </Grid>
-                          <Grid item xs={4} className="flex-grow flex flex-col">
-                            <Button
-                              variant="contained"
-                              color="secondary"
-                              disabled={postLoading}
-                              type="submit"
-                              style={{ height: "100%" }}
-                            >
-                              start
-                              <Icon>play_arrow</Icon>
-                            </Button>
-                          </Grid>
-                        </Grid>
+                      <Grid item xs={12} className="flex-grow flex flex-col">
+                        <FormikTextField
+                          formik={formik}
+                          name="pages"
+                          label="Pages"
+                          overrides={{
+                            type: "number",
+                            variant: "outlined",
+                            disabled: postLoading,
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} className="flex justify-end">
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          disabled={postLoading}
+                          type="submit"
+                          style={{ height: "100%" }}
+                        >
+                          start
+                          <Icon>play_arrow</Icon>
+                        </Button>
                       </Grid>
                     </Grid>
                   </CardContent>
