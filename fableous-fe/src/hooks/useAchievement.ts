@@ -14,6 +14,7 @@ export default function useAchievement(config?: {
   const { debug } = config || { debug: false };
   const [achievements, setAchievements] =
     useState<Achievement>(EmptyAchievement);
+  const [page, setPage] = useState(0);
 
   const [allColorColors, setAllColorColors] = useState<Set<string>>(
     new Set<string>()
@@ -27,28 +28,28 @@ export default function useAchievement(config?: {
     [allColorColors]
   );
 
-  const [fiveTextIds, setFiveTextIds] = useState<Set<number>>(
-    new Set<number>()
+  const [fiveTextIds, setFiveTextIds] = useState<Set<string>>(
+    new Set<string>()
   );
   const doFiveText = useCallback(
     (msg: WSMessage): number => {
       if (!msg.data.text) return 0;
-      const newIds = new Set(fiveTextIds).add(msg.data.id || 0);
+      const newIds = new Set(fiveTextIds).add(`${page}:${msg.data.id || 0}`);
       setFiveTextIds(newIds);
       return newIds.size / 5;
     },
-    [fiveTextIds]
+    [fiveTextIds, page]
   );
 
-  const [tenTextIds, setTenTextIds] = useState<Set<number>>(new Set<number>());
+  const [tenTextIds, setTenTextIds] = useState<Set<string>>(new Set<string>());
   const doTenText = useCallback(
     (msg: WSMessage): number => {
       if (!msg.data.text) return 0;
-      const newIds = new Set(tenTextIds).add(msg.data.id || 0);
+      const newIds = new Set(tenTextIds).add(`${page}:${msg.data.id || 0}`);
       setTenTextIds(newIds);
       return newIds.size / 10;
     },
-    [tenTextIds]
+    [tenTextIds, page]
   );
 
   const [onePageCount, setOnePageCount] = useState<number>(0);
@@ -148,6 +149,7 @@ export default function useAchievement(config?: {
     checkAchievement(AchievementType.OnePage);
     checkAchievement(AchievementType.ThreePage);
     checkAchievement(AchievementType.FivePage);
+    setPage(page + 1);
   };
 
   useEffect(() => {
