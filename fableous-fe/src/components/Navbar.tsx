@@ -60,7 +60,7 @@ export default function Navbar() {
               component={Link}
               to="/login"
             >
-              Login
+              <Icon fontSize="small">login</Icon>&nbsp; Login
             </Button>
             <Button
               variant="outlined"
@@ -68,7 +68,7 @@ export default function Navbar() {
               component={Link}
               to="/register"
             >
-              Register
+              <Icon fontSize="small">person</Icon>&nbsp; Register
             </Button>
           </>
         )}
