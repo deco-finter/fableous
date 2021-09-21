@@ -139,7 +139,7 @@ export default function HubCanvasPage() {
                 enqueueSnackbar(
                   `${
                     role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
-                  } got disconnected`,
+                  } leaves the room!`,
                   {
                     variant: "error",
                   }
@@ -227,7 +227,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    ].some((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
