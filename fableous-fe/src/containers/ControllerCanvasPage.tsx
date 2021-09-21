@@ -11,7 +11,6 @@ import Typography from "@material-ui/core/Typography";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
-import { Chip } from "@material-ui/core";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import {
@@ -25,8 +24,12 @@ import {
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
-import { ControllerRole, WSMessageType } from "../constant";
-import { TextShapeMap } from "../components/canvas/data";
+import { ControllerRole, ToolMode, WSMessageType } from "../constant";
+import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
+import CanvasToolbar from "../components/canvas/CanvasToolbar";
+import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
+import useContainRatio from "../hooks/useContainRatio";
+import ChipRow from "../components/ChipRow";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -59,11 +62,25 @@ export default function ControllerCanvasPage() {
     APIResponse<Session>,
     APIResponse<undefined>
   >({});
+  const [toolColor, setToolColor] = useState("#000000ff");
+  const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
+  const [toolWidth, setToolWidth] = useState(8 * SCALE);
+  const canvasContainerRef = useRef<HTMLDivElement>(
+    document.createElement("div")
+  );
+  const [canvasOffsetWidth, canvasOffsetHeight] = useContainRatio({
+    containerRef: canvasContainerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
   const classes = useStyles();
 
+  const canvasRef = useRef<ImperativeCanvasRef>({
+    getCanvas: () => document.createElement("canvas"),
+    runUndo: () => {},
+    runAudio: () => {},
+  });
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const [cursor, setCursor] = useState<Cursor | undefined>();
 
   const wsMessageHandler = useCallback(
@@ -210,11 +227,10 @@ export default function ControllerCanvasPage() {
 
   return (
     <Grid
-      item
       container
-      className={`mb-4 ${classes.disableMobileHoldInteraction}`}
+      className={`flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
     >
-      <Grid item xs={12}>
+      <Grid item xs={12} className="mb-4">
         <Typography variant="h2">
           {
             {
@@ -304,31 +320,6 @@ export default function ControllerCanvasPage() {
             controllerState !== ControllerState.JoinForm ? "block" : "hidden"
           }
         >
-          {/* TODO keep it one row regardless of screen size */}
-          <div className="flex flex-wrap justify-between gap-y-4">
-            <div className="flex">
-              <Chip label={`Title: ${storyDetails?.title}`} color="primary" />
-              {storyDetails?.description.split(",").map((tag) => (
-                <Chip label={tag} color="secondary" key={tag} />
-              ))}
-            </div>
-            <div className="flex">
-              <Chip
-                label={`Role: ${
-                  role[0].toUpperCase() + role.slice(1).toLowerCase()
-                }`}
-                color="primary"
-                variant="outlined"
-              />
-              <Chip
-                label={`Page ${currentPageIdx} of ${
-                  storyDetails?.pages || "-"
-                }`}
-                color="primary"
-                variant="outlined"
-              />
-            </div>
-          </div>
           {controllerState === ControllerState.WaitingRoom && (
             <Typography variant="h6" component="p">
               waiting for hub to start..
@@ -360,50 +351,110 @@ export default function ControllerCanvasPage() {
               </div>
             </>
           )}
-          <div
-            className={
-              controllerState === ControllerState.DrawingSession
-                ? "grid"
-                : "hidden"
-            }
-          >
-            <div
-              style={{
-                gridRowStart: 1,
-                gridColumnStart: 1,
-                zIndex: 20,
-                pointerEvents: "none", // forwards pointer events to next layer
-              }}
-            >
-              <CursorScreen
-                cursor={cursor}
-                isShown={controllerState === ControllerState.DrawingSession}
-              />
-            </div>
-            <div
-              style={{
-                gridRowStart: 1,
-                gridColumnStart: 1,
-                zIndex: 10,
-              }}
-            >
-              <Canvas
-                ref={canvasRef}
-                wsConn={wsConn}
-                role={role}
-                layer={role}
-                pageNum={currentPageIdx}
-                isShown={controllerState === ControllerState.DrawingSession}
-                setCursor={setCursor}
-                textShapes={textShapes}
-                setTextShapes={setTextShapes}
-                audioPaths={audioPaths}
-                setAudioPaths={setAudioPaths}
-              />
-            </div>
-          </div>
         </div>
       </Grid>
+      <div
+        className={`flex flex-col absolute w-full h-full ${
+          controllerState !== ControllerState.DrawingSession && "invisible"
+        }`}
+      >
+        <Grid container className="mb-4">
+          <Grid item xs={12}>
+            <ChipRow
+              left={storyDetails?.description.split(",") || []}
+              middle={`Title: ${storyDetails?.title}`}
+              right={[
+                role[0].toUpperCase() + role.slice(1).toLowerCase(),
+                `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
+              ]}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={2} className="flex-1 mb-4">
+          <Grid item xs={2} md={1}>
+            <CanvasToolbar
+              ref={canvasRef}
+              role={role}
+              offsetHeight={`${canvasOffsetHeight}px`}
+              toolColor={toolColor}
+              setToolColor={setToolColor}
+              toolMode={toolMode}
+              setToolMode={setToolMode}
+              toolWidth={toolWidth}
+              setToolWidth={setToolWidth}
+            />
+          </Grid>
+          <Grid item xs={10} md={11}>
+            <div
+              ref={canvasContainerRef}
+              className="grid place-items-stretch h-full"
+              style={{
+                border: "3px solid black",
+              }}
+            >
+              <div
+                className="grid"
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 20,
+                  pointerEvents: "none", // forwards pointer events to next layer
+                }}
+              >
+                <CursorScreen
+                  cursor={cursor}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                  offsetWidth={canvasOffsetWidth}
+                />
+              </div>
+              <div
+                className="grid"
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 10,
+                }}
+              >
+                <Canvas
+                  ref={canvasRef}
+                  wsConn={wsConn}
+                  role={role}
+                  layer={role}
+                  pageNum={currentPageIdx}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                  setCursor={setCursor}
+                  textShapes={textShapes}
+                  setTextShapes={setTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
+                  toolColor={toolColor}
+                  toolMode={toolMode}
+                  setToolMode={setToolMode}
+                  toolWidth={toolWidth}
+                  offsetWidth={canvasOffsetWidth}
+                />
+              </div>
+              <div
+                className="grid"
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 1,
+                }}
+              >
+                <div
+                  className="bg-white place-self-center"
+                  style={{
+                    width: canvasOffsetWidth,
+                    height: canvasOffsetHeight,
+                    borderRadius: "30px",
+                  }}
+                />
+              </div>
+            </div>
+          </Grid>
+        </Grid>
+      </div>
     </Grid>
   );
 }

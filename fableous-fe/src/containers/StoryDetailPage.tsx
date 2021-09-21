@@ -7,14 +7,18 @@ import { restAPI } from "../api";
 import { APIResponse, Manifest, Session } from "../data";
 import Canvas from "../components/canvas/Canvas";
 import { ControllerRole } from "../constant";
-import { TextShapeMap } from "../components/canvas/data";
+import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const { sessionId } = useParams<{ sessionId: string }>();
 
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
+  const canvasRef = useRef<ImperativeCanvasRef>({
+    getCanvas: () => document.createElement("canvas"),
+    runUndo: () => {},
+    runAudio: () => {},
+  });
 
   const [
     { data: story, loading: getStoryLoading, error: getStoryError },

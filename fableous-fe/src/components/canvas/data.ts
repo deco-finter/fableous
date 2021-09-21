@@ -9,3 +9,9 @@ export interface TextShape extends Shape {
 }
 
 export type TextShapeMap = { [id: number]: TextShape };
+
+export interface ImperativeCanvasRef {
+  getCanvas: () => HTMLCanvasElement;
+  runUndo: () => void;
+  runAudio: () => void;
+}
