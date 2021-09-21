@@ -246,7 +246,7 @@ export default function ControllerCanvasPage() {
               [ControllerState.JoinForm]: "Join Room",
               [ControllerState.WaitingRoom]: "Lobby",
               [ControllerState.DrawingSession]: "",
-              [ControllerState.StoryFinished]: "finished",
+              [ControllerState.StoryFinished]: "Finished!",
             }[controllerState]
           }
         </Typography>
@@ -382,8 +382,8 @@ export default function ControllerCanvasPage() {
         </div>
       )}
       {controllerState === ControllerState.StoryFinished && (
-        <Grid item xs={12} sm={8} md={6} lg={4}>
-          <div>
+        <>
+          <Grid item xs={12}>
             <Button
               variant="contained"
               color="primary"
@@ -392,20 +392,20 @@ export default function ControllerCanvasPage() {
                 setControllerState(ControllerState.JoinForm);
               }}
             >
-              Join another session
+              Join another session <Icon>brush</Icon>
             </Button>
-          </div>
-          <div>
+          </Grid>
+          <Grid item xs={12}>
             <Button
               variant="contained"
-              color="primary"
+              color="secondary"
               component={Link}
               to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
             >
               View story in gallery
             </Button>
-          </div>
-        </Grid>
+          </Grid>
+        </>
       )}
       <FillScreen isShown={controllerState === ControllerState.DrawingSession}>
         <Grid container className="mb-4">
