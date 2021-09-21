@@ -42,8 +42,8 @@ export default function GalleryPage() {
 
   return (
     <Grid container>
-      <Grid item xs={12} className="mb-4">
-        {isAuthenticated && <BackButton />}
+      <Grid item xs={12} className="mb-8">
+        {isAuthenticated && <BackButton className="mb-2" />}
         <Typography variant="h2">
           {classroom && `${classroom?.data?.name}'s`} Gallery
         </Typography>

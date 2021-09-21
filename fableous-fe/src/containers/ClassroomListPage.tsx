@@ -93,7 +93,7 @@ export default function ClassroomListPage() {
 
   return (
     <Grid container>
-      <Grid item xs={12} className="mb-4">
+      <Grid item xs={12} className="mb-8">
         <Typography variant="h2">Classrooms</Typography>
       </Grid>
       {getLoading && (

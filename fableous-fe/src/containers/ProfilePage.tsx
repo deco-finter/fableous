@@ -82,8 +82,8 @@ export default function ProfilePage() {
 
   return (
     <Grid container>
-      <Grid item xs={12} className="mb-4">
-        <BackButton />
+      <Grid item xs={12} className="mb-8">
+        <BackButton className="mb-2" />
         <Typography variant="h2">Manage Profile</Typography>
       </Grid>
       {getLoading && (
