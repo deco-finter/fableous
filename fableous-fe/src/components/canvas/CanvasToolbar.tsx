@@ -7,18 +7,12 @@ import UndoIcon from "@material-ui/icons/Undo";
 import BrushIcon from "@material-ui/icons/Brush";
 import StopIcon from "@material-ui/icons/Stop";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
-import {
-  Button,
-  ClickAwayListener,
-  IconButton,
-  makeStyles,
-  Tooltip,
-  Typography,
-} from "@material-ui/core";
+import { Button, IconButton, makeStyles, Typography } from "@material-ui/core";
 import EraserIcon from "../EraserIcon";
 import { ControllerRole, ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
 import BrushWidthIcon from "../BrushWidthIcon";
+import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
 
 interface CanvasToolbarProps {
   role: ControllerRole;
@@ -120,72 +114,57 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
               role
             ) && (
               <>
-                <ClickAwayListener
-                  onClickAway={() => setIsWidthPickerOpen(false)}
+                <CanvasToolbarTooltip
+                  isOpen={isWidthPickerOpen}
+                  setIsOpen={setIsWidthPickerOpen}
+                  tooltipTitle={
+                    <div className="flex">
+                      {BRUSH_WIDTHS.map((brushWidth) => (
+                        <IconButton
+                          onClick={() => {
+                            setToolWidth(brushWidth);
+                            setIsWidthPickerOpen(false);
+                          }}
+                          color="primary"
+                          key={brushWidth}
+                        >
+                          <BrushWidthIcon
+                            fontSize="medium"
+                            strokeWidth={brushWidth * ICON_STROKE_WIDTH_RATIO}
+                          />
+                        </IconButton>
+                      ))}
+                    </div>
+                  }
                 >
-                  <Tooltip
-                    interactive
-                    classes={{
-                      tooltip: classes.unsetMaxWidth,
+                  <IconButton
+                    className="relative"
+                    onClick={() => {
+                      if (toolColor === ERASE_COLOR) {
+                        setToolColor(prevColor);
+                      }
+                      setToolMode(ToolMode.Paint);
+                      setIsWidthPickerOpen((prev) => !prev);
                     }}
-                    onClose={() => setIsWidthPickerOpen(false)}
-                    open={isWidthPickerOpen}
-                    arrow
-                    placement="right"
-                    leaveTouchDelay={undefined}
-                    disableFocusListener
-                    disableHoverListener
-                    disableTouchListener
-                    title={
-                      <div className="flex">
-                        {BRUSH_WIDTHS.map((brushWidth) => (
-                          <IconButton
-                            onClick={() => {
-                              setToolWidth(brushWidth);
-                              setIsWidthPickerOpen(false);
-                            }}
-                            color="primary"
-                            key={brushWidth}
-                          >
-                            <BrushWidthIcon
-                              fontSize="medium"
-                              strokeWidth={brushWidth * ICON_STROKE_WIDTH_RATIO}
-                            />
-                          </IconButton>
-                        ))}
-                      </div>
+                    color={
+                      toolMode === ToolMode.Paint && toolColor !== "#00000000"
+                        ? "secondary"
+                        : "primary"
                     }
                   >
-                    <IconButton
-                      className="relative"
-                      onClick={() => {
-                        if (toolColor === ERASE_COLOR) {
-                          setToolColor(prevColor);
-                        }
-                        setToolMode(ToolMode.Paint);
-                        setIsWidthPickerOpen((prev) => !prev);
-                      }}
+                    <BrushIcon fontSize="large" />
+                    <BrushWidthIcon
+                      fontSize="small"
+                      className="absolute bottom-1 right-1"
                       color={
                         toolMode === ToolMode.Paint && toolColor !== "#00000000"
                           ? "secondary"
                           : "primary"
                       }
-                    >
-                      <BrushIcon fontSize="large" />
-                      <BrushWidthIcon
-                        fontSize="small"
-                        className="absolute bottom-1 right-1"
-                        color={
-                          toolMode === ToolMode.Paint &&
-                          toolColor !== "#00000000"
-                            ? "secondary"
-                            : "primary"
-                        }
-                        strokeWidth={toolWidth * ICON_STROKE_WIDTH_RATIO}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                </ClickAwayListener>
+                      strokeWidth={toolWidth * ICON_STROKE_WIDTH_RATIO}
+                    />
+                  </IconButton>
+                </CanvasToolbarTooltip>
                 <IconButton
                   onClick={() => {
                     setToolColorRememberPrev(ERASE_COLOR);
@@ -210,67 +189,54 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 >
                   <FormatColorFillIcon fontSize="large" />
                 </IconButton>
-                <ClickAwayListener
-                  onClickAway={() => setIsColorPickerOpen(false)}
-                >
-                  <Tooltip
-                    interactive
-                    classes={{
-                      tooltip: classes.unsetMaxWidth,
-                    }}
-                    onClose={() => setIsColorPickerOpen(false)}
-                    open={isColorPickerOpen}
-                    arrow
-                    placement="right"
-                    leaveTouchDelay={undefined}
-                    disableFocusListener
-                    disableHoverListener
-                    disableTouchListener
-                    title={
-                      <div
-                        style={{
-                          display: "flex",
-                        }}
-                      >
-                        {COLORS.map((color) => (
-                          <Button
-                            component="div"
-                            onClick={() => {
-                              setToolColorRememberPrev(color);
-                              setIsColorPickerOpen(false);
-                            }}
-                            style={{
-                              backgroundColor: color,
-                              width: "50px",
-                              height: "50px",
-                              padding: 0,
-                              marginLeft: "0.5rem",
-                              minWidth: "auto",
-                              borderRadius: 0,
-                            }}
-                            key={color}
-                          />
-                        ))}
-                      </div>
-                    }
-                  >
-                    <IconButton
-                      onClick={() => setIsColorPickerOpen((prev) => !prev)}
-                      color="primary"
-                      className="relative"
+                <CanvasToolbarTooltip
+                  isOpen={isColorPickerOpen}
+                  setIsOpen={setIsColorPickerOpen}
+                  // cannot use tailwind classes due to using mui portal so tooltip works corrrectly eventhough overflow set in parent
+                  tooltipTitle={
+                    <div
+                      style={{
+                        display: "flex",
+                      }}
                     >
-                      <PaletteIcon fontSize="large" />
-                      <StopIcon
-                        style={{
-                          color:
-                            toolColor === ERASE_COLOR ? prevColor : toolColor,
-                        }}
-                        fontSize="small"
-                        className="absolute bottom-1 right-1"
-                      />
-                    </IconButton>
-                  </Tooltip>
-                </ClickAwayListener>
+                      {COLORS.map((color) => (
+                        <Button
+                          component="div"
+                          onClick={() => {
+                            setToolColorRememberPrev(color);
+                            setIsColorPickerOpen(false);
+                          }}
+                          style={{
+                            backgroundColor: color,
+                            width: "50px",
+                            height: "50px",
+                            padding: 0,
+                            marginLeft: "0.5rem",
+                            minWidth: "auto",
+                            borderRadius: 0,
+                          }}
+                          key={color}
+                        />
+                      ))}
+                    </div>
+                  }
+                >
+                  <IconButton
+                    onClick={() => setIsColorPickerOpen((prev) => !prev)}
+                    color="primary"
+                    className="relative"
+                  >
+                    <PaletteIcon fontSize="large" />
+                    <StopIcon
+                      style={{
+                        color:
+                          toolColor === ERASE_COLOR ? prevColor : toolColor,
+                      }}
+                      fontSize="small"
+                      className="absolute bottom-1 right-1"
+                    />
+                  </IconButton>
+                </CanvasToolbarTooltip>
                 <IconButton
                   onClick={imperativeCanvasRef.current.runUndo}
                   color="primary"
@@ -287,19 +253,10 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 >
                   <TextFieldsIcon fontSize="large" />
                 </IconButton>
-                <Tooltip
-                  interactive
-                  classes={{
-                    tooltip: classes.unsetMaxWidth,
-                  }}
-                  open={isRecordingAudio}
-                  arrow
-                  placement="right"
-                  leaveTouchDelay={undefined}
-                  disableFocusListener
-                  disableHoverListener
-                  disableTouchListener
-                  title={
+                <CanvasToolbarTooltip
+                  isOpen={isRecordingAudio}
+                  setIsOpen={setIsRecordingAudio}
+                  tooltipTitle={
                     <Typography variant="body1">
                       {showMmSsFromSeconds(recordingTimeElapsed)}
                     </Typography>
@@ -325,7 +282,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       <MicIcon fontSize="large" />
                     )}
                   </IconButton>
-                </Tooltip>
+                </CanvasToolbarTooltip>
                 <IconButton
                   onClick={imperativeCanvasRef.current.runUndo}
                   color="primary"
