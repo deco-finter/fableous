@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import { ChipProps, IconButton } from "@material-ui/core";
+import { Card, CardContent, ChipProps, IconButton } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
@@ -215,7 +215,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    ].some((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -307,8 +307,8 @@ export default function HubCanvasPage() {
             <Typography variant="h2">
               {
                 {
-                  [HubState.SessionForm]: "story",
-                  [HubState.WaitingRoom]: "lobby",
+                  [HubState.SessionForm]: "New Story",
+                  [HubState.WaitingRoom]: "Lobby",
                   [HubState.DrawingSession]: "",
                 }[hubState]
               }
@@ -317,73 +317,90 @@ export default function HubCanvasPage() {
         </>
       )}
       {hubState === HubState.SessionForm && (
-        <Formik
-          initialValues={
-            {
-              title: "",
-              description: "",
-              pages: 1,
-            } as Story
-          }
-          validationSchema={yup.object({
-            title: yup.string().required("required"),
-            description: yup.string().required("required"),
-            pages: yup.number().positive("must be positive"),
-          })}
-          onSubmit={handleCreateSession}
-        >
-          {(formik) => (
-            <form onSubmit={formik.handleSubmit}>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="title"
-                  label="Title"
-                  overrides={{
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="description"
-                  label="Description"
-                  overrides={{
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="pages"
-                  label="Pages"
-                  overrides={{
-                    type: "number",
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={postLoading}
-                  type="submit"
-                >
-                  create
-                </Button>
-              </div>
-            </form>
-          )}
-        </Formik>
+        <Grid item xs={4}>
+          <Card>
+            <Formik
+              initialValues={
+                {
+                  title: "",
+                  description: "",
+                  pages: 1,
+                } as Story
+              }
+              validationSchema={yup.object({
+                title: yup.string().required("Title required"),
+                description: yup.string().required("Description required"),
+                pages: yup
+                  .number()
+                  .positive("Must have at least one page")
+                  .lessThan(21, "Maximum is 20 pages"),
+              })}
+              onSubmit={handleCreateSession}
+            >
+              {(formik) => (
+                <form onSubmit={formik.handleSubmit}>
+                  <CardContent>
+                    <Grid container>
+                      <Grid item xs={12} className="flex-grow flex flex-col">
+                        <FormikTextField
+                          formik={formik}
+                          name="title"
+                          label="Title"
+                          overrides={{
+                            autoFocus: true,
+                            variant: "outlined",
+                            disabled: postLoading,
+                            className: "mb-4",
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} className="flex-grow flex flex-col">
+                        <FormikTextField
+                          formik={formik}
+                          name="description"
+                          label="Description"
+                          overrides={{
+                            variant: "outlined",
+                            disabled: postLoading,
+                            className: "mb-4",
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Grid container spacing={2}>
+                          <Grid item xs={8} className="flex-grow flex flex-col">
+                            <FormikTextField
+                              formik={formik}
+                              name="pages"
+                              label="Pages"
+                              overrides={{
+                                type: "number",
+                                variant: "outlined",
+                                disabled: postLoading,
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={4} className="flex-grow flex flex-col">
+                            <Button
+                              variant="contained"
+                              color="secondary"
+                              disabled={postLoading}
+                              type="submit"
+                              style={{ height: "100%" }}
+                            >
+                              start
+                              <Icon>play_arrow</Icon>
+                            </Button>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </form>
+              )}
+            </Formik>
+          </Card>
+        </Grid>
       )}
       {hubState === HubState.WaitingRoom && (
         <Grid item xs={12}>
