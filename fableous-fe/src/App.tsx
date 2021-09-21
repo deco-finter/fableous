@@ -11,7 +11,7 @@ import AuthProvider from "./components/AuthProvider";
 import Navbar from "./components/Navbar";
 import Routes from "./Routes";
 import InjectAxiosRespInterceptor from "./components/InjectAxiosRespInterceptor";
-import colors from "./colors";
+import { colors } from "./colors";
 
 // generated background from https://www.svgbackgrounds.com/
 const useStyles = makeStyles({
@@ -57,7 +57,7 @@ export default function App() {
         root: {
           borderRadius: "1.5rem",
           padding: "0.25rem 1rem",
-          marginRight: "1rem",
+          marginRight: "0.25rem",
           height: "auto",
           fontWeight: "bold",
           "&:last-of-type": {
@@ -76,6 +76,14 @@ export default function App() {
         outlinedPrimary: {
           backgroundColor: colors.white,
           color: colors.blue.light,
+        },
+        clickable: {
+          "&:hover": {
+            backgroundColor: `${colors.white} !important`,
+          },
+          "&:focus": {
+            backgroundColor: `${colors.white} !important`,
+          },
         },
       },
       MuiPaper: {

@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 import * as yup from "yup";
 import FormikTextField from "./FormikTextField";
 import { restAPI } from "../api";
-import colors from "../colors";
+import { colors } from "../colors";
 import { APIResponse, Classroom, Session } from "../data";
 
 const useStyles = makeStyles(() => ({
@@ -29,7 +29,7 @@ const useStyles = makeStyles(() => ({
     overflow: "inherit",
   },
   cardContainer: {
-    minHeight: 128,
+    minHeight: 150,
     display: "flex",
     flexDirection: "column",
   },
@@ -133,7 +133,7 @@ export default function ClassroomItem(props: {
 
   return (
     <>
-      <Card className={classes.card}>
+      <Card className={classes.card} elevation={8}>
         <Formik
           initialValues={classroom as Classroom}
           validationSchema={yup.object().shape({
@@ -162,7 +162,7 @@ export default function ClassroomItem(props: {
                   <Icon>delete</Icon>
                 </IconButton>
               )}
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow flex flex-col">
                 {editing ? (
                   <FormikTextField
                     formik={formik}
@@ -171,11 +171,16 @@ export default function ClassroomItem(props: {
                     overrides={{
                       autoFocus: true,
                       disabled: putLoading,
+                      variant: "outlined",
                     }}
                   />
                 ) : (
                   <>
-                    <Typography variant="h5" component="h2">
+                    <Typography
+                      variant="h5"
+                      component="h2"
+                      className="overflow-ellipsis overflow-hidden"
+                    >
                       {classroom.name}
                     </Typography>
                   </>

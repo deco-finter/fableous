@@ -16,16 +16,20 @@ import { restAPI } from "../api";
 import { APIResponse, Manifest, Session } from "../data";
 import Canvas from "../components/canvas/Canvas";
 import { ControllerRole } from "../constant";
-import { TextShapeMap } from "../components/canvas/data";
+import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import { ASPECT_RATIO } from "../components/canvas/constants";
+import useContainRatio from "../hooks/useContainRatio";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const { sessionId } = useParams<{ sessionId: string }>();
 
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
-  const imgContainerRef = useRef<HTMLDivElement>(document.createElement("div"));
+  const canvasRef = useRef<ImperativeCanvasRef>({
+    getCanvas: () => document.createElement("canvas"),
+    runUndo: () => {},
+    runAudio: () => {},
+  });
 
   const [
     { data: story, loading: getStoryLoading, error: getStoryError },
@@ -44,15 +48,13 @@ export default function StoryDetailPage() {
       }
     );
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
-
-  const getImageWidth = useCallback(() => {
-    const { offsetWidth: contOffWidth, offsetHeight: contOffHeight } =
-      imgContainerRef.current;
-    return contOffHeight / contOffWidth > ASPECT_RATIO
-      ? contOffWidth
-      : contOffHeight / ASPECT_RATIO;
-  }, [imgContainerRef]);
-
+  const canvasContainerRef = useRef<HTMLDivElement>(
+    document.createElement("div")
+  );
+  const [canvasOffsetWidth, canvasOffsetHeight] = useContainRatio({
+    containerRef: canvasContainerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
   useEffect(() => {
     executeGetClassroomDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -216,6 +218,7 @@ export default function StoryDetailPage() {
               style={{
                 border: "3px solid black",
               }}
+              ref={canvasContainerRef}
             >
               <div
                 style={{
@@ -247,7 +250,6 @@ export default function StoryDetailPage() {
               {/* TODO ini gw tambahin classname supaya image nya ke center, ref supaya bisa itung desired width <img /> */}
               <div
                 className="grid place-items-center"
-                ref={imgContainerRef}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -256,7 +258,7 @@ export default function StoryDetailPage() {
                 }}
               >
                 <img
-                  width={`${getImageWidth()}px`}
+                  width={canvasOffsetWidth}
                   src={
                     restAPI.gallery.getAsset(
                       classroomId,
