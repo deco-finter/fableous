@@ -320,7 +320,8 @@ export default function HubCanvasPage() {
       setHubState(HubState.SessionForm);
       achievementReset();
     }
-  }, [currentPageIdx, story, clearWsConn, enqueueSnackbar, achievementReset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPageIdx, story, enqueueSnackbar]);
 
   // broadcast achievement to all joined controllers on achievement update
   useEffect(() => {
