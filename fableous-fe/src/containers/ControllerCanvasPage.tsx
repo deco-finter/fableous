@@ -12,6 +12,7 @@ import {
   Select,
   Typography,
   makeStyles,
+  Chip,
 } from "@material-ui/core";
 import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
@@ -49,6 +50,34 @@ enum ControllerState {
   DrawingSession = "DRAWING_SESSION",
   StoryFinished = "STORY_FINISHED",
 }
+
+const ROLE_ICON = {
+  [ControllerRole.Story]: (
+    <>
+      <Icon fontSize="small" className="align-middle mr-1">
+        text_fields
+      </Icon>
+      Story
+    </>
+  ),
+  [ControllerRole.Character]: (
+    <>
+      <Icon fontSize="small" className="align-middle mr-1">
+        directions_run
+      </Icon>
+      Character
+    </>
+  ),
+  [ControllerRole.Background]: (
+    <>
+      <Icon fontSize="small" className="align-middle mr-1">
+        image
+      </Icon>
+      Background
+    </>
+  ),
+  [ControllerRole.Hub]: undefined,
+};
 
 const useStyles = makeStyles({
   disableMobileHoldInteraction: {
@@ -330,31 +359,13 @@ export default function ControllerCanvasPage() {
                                 onBlur={formik.handleBlur}
                               >
                                 <MenuItem value={ControllerRole.Story}>
-                                  <Icon
-                                    fontSize="small"
-                                    className="align-middle"
-                                  >
-                                    text_fields
-                                  </Icon>
-                                  Story
+                                  {ROLE_ICON[ControllerRole.Story]}
                                 </MenuItem>
                                 <MenuItem value={ControllerRole.Character}>
-                                  <Icon
-                                    fontSize="small"
-                                    className="align-middle"
-                                  >
-                                    directions_run
-                                  </Icon>
-                                  Character
+                                  {ROLE_ICON[ControllerRole.Character]}
                                 </MenuItem>
                                 <MenuItem value={ControllerRole.Background}>
-                                  <Icon
-                                    fontSize="small"
-                                    className="align-middle"
-                                  >
-                                    image
-                                  </Icon>
-                                  Background
+                                  {ROLE_ICON[ControllerRole.Background]}
                                 </MenuItem>
                               </Select>
                             </FormControl>
@@ -431,7 +442,12 @@ export default function ControllerCanvasPage() {
                   confetti
                   notify
                 />,
-                role[0].toUpperCase() + role.slice(1).toLowerCase(),
+                <Chip
+                  className="flex-initial"
+                  label={ROLE_ICON[role]}
+                  color="primary"
+                  variant="outlined"
+                />,
                 `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
               ]}
               right={storyDetails?.description.split(",") || []}
