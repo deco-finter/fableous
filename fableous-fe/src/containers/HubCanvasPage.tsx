@@ -267,16 +267,16 @@ export default function HubCanvasPage() {
     // TODO: only use this function to finalize the canvas
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    const { width, height } = storyCanvasRef.current;
+    const { width, height } = storyCanvasRef.current.getCanvas();
     if (!ctx) return;
     canvas.width = width;
     canvas.height = height;
     ctx.beginPath();
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(backgroundCanvasRef.current, 0, 0, width, height);
-    ctx.drawImage(characterCanvasRef.current, 0, 0, width, height);
-    ctx.drawImage(storyCanvasRef.current, 0, 0, width, height);
+    ctx.drawImage(backgroundCanvasRef.current.getCanvas(), 0, 0, width, height);
+    ctx.drawImage(characterCanvasRef.current.getCanvas(), 0, 0, width, height);
+    ctx.drawImage(storyCanvasRef.current.getCanvas(), 0, 0, width, height);
     const link = document.createElement("a");
     link.download = "output.png";
     const dataUrl = canvas.toDataURL();
