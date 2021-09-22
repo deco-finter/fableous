@@ -12,8 +12,8 @@ export default function ChipRow(props: ChipRowProps) {
   const { left, middle, right } = props;
 
   return (
-    <div className="flex flex-wrap gap-y-4">
-      <div className="flex justify-evenly flex-grow flex-wrap gap-y-4">
+    <div className="flex flex-wrap gap-y-1 md:gap-y-4">
+      <div className="flex justify-evenly flex-grow flex-wrap gap-y-1 md:gap-y-4">
         <Chip
           className="flex-initial ml-4"
           label={typeof left === "string" ? left : left.label}
@@ -36,7 +36,7 @@ export default function ChipRow(props: ChipRowProps) {
           )
         )}
       </div>
-      <div className="flex justify-evenly flex-shrink flex-grow flex-wrap gap-y-4">
+      <div className="flex justify-evenly flex-shrink flex-grow flex-wrap gap-y-1 md:gap-y-4">
         {right.map((item) =>
           React.isValidElement(item) ? (
             item
