@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Grid } from "@material-ui/core";
+import { Container } from "@material-ui/core";
 import {
   createTheme,
   makeStyles,
@@ -57,7 +57,7 @@ export default function App() {
         root: {
           borderRadius: "1.5rem",
           padding: "0.25rem 1rem",
-          marginRight: "1rem",
+          marginRight: "0.25rem",
           height: "auto",
           fontWeight: "bold",
           "&:last-of-type": {
@@ -76,6 +76,14 @@ export default function App() {
         outlinedPrimary: {
           backgroundColor: colors.white,
           color: colors.blue.light,
+        },
+        clickable: {
+          "&:hover": {
+            backgroundColor: `${colors.white} !important`,
+          },
+          "&:focus": {
+            backgroundColor: `${colors.white} !important`,
+          },
         },
       },
       MuiPaper: {
@@ -114,24 +122,24 @@ export default function App() {
 
   return (
     <div id="app" className={classes.app}>
-      {/* place Snackbar outside of React.StrictMode to suppress finddomnode is deprecated warning */}
-      <SnackbarProvider maxSnack={3}>
-        <React.StrictMode>
-          <AuthProvider>
-            <Router>
-              <InjectAxiosRespInterceptor />
-              <ThemeProvider theme={theme}>
-                <Navbar />
-                <Container className="pt-5">
-                  <Grid container>
+      <div className="flex flex-col min-h-screen">
+        {/* place Snackbar outside of React.StrictMode to suppress finddomnode is deprecated warning */}
+        <SnackbarProvider maxSnack={3}>
+          <React.StrictMode>
+            <AuthProvider>
+              <Router>
+                <InjectAxiosRespInterceptor />
+                <ThemeProvider theme={theme}>
+                  <Navbar />
+                  <Container className="flex flex-col flex-1 pt-5 ">
                     <Routes />
-                  </Grid>
-                </Container>
-              </ThemeProvider>
-            </Router>
-          </AuthProvider>
-        </React.StrictMode>
-      </SnackbarProvider>
+                  </Container>
+                </ThemeProvider>
+              </Router>
+            </AuthProvider>
+          </React.StrictMode>
+        </SnackbarProvider>
+      </div>
     </div>
   );
 }
