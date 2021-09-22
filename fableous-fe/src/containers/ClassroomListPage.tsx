@@ -93,7 +93,7 @@ export default function ClassroomListPage() {
 
   return (
     <Grid container>
-      <Grid item xs={12} className="mb-4">
+      <Grid item xs={12} className="mb-8">
         <Typography variant="h2">Classrooms</Typography>
       </Grid>
       {getLoading && (
@@ -137,7 +137,7 @@ export default function ClassroomListPage() {
                 >
                   {(formik) => (
                     <form onSubmit={formik.handleSubmit} autoComplete="off">
-                      <CardContent className="flex-grow">
+                      <CardContent className="flex-grow flex flex-col">
                         <FormikTextField
                           formik={formik}
                           name="name"

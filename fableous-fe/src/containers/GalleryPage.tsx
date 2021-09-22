@@ -7,6 +7,7 @@ import { restAPI } from "../api";
 import { APIResponse, Classroom, Session } from "../data";
 import { AuthContext } from "../components/AuthProvider";
 import StoryItem from "../components/StoryItem";
+import BackButton from "../components/BackButton";
 
 export default function GalleryPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
@@ -41,7 +42,8 @@ export default function GalleryPage() {
 
   return (
     <Grid container>
-      <Grid item xs={12} className="mb-4">
+      <Grid item xs={12} className="mb-8">
+        {isAuthenticated && <BackButton className="mb-2" />}
         <Typography variant="h2">
           {classroom && `${classroom?.data?.name}'s`} Gallery
         </Typography>
