@@ -101,8 +101,12 @@ export const restAPI = {
       sessionId: string,
       pageNumber: number,
       name: string
-    ) => ({
-      url: `${baseAPI}/api/gallery/assets/${classroomId}/${sessionId}/${pageNumber}/${name}`,
+    ) =>
+      restAPI.gallery.getAssetByPath(
+        `${classroomId}/${sessionId}/${pageNumber}/${name}`
+      ),
+    getAssetByPath: (path: string) => ({
+      url: `${baseAPI}/api/gallery/assets/${path}`,
       method: "get",
     }),
   },
@@ -122,6 +126,10 @@ export const restAPI = {
     create: (classroomId: string) => ({
       url: `/api/classroom/${classroomId}/session`,
       method: "post",
+    }),
+    update: (classroomId: string, sessionId: string) => ({
+      url: `/api/classroom/${classroomId}/session/${sessionId}`,
+      method: "put",
     }),
     delete: (classroomId: string, sessionId: string) => ({
       url: `/api/classroom/${classroomId}/session/${sessionId}`,

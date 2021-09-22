@@ -48,8 +48,10 @@ export const getTextBounds = (
   text: string,
   fontSize: number
 ) => {
-  const bounds = canvasRef.current?.getContext("2d")?.measureText(text);
-  if (bounds) {
+  const ctx = canvasRef.current.getContext("2d");
+  if (ctx) {
+    ctx.font = `${fontSize * SCALE}px Comic Sans MS`;
+    const bounds = ctx.measureText(text);
     return [
       x - bounds.width / 2,
       y - (fontSize * SCALE) / 2,

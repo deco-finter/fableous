@@ -12,9 +12,9 @@ import { useSnackbar } from "notistack";
 import { useEffect, useState, useCallback } from "react";
 import { useHistory } from "react-router-dom";
 import * as yup from "yup";
-import { restAPI } from "../Api";
+import { restAPI } from "../api";
 import FormikTextField from "../components/FormikTextField";
-import { APIResponse, User } from "../Data";
+import { APIResponse, User } from "../data";
 
 export default function ProfilePage() {
   const history = useHistory();

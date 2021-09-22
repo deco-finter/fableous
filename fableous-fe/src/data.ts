@@ -1,3 +1,7 @@
+import { Achievement } from "./components/achievement/achievement";
+import { TextShapeMap } from "./components/canvas/data";
+import { ControllerRole, WSMessageType } from "./constant";
+
 export interface WSMessage {
   role: ControllerRole;
   type: WSMessageType;
@@ -95,6 +99,9 @@ export interface Session {
   title: string;
   description: string;
   pages: number;
+  nameStory: string;
+  nameCharacter: string;
+  nameBackground: string;
   completed: boolean;
   createdAt: string;
 }
@@ -103,6 +110,11 @@ export interface ControllerJoin {
   name: string;
   token: string;
   role: ControllerRole;
+}
+export interface Manifest {
+  texts: TextShapeMap;
+  audios: { text: string }[];
+  achievements: Achievement;
 }
 
 export interface Story {

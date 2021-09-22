@@ -13,9 +13,9 @@ import { useState } from "react";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { useSnackbar } from "notistack";
-import { restAPI } from "../Api";
+import { restAPI } from "../api";
 import FormikTextField from "../components/FormikTextField";
-import { Register } from "../Data";
+import { Register } from "../data";
 
 const useStyles = makeStyles({
   root: {
@@ -158,7 +158,7 @@ export default function RegisterPage() {
                       />
                       <Button
                         variant="contained"
-                        color="primary"
+                        color="secondary"
                         disabled={loading}
                         type="submit"
                       >

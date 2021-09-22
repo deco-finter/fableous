@@ -2,10 +2,10 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-case-declarations */
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { scaleUpXY } from "./helpers";
 import { ASPECT_RATIO, SCALE } from "./constants";
-import { ToolMode } from "../../Data";
+import { ToolMode } from "../../constant";
 
 export interface Cursor {
   normX: number;
@@ -18,19 +18,23 @@ interface CursorScreenProps {
   cursor: Cursor | undefined;
   name?: string;
   isShown?: boolean;
+  offsetWidth?: number;
 }
 
 const CursorScreen = (props: CursorScreenProps) => {
-  const { cursor, name, isShown } = props;
+  const { cursor, name, isShown, offsetWidth = 0 } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
+  const cursorRef = useRef<Cursor>(cursor as Cursor);
+  cursorRef.current = cursor as Cursor;
 
-  const refreshCursor = useCallback(() => {
+  const refreshCursor = () => {
+    window.requestAnimationFrame(refreshCursor);
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
     const { width, height } = canvasRef.current;
     ctx.clearRect(0, 0, width, height);
-    if (!cursor) return;
-    const { normX, normY, normWidth, toolMode } = cursor;
+    if (!cursorRef.current) return;
+    const { normX, normY, normWidth, toolMode } = cursorRef.current;
     const [x, y] = scaleUpXY(canvasRef, normX, normY);
     const [toolWidth] = scaleUpXY(canvasRef, normWidth, 0);
     switch (toolMode) {
@@ -84,12 +88,13 @@ const CursorScreen = (props: CursorScreenProps) => {
         break;
       default:
     }
-  }, [cursor, name]);
+  };
 
   // set canvas size onmount and when canvas appears or becomes hidden
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.offsetWidth * SCALE;
+    const canvasOffsetWidth = canvas.offsetWidth;
+    canvas.width = canvasOffsetWidth * SCALE;
     canvas.height = canvas.width * ASPECT_RATIO;
     const ctx = canvas.getContext("2d");
     if (ctx) {
@@ -100,16 +105,25 @@ const CursorScreen = (props: CursorScreenProps) => {
   // start cursor layer animation
   useEffect(() => {
     window.requestAnimationFrame(refreshCursor);
-  }, [refreshCursor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <>
+    <div
+      className="place-self-center"
+      style={{
+        width: offsetWidth,
+        height: offsetWidth * ASPECT_RATIO,
+      }}
+    >
       <canvas
         ref={canvasRef}
         style={{
+          position: "absolute",
           borderWidth: 4,
           borderColor: "blue",
-          width: "100%",
+          borderRadius: "30px",
+          width: offsetWidth,
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",
@@ -120,13 +134,14 @@ const CursorScreen = (props: CursorScreenProps) => {
           userSelect: "none",
         }}
       />
-    </>
+    </div>
   );
 };
 
 CursorScreen.defaultProps = {
   name: "",
   isShown: true,
+  offsetWidth: 0,
 };
 
 export default CursorScreen;

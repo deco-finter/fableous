@@ -2,6 +2,7 @@ import { Button, Grid, Typography } from "@material-ui/core";
 import { Link } from "react-router-dom";
 
 export default function HomePage() {
+  const version = process.env.REACT_APP_VERSION;
   return (
     <Grid
       container
@@ -23,23 +24,15 @@ export default function HomePage() {
       <div className="mt-16">
         <Button
           size="large"
-          variant="outlined"
-          className="mx-4"
-          component={Link}
-          to="/login"
-        >
-          Teacher
-        </Button>
-        <Button
-          size="large"
-          variant="outlined"
-          className="mx-4"
+          variant="contained"
+          color="secondary"
           component={Link}
           to="/join"
         >
-          Student
+          Join
         </Button>
       </div>
+      <div id="version_tag">{version}</div>
     </Grid>
   );
 }

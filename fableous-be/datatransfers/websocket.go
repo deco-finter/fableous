@@ -10,6 +10,7 @@ type WSMessageData struct {
 	WSPaintMessageData
 	WSControlMessageData
 	WSJoinMessageData
+	WSAchievementMessageData
 	WSErrorMessageData
 }
 
@@ -30,6 +31,15 @@ type WSControlMessageData struct {
 	SessionID      string `json:"sessionId,omitempty"`
 	CurrentPage    *int   `json:"currentPage,omitempty"`
 	NextPage       *bool  `json:"nextPage,omitempty"`
+}
+
+type WSAchievementMessageData struct {
+	AllColor  float32 `json:"all_color"`
+	FiveText  float32 `json:"five_text"`
+	TenText   float32 `json:"ten_text"`
+	OnePage   float32 `json:"one_page"`
+	ThreePage float32 `json:"three_page"`
+	FivePage  float32 `json:"five_page"`
 }
 
 type WSJoinMessageData struct {
