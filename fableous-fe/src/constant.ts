@@ -12,7 +12,7 @@ export enum WSMessageType {
   Control = "CONTROL",
   Ping = "PING",
   Image = "IMAGE",
-  Manifest = "MANIFEST"
+  Manifest = "MANIFEST",
 }
 
 export enum ToolMode {
