@@ -392,7 +392,12 @@ export default function HubCanvasPage() {
                           }}
                         />
                       </Grid>
-                      <Grid item xs={6} className="flex-grow flex flex-col">
+                      <Grid
+                        item
+                        xs={12}
+                        sm={6}
+                        className="flex-grow flex flex-col"
+                      >
                         <FormikTextField
                           formik={formik}
                           name="description"
@@ -403,7 +408,12 @@ export default function HubCanvasPage() {
                           }}
                         />
                       </Grid>
-                      <Grid item xs={6} className="flex-grow flex flex-col">
+                      <Grid
+                        item
+                        xs={12}
+                        sm={6}
+                        className="flex-grow flex flex-col"
+                      >
                         <FormikTextField
                           formik={formik}
                           name="pages"
