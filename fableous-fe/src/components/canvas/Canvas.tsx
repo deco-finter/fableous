@@ -70,6 +70,7 @@ interface SimplePointerEventData {
   clientX: number;
   clientY: number;
   pointerType: "mouse" | "pen" | "touch";
+  onLeave: boolean;
 }
 
 // TODO after width of canvas DOM element is dynamic, attempt to make canvas drawing scaling dynamic
@@ -742,7 +743,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           }
           break;
         case ToolMode.Fill:
-          placeCheckpoint(toolMode);
+          if (!event.onLeave) placeCheckpoint(toolMode);
           break;
         default:
       }
@@ -754,6 +755,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     };
 
     const onPointerOut = (event: SimplePointerEventData) => {
+      event.onLeave = true;
       onPointerUp(event);
       if (setCursor) {
         setCursor(undefined);
@@ -770,6 +772,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             clientX: event.clientX,
             clientY: event.clientY,
             pointerType: event.pointerType,
+            onLeave: false,
           });
         }
       };
