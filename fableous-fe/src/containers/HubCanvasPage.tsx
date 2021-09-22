@@ -16,7 +16,7 @@ import MusicNoteIcon from "@material-ui/icons/MusicNote";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
 import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
@@ -26,6 +26,7 @@ import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
 import { WSMessageType, ControllerRole } from "../constant";
+import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
@@ -39,7 +40,6 @@ enum HubState {
 
 export default function HubCanvasPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
-  const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
@@ -358,27 +358,18 @@ export default function HubCanvasPage() {
   return (
     <Grid container className="flex-col flex-1 relative">
       {hubState !== HubState.DrawingSession && (
-        <>
-          <Grid item xs={12}>
-            <Button
-              onClick={() => history.goBack()}
-              startIcon={<Icon>arrow_backward</Icon>}
-            >
-              Back
-            </Button>
-          </Grid>
-          <Grid item xs={12} className="mb-4">
-            <Typography variant="h2">
+        <Grid item xs={12} className="mb-8">
+          <BackButton className="mb-2" />
+          <Typography variant="h2">
+            {
               {
-                {
-                  [HubState.SessionForm]: "New Story",
-                  [HubState.WaitingRoom]: "Lobby",
-                  [HubState.DrawingSession]: "",
-                }[hubState]
-              }
-            </Typography>
-          </Grid>
-        </>
+                [HubState.SessionForm]: "New Story",
+                [HubState.WaitingRoom]: "Lobby",
+                [HubState.DrawingSession]: "",
+              }[hubState]
+            }
+          </Typography>
+        </Grid>
       )}
       {hubState === HubState.SessionForm && (
         <Grid item xs={12} sm={8} md={6} lg={4}>
