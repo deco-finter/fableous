@@ -777,12 +777,13 @@ export default function HubCanvasPage() {
                 />
               </div>
             </div>
-          <Button onClick={() => exportCanvas()}>Export</Button>
-          {currentPageIdx >= storyPageCnt ? (
-            <Button onClick={finishCanvas}>Finish</Button>
-          ) : (
-            <Button onClick={onNextPage}>Next page</Button>
-          )}
+            <Button onClick={() => exportCanvas()}>Export</Button>
+            {currentPageIdx && story && currentPageIdx >= story.pages ? (
+              <Button onClick={finishCanvas}>Finish</Button>
+            ) : (
+              <Button onClick={onNextPage}>Next page</Button>
+            )}
+          </Grid>
         </Grid>
       </div>
     </Grid>
