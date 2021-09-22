@@ -899,7 +899,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     return (
       <div
-        className="place-self-center"
+        className="absolute place-self-center"
         style={{
           width: offsetWidth,
           height: offsetWidth * ASPECT_RATIO,
@@ -923,7 +923,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
               showKeyboard(true);
           }}
           style={{
-            position: "absolute",
             borderWidth: 4,
             width: offsetWidth,
             borderRadius: "30px",

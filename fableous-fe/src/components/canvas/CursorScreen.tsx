@@ -110,7 +110,7 @@ const CursorScreen = (props: CursorScreenProps) => {
 
   return (
     <div
-      className="place-self-center"
+      className="absolute place-self-center"
       style={{
         width: offsetWidth,
         height: offsetWidth * ASPECT_RATIO,
@@ -119,7 +119,6 @@ const CursorScreen = (props: CursorScreenProps) => {
       <canvas
         ref={canvasRef}
         style={{
-          position: "absolute",
           borderWidth: 4,
           borderColor: "blue",
           borderRadius: "30px",

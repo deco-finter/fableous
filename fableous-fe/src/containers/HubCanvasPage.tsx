@@ -315,131 +315,140 @@ export default function HubCanvasPage() {
   }, [achievements, broadcastAchievement]);
 
   return (
-    <Grid container className="flex-col flex-1 relative">
-      {hubState !== HubState.DrawingSession && (
-        <>
+    <Grid container className="grid flex-col flex-1 relative">
+      <div
+        style={{
+          gridRowStart: 1,
+          gridColumnStart: 1,
+        }}
+      >
+        {hubState !== HubState.DrawingSession && (
+          <>
+            <Grid item xs={12}>
+              <Button
+                onClick={() => history.goBack()}
+                startIcon={<Icon>arrow_backward</Icon>}
+              >
+                Back
+              </Button>
+            </Grid>
+            <Grid item xs={12} className="mb-4">
+              <Typography variant="h2">
+                {
+                  {
+                    [HubState.SessionForm]: "story",
+                    [HubState.WaitingRoom]: "lobby",
+                    [HubState.DrawingSession]: "",
+                  }[hubState]
+                }
+              </Typography>
+            </Grid>
+          </>
+        )}
+        {hubState === HubState.SessionForm && (
+          <Formik
+            initialValues={
+              {
+                title: "",
+                description: "",
+                pages: 1,
+              } as Story
+            }
+            validationSchema={yup.object({
+              title: yup.string().required("required"),
+              description: yup.string().required("required"),
+              pages: yup.number().positive("must be positive"),
+            })}
+            onSubmit={handleCreateSession}
+          >
+            {(formik) => (
+              <form onSubmit={formik.handleSubmit}>
+                <div>
+                  <FormikTextField
+                    formik={formik}
+                    name="title"
+                    label="Title"
+                    overrides={{
+                      variant: "outlined",
+                      disabled: postLoading,
+                      className: "mb-4",
+                    }}
+                  />
+                </div>
+                <div>
+                  <FormikTextField
+                    formik={formik}
+                    name="description"
+                    label="Description"
+                    overrides={{
+                      variant: "outlined",
+                      disabled: postLoading,
+                      className: "mb-4",
+                    }}
+                  />
+                </div>
+                <div>
+                  <FormikTextField
+                    formik={formik}
+                    name="pages"
+                    label="Pages"
+                    overrides={{
+                      type: "number",
+                      variant: "outlined",
+                      disabled: postLoading,
+                      className: "mb-4",
+                    }}
+                  />
+                </div>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    disabled={postLoading}
+                    type="submit"
+                  >
+                    create
+                  </Button>
+                </div>
+              </form>
+            )}
+          </Formik>
+        )}
+        {hubState === HubState.WaitingRoom && (
           <Grid item xs={12}>
+            <Typography variant="h6">
+              token: <span>{classroomToken || "-"}</span>
+            </Typography>
+            <Typography variant="h6">
+              Joined Students ({Object.keys(joinedControllers).length}/3)
+            </Typography>
+            <ul>
+              {Object.entries(joinedControllers).map(([role, name]) => (
+                <li key={role}>
+                  {role} - {name}
+                </li>
+              ))}
+            </ul>
             <Button
-              onClick={() => history.goBack()}
-              startIcon={<Icon>arrow_backward</Icon>}
+              variant="contained"
+              color="primary"
+              onClick={onBeginDrawing}
+              disabled={!isAllControllersJoined()}
             >
-              Back
+              begin drawing
             </Button>
           </Grid>
-          <Grid item xs={12} className="mb-4">
-            <Typography variant="h2">
-              {
-                {
-                  [HubState.SessionForm]: "story",
-                  [HubState.WaitingRoom]: "lobby",
-                  [HubState.DrawingSession]: "",
-                }[hubState]
-              }
-            </Typography>
-          </Grid>
-        </>
-      )}
-      {hubState === HubState.SessionForm && (
-        <Formik
-          initialValues={
-            {
-              title: "",
-              description: "",
-              pages: 1,
-            } as Story
-          }
-          validationSchema={yup.object({
-            title: yup.string().required("required"),
-            description: yup.string().required("required"),
-            pages: yup.number().positive("must be positive"),
-          })}
-          onSubmit={handleCreateSession}
-        >
-          {(formik) => (
-            <form onSubmit={formik.handleSubmit}>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="title"
-                  label="Title"
-                  overrides={{
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="description"
-                  label="Description"
-                  overrides={{
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="pages"
-                  label="Pages"
-                  overrides={{
-                    type: "number",
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={postLoading}
-                  type="submit"
-                >
-                  create
-                </Button>
-              </div>
-            </form>
-          )}
-        </Formik>
-      )}
-      {hubState === HubState.WaitingRoom && (
-        <Grid item xs={12}>
-          <Typography variant="h6">
-            token: <span>{classroomToken || "-"}</span>
-          </Typography>
-          <Typography variant="h6">
-            Joined Students ({Object.keys(joinedControllers).length}/3)
-          </Typography>
-          <ul>
-            {Object.entries(joinedControllers).map(([role, name]) => (
-              <li key={role}>
-                {role} - {name}
-              </li>
-            ))}
-          </ul>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={onBeginDrawing}
-            disabled={!isAllControllersJoined()}
-          >
-            begin drawing
-          </Button>
-        </Grid>
-      )}
+        )}
+      </div>
       <div
-        className={`flex flex-col absolute w-full ${
+        className={`flex flex-col w-full ${
           hubState !== HubState.DrawingSession && "invisible"
         }`}
         style={{
           // 64px navbar height and 20px content top padding
           height: "calc(100vh - 84px)",
+          gridRowStart: 1,
+          gridColumnStart: 1,
         }}
       >
         <Grid container className="mb-4">
@@ -603,11 +612,11 @@ export default function HubCanvasPage() {
                 }}
               >
                 <div
-                  className="bg-white place-self-center"
+                  className="absolute place-self-center bg-white"
                   style={{
-                    width: `${canvasOffsetWidth}px`,
+                    width: canvasOffsetWidth,
                     // if not decrement by 1, canvas will be larger than screen height
-                    height: `${canvasOffsetHeight - 1}px`,
+                    height: canvasOffsetHeight - 1,
                     borderRadius: "30px",
                   }}
                 />

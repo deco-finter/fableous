@@ -19,6 +19,7 @@ export default function useContainRatio<T>(config: {
 
   const isPotrait = (width || 0) / (height || 1) > ratio;
   const containedWidth = isPotrait ? (height || 0) * ratio : width || 0;
+  const containedHeight = containedWidth / ratio;
 
-  return [containedWidth, containedWidth / ratio];
+  return [containedWidth, containedHeight];
 }

@@ -238,139 +238,148 @@ export default function ControllerCanvasPage() {
   return (
     <Grid
       container
-      className={`flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
+      className={`grid flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
     >
-      <Grid item xs={12} className="mb-4">
-        <Typography variant="h2">
-          {
-            {
-              [ControllerState.JoinForm]: "join",
-              [ControllerState.WaitingRoom]: "",
-              [ControllerState.DrawingSession]: "",
-              [ControllerState.StoryFinished]: "finished",
-            }[controllerState]
-          }
-        </Typography>
-        {controllerState === ControllerState.JoinForm && (
-          <Formik
-            initialValues={
-              {
-                name: "",
-                token: "",
-                role: ControllerRole.Story,
-              } as ControllerJoin
-            }
-            validationSchema={yup.object().shape({
-              name: yup.string().required("required"),
-              token: yup
-                .string()
-                .required("required")
-                .length(4, "must be 4 characters")
-                .uppercase("must be all uppercase characters"),
-            })}
-            onSubmit={handleJoinSession}
-          >
-            {(formik) => (
-              <form onSubmit={formik.handleSubmit}>
-                <div>
-                  <FormikTextField
-                    formik={formik}
-                    name="name"
-                    label="Name"
-                    overrides={{
-                      autoFocus: true,
-                    }}
-                  />
-                </div>
-                <div>
-                  <FormikTextField
-                    formik={formik}
-                    name="token"
-                    label="Token"
-                    overrides={{
-                      onChange: (ev: React.ChangeEvent<HTMLInputElement>) => {
-                        const evUpperCase = { ...ev };
-                        evUpperCase.target.value =
-                          ev.target.value?.toUpperCase();
-                        formik.handleChange(evUpperCase);
-                      },
-                    }}
-                  />
-                </div>
-
-                <RadioGroup
-                  name="role"
-                  value={formik.values.role}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                >
-                  <FormControlLabel
-                    value={ControllerRole.Story}
-                    control={<Radio />}
-                    label="Story"
-                  />
-                  <FormControlLabel
-                    value={ControllerRole.Character}
-                    control={<Radio />}
-                    label="Character"
-                  />
-                  <FormControlLabel
-                    value={ControllerRole.Background}
-                    control={<Radio />}
-                    label="Background"
-                  />
-                </RadioGroup>
-                <Button type="submit">Join Session</Button>
-              </form>
-            )}
-          </Formik>
-        )}
-        <div
-          className={
-            controllerState !== ControllerState.JoinForm ? "block" : "hidden"
-          }
-        >
-          {controllerState === ControllerState.WaitingRoom && (
-            <Typography variant="h6" component="p">
-              waiting for hub to start..
-            </Typography>
-          )}
-          {controllerState === ControllerState.StoryFinished && (
-            <>
-              <div>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  className="mb-2"
-                  onClick={() => {
-                    setControllerState(ControllerState.JoinForm);
-                    setAchievements(EmptyAchievement);
-                  }}
-                >
-                  Join another session
-                </Button>
-              </div>
-              <div>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  component={Link}
-                  to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
-                >
-                  View story in gallery
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </Grid>
       <div
-        className={`flex flex-col absolute w-full ${
+        style={{
+          gridRowStart: 1,
+          gridColumnStart: 1,
+        }}
+      >
+        <Grid item xs={12} className="mb-4">
+          <Typography variant="h2">
+            {
+              {
+                [ControllerState.JoinForm]: "join",
+                [ControllerState.WaitingRoom]: "",
+                [ControllerState.DrawingSession]: "",
+                [ControllerState.StoryFinished]: "finished",
+              }[controllerState]
+            }
+          </Typography>
+          {controllerState === ControllerState.JoinForm && (
+            <Formik
+              initialValues={
+                {
+                  name: "",
+                  token: "",
+                  role: ControllerRole.Story,
+                } as ControllerJoin
+              }
+              validationSchema={yup.object().shape({
+                name: yup.string().required("required"),
+                token: yup
+                  .string()
+                  .required("required")
+                  .length(4, "must be 4 characters")
+                  .uppercase("must be all uppercase characters"),
+              })}
+              onSubmit={handleJoinSession}
+            >
+              {(formik) => (
+                <form onSubmit={formik.handleSubmit}>
+                  <div>
+                    <FormikTextField
+                      formik={formik}
+                      name="name"
+                      label="Name"
+                      overrides={{
+                        autoFocus: true,
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <FormikTextField
+                      formik={formik}
+                      name="token"
+                      label="Token"
+                      overrides={{
+                        onChange: (ev: React.ChangeEvent<HTMLInputElement>) => {
+                          const evUpperCase = { ...ev };
+                          evUpperCase.target.value =
+                            ev.target.value?.toUpperCase();
+                          formik.handleChange(evUpperCase);
+                        },
+                      }}
+                    />
+                  </div>
+
+                  <RadioGroup
+                    name="role"
+                    value={formik.values.role}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                  >
+                    <FormControlLabel
+                      value={ControllerRole.Story}
+                      control={<Radio />}
+                      label="Story"
+                    />
+                    <FormControlLabel
+                      value={ControllerRole.Character}
+                      control={<Radio />}
+                      label="Character"
+                    />
+                    <FormControlLabel
+                      value={ControllerRole.Background}
+                      control={<Radio />}
+                      label="Background"
+                    />
+                  </RadioGroup>
+                  <Button type="submit">Join Session</Button>
+                </form>
+              )}
+            </Formik>
+          )}
+          <div
+            className={
+              controllerState !== ControllerState.JoinForm ? "block" : "hidden"
+            }
+          >
+            {controllerState === ControllerState.WaitingRoom && (
+              <Typography variant="h6" component="p">
+                waiting for hub to start..
+              </Typography>
+            )}
+            {controllerState === ControllerState.StoryFinished && (
+              <>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className="mb-2"
+                    onClick={() => {
+                      setControllerState(ControllerState.JoinForm);
+                      setAchievements(EmptyAchievement);
+                    }}
+                  >
+                    Join another session
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    component={Link}
+                    to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
+                  >
+                    View story in gallery
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Grid>
+      </div>
+      <div
+        className={`flex flex-col w-full ${
           controllerState !== ControllerState.DrawingSession && "invisible"
         }`}
         style={{
           // 64px navbar height and 20px content top padding
           height: "calc(100vh - 84px)",
+          gridRowStart: 1,
+          gridColumnStart: 1,
         }}
       >
         <Grid container className="mb-4">
@@ -463,10 +472,11 @@ export default function ControllerCanvasPage() {
                 }}
               >
                 <div
-                  className="bg-white place-self-center"
+                  className="absolute place-self-center bg-white"
                   style={{
                     width: canvasOffsetWidth,
-                    height: canvasOffsetHeight,
+                    // if not decrement by 1, canvas will be larger than screen height
+                    height: canvasOffsetHeight - 1,
                     borderRadius: "30px",
                   }}
                 />
