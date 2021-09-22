@@ -434,9 +434,13 @@ export default function HubCanvasPage() {
         </Grid>
       )}
       <div
-        className={`flex flex-col absolute w-full h-full ${
+        className={`flex flex-col absolute w-full ${
           hubState !== HubState.DrawingSession && "invisible"
         }`}
+        style={{
+          // 64px navbar height and 20px content top padding
+          height: "calc(100vh - 84px)",
+        }}
       >
         <Grid container className="mb-4">
           <Grid item xs={12}>

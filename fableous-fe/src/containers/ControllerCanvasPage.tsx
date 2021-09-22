@@ -365,9 +365,13 @@ export default function ControllerCanvasPage() {
         </div>
       </Grid>
       <div
-        className={`flex flex-col absolute w-full h-full ${
+        className={`flex flex-col absolute w-full ${
           controllerState !== ControllerState.DrawingSession && "invisible"
         }`}
+        style={{
+          // 64px navbar height and 20px content top padding
+          height: "calc(100vh - 84px)",
+        }}
       >
         <Grid container className="mb-4">
           <Grid item xs={12}>
@@ -386,7 +390,7 @@ export default function ControllerCanvasPage() {
             />
           </Grid>
         </Grid>
-        <Grid container spacing={2} className="flex-1 mb-4">
+        <Grid container spacing={2} className="relative flex-1 mb-4">
           <Grid item xs={2} md={1}>
             <CanvasToolbar
               ref={canvasRef}
