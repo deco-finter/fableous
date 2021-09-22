@@ -137,7 +137,7 @@ export default function ClassroomListPage() {
                 >
                   {(formik) => (
                     <form onSubmit={formik.handleSubmit} autoComplete="off">
-                      <CardContent className="flex-grow">
+                      <CardContent className="flex-grow flex flex-col">
                         <FormikTextField
                           formik={formik}
                           name="name"
