@@ -223,6 +223,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
 			go func() {
+				message.Data.ID = sess.currentPage // override page numbber
 				if filename, page := m.SavePayload(sess, message, true); filename != "" {
 					_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
 						Type: constants.WSMessageTypeAudio,
