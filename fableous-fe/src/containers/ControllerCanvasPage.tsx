@@ -210,6 +210,7 @@ export default function ControllerCanvasPage() {
     wsConn?.send(
       JSON.stringify({
         type: WSMessageType.Control,
+        role,
         data: { help: true } as WSControlMessageData,
       })
     );
@@ -275,10 +276,11 @@ export default function ControllerCanvasPage() {
       wsConn?.send(
         JSON.stringify({
           type: WSMessageType.Control,
+          role,
           data: { done: isDone } as WSControlMessageData,
         })
       );
-  }, [controllerState, isDone, wsConn]);
+  }, [controllerState, isDone, role, wsConn]);
 
   return (
     <Grid

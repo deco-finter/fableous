@@ -160,21 +160,20 @@ export default function HubCanvasPage() {
               if (classroomTokenFromWs) {
                 setClassroomToken(classroomTokenFromWs);
               }
+              console.log(msg);
               if (help) {
-                setHelpControllers((prev) => ({
-                  ...prev,
-                  [msg.role as StudentRole]: true,
-                }));
                 enqueueSnackbar(`${ROLE_ICON[msg.role].text} needs a hand!`, {
                   variant: "info",
                 });
               }
-              if (done) {
-                setDoneControllers((prev) => ({
-                  ...prev,
-                  [msg.role as StudentRole]: true,
-                }));
-              }
+              setHelpControllers((prev) => ({
+                ...prev,
+                [msg.role as StudentRole]: help,
+              }));
+              setDoneControllers((prev) => ({
+                ...prev,
+                [msg.role as StudentRole]: done,
+              }));
             }
             break;
           case WSMessageType.Join:
@@ -296,7 +295,6 @@ export default function HubCanvasPage() {
   };
 
   const onNextPage = () => {
-    console.log("posting this canvas page");
     if (hubState === HubState.DrawingSession) {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -356,6 +354,16 @@ export default function HubCanvasPage() {
       if (prev > 0) achievementNextPage();
       return prev + 1;
     });
+    setHelpControllers({
+      [ControllerRole.Story]: false,
+      [ControllerRole.Character]: false,
+      [ControllerRole.Background]: false,
+    });
+    setDoneControllers({
+      [ControllerRole.Story]: false,
+      [ControllerRole.Character]: false,
+      [ControllerRole.Background]: false,
+    });
   };
   const onBeginDrawing = () => {
     onNextPage();
@@ -408,6 +416,16 @@ export default function HubCanvasPage() {
       setStory(undefined);
       setClassroomToken("");
       setJoinedControllers({});
+      setHelpControllers({
+        [ControllerRole.Story]: false,
+        [ControllerRole.Character]: false,
+        [ControllerRole.Background]: false,
+      });
+      setDoneControllers({
+        [ControllerRole.Story]: false,
+        [ControllerRole.Character]: false,
+        [ControllerRole.Background]: false,
+      });
     }
   }, [hubState]);
 
