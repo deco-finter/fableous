@@ -56,7 +56,7 @@ export default function HubCanvasPage() {
   const [classroomToken, setClassroomToken] = useState("");
   const [joinedControllers, setJoinedControllers] = useState<
     {
-      [key in ControllerRole]?: string | null;
+      [key in StudentRole]?: string;
     }
   >({});
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
