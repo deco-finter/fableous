@@ -596,7 +596,7 @@ export default function ControllerCanvasPage() {
                   icon: (
                     <Icon
                       fontSize="medium"
-                      style={{ color: isDone ? "#41A041" : "inherit" }}
+                      style={{ color: isDone ? colors.green : "inherit" }}
                     >
                       check_circle
                     </Icon>

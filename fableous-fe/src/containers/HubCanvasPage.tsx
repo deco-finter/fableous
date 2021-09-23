@@ -29,7 +29,12 @@ import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
-import { WSMessageType, ControllerRole, ROLE_ICON } from "../constant";
+import {
+  WSMessageType,
+  ControllerRole,
+  ROLE_ICON,
+  StudentRole,
+} from "../constant";
 import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
@@ -107,9 +112,27 @@ export default function HubCanvasPage() {
   ] = useAchievement({
     debug: true,
   });
-  const [focusLayer, setFocusLayer] = useState<ControllerRole | undefined>(
+  const [focusLayer, setFocusLayer] = useState<StudentRole | undefined>(
     undefined
   );
+  const [helpControllers, setHelpControllers] = useState<
+    {
+      [key in StudentRole]: boolean;
+    }
+  >({
+    [ControllerRole.Story]: false,
+    [ControllerRole.Character]: false,
+    [ControllerRole.Background]: false,
+  });
+  const [doneControllers, setDoneControllers] = useState<
+    {
+      [key in StudentRole]: boolean;
+    }
+  >({
+    [ControllerRole.Story]: false,
+    [ControllerRole.Character]: false,
+    [ControllerRole.Background]: false,
+  });
 
   const broadcastAchievement = useCallback(() => {
     if (hubState === HubState.DrawingSession) {
@@ -125,14 +148,29 @@ export default function HubCanvasPage() {
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
       try {
-        const msg = JSON.parse(ev.data);
+        const msg = JSON.parse(ev.data) as WSMessage;
         switch (msg.type) {
           case WSMessageType.Control:
             {
-              const { classroomToken: classroomTokenFromWs } =
-                msg.data as WSControlMessageData;
+              const {
+                classroomToken: classroomTokenFromWs,
+                help,
+                done,
+              } = msg.data as WSControlMessageData;
               if (classroomTokenFromWs) {
                 setClassroomToken(classroomTokenFromWs);
+              }
+              if (help) {
+                setHelpControllers((prev) => ({
+                  ...prev,
+                  [msg.role as StudentRole]: true,
+                }));
+              }
+              if (done) {
+                setDoneControllers((prev) => ({
+                  ...prev,
+                  [msg.role as StudentRole]: true,
+                }));
               }
             }
             break;
@@ -168,6 +206,14 @@ export default function HubCanvasPage() {
                     break;
                   default:
                 }
+                setHelpControllers((prev) => ({
+                  ...prev,
+                  [role as StudentRole]: false,
+                }));
+                setDoneControllers((prev) => ({
+                  ...prev,
+                  [role as StudentRole]: false,
+                }));
               }
 
               // show error if controller disconnects during drawing session
@@ -643,25 +689,27 @@ export default function HubCanvasPage() {
                   maxWidth: "100px",
                 }}
               >
-                <Paper className="p-1 flex flex-col justify-around items-center min-h-full px-2">
-                  <LayerIcon
-                    role={ControllerRole.Story}
-                    focusLayer={focusLayer}
-                    setFocusLayer={setFocusLayer}
-                    joinedControllers={joinedControllers}
-                  />
-                  <LayerIcon
-                    role={ControllerRole.Character}
-                    focusLayer={focusLayer}
-                    setFocusLayer={setFocusLayer}
-                    joinedControllers={joinedControllers}
-                  />
-                  <LayerIcon
-                    role={ControllerRole.Background}
-                    focusLayer={focusLayer}
-                    setFocusLayer={setFocusLayer}
-                    joinedControllers={joinedControllers}
-                  />
+                <Paper className="p-1 flex flex-col justify-around items-center min-h-full px-2 items-stretch">
+                  {[
+                    ControllerRole.Story,
+                    ControllerRole.Character,
+                    ControllerRole.Background,
+                  ].map((role) => (
+                    <LayerIcon
+                      role={role as StudentRole}
+                      focusLayer={focusLayer}
+                      setFocusLayer={setFocusLayer}
+                      onClick={() =>
+                        setHelpControllers({
+                          ...helpControllers,
+                          [role]: false,
+                        })
+                      }
+                      joinedControllers={joinedControllers}
+                      needsHelp={helpControllers[role as StudentRole]}
+                      isDone={doneControllers[role as StudentRole]}
+                    />
+                  ))}
                 </Paper>
               </div>
             </div>
