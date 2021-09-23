@@ -38,7 +38,12 @@ import {
   EmptyAchievement,
 } from "../components/achievement/achievement";
 import AchievementButton from "../components/achievement/AchievementButton";
-import { ControllerRole, ToolMode, WSMessageType } from "../constant";
+import {
+  ControllerRole,
+  ROLE_ICON,
+  ToolMode,
+  WSMessageType,
+} from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
@@ -52,34 +57,6 @@ enum ControllerState {
   DrawingSession = "DRAWING_SESSION",
   StoryFinished = "STORY_FINISHED",
 }
-
-const ROLE_ICON = {
-  [ControllerRole.Story]: (
-    <>
-      <Icon fontSize="small" className="align-middle mr-1">
-        textsms
-      </Icon>
-      Story
-    </>
-  ),
-  [ControllerRole.Character]: (
-    <>
-      <Icon fontSize="small" className="align-middle mr-1">
-        directions_run
-      </Icon>
-      Character
-    </>
-  ),
-  [ControllerRole.Background]: (
-    <>
-      <Icon fontSize="small" className="align-middle mr-1">
-        image
-      </Icon>
-      Background
-    </>
-  ),
-  [ControllerRole.Hub]: undefined,
-};
 
 const useStyles = makeStyles({
   disableMobileHoldInteraction: {
@@ -389,13 +366,31 @@ export default function ControllerCanvasPage() {
                                 onBlur={formik.handleBlur}
                               >
                                 <MenuItem value={ControllerRole.Story}>
-                                  {ROLE_ICON[ControllerRole.Story]}
+                                  <Icon
+                                    fontSize="small"
+                                    className="align-middle mr-1"
+                                  >
+                                    {ROLE_ICON[ControllerRole.Story].icon}
+                                  </Icon>
+                                  {ROLE_ICON[ControllerRole.Story].text}
                                 </MenuItem>
                                 <MenuItem value={ControllerRole.Character}>
-                                  {ROLE_ICON[ControllerRole.Character]}
+                                  <Icon
+                                    fontSize="small"
+                                    className="align-middle mr-1"
+                                  >
+                                    {ROLE_ICON[ControllerRole.Character].icon}
+                                  </Icon>
+                                  {ROLE_ICON[ControllerRole.Character].text}
                                 </MenuItem>
                                 <MenuItem value={ControllerRole.Background}>
-                                  {ROLE_ICON[ControllerRole.Background]}
+                                  <Icon
+                                    fontSize="small"
+                                    className="align-middle mr-1"
+                                  >
+                                    {ROLE_ICON[ControllerRole.Background].icon}
+                                  </Icon>
+                                  {ROLE_ICON[ControllerRole.Background].text}
                                 </MenuItem>
                               </Select>
                             </FormControl>
@@ -470,7 +465,16 @@ export default function ControllerCanvasPage() {
                 <Chip label={storyDetails?.title} color="primary" />,
                 ...(storyDetails?.description.split(",") || []),
                 <Chip
-                  label={ROLE_ICON[role]}
+                  icon={
+                    <Icon
+                      fontSize="small"
+                      className="align-middle mr-1"
+                      style={{ color: colors.orange.main }}
+                    >
+                      {ROLE_ICON[role].icon}
+                    </Icon>
+                  }
+                  label={ROLE_ICON[role].text}
                   style={{ color: colors.orange.main }}
                 />,
               ]}

@@ -738,7 +738,7 @@ export default function HubCanvasPage() {
                     ),
                   label:
                     currentPageIdx >= (story?.pages || -1)
-                      ? "Finish"
+                      ? "Finish Story"
                       : "Next Page",
                   onClick: onNextPage,
                 } as ChipProps,

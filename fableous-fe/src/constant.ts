@@ -27,3 +27,22 @@ export enum ControllerRole {
   Story = "STORY",
   Hub = "HUB",
 }
+
+export const ROLE_ICON = {
+  [ControllerRole.Story]: {
+    icon: "textsms",
+    text: "Story",
+  },
+  [ControllerRole.Character]: {
+    icon: "directions_run",
+    text: "Character",
+  },
+  [ControllerRole.Background]: {
+    icon: "image",
+    text: "Background",
+  },
+  [ControllerRole.Hub]: {
+    icon: "web",
+    text: "Background",
+  },
+};
