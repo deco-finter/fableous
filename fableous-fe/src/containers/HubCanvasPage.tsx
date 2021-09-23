@@ -25,7 +25,6 @@ import {
   WSControlMessageData,
   WSJoinMessageData,
   WSMessage,
-  Manifest,
 } from "../data";
 import AchievementButton from "../components/achievement/AchievementButton";
 import Canvas from "../components/canvas/Canvas";
@@ -223,36 +222,14 @@ export default function HubCanvasPage() {
       });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const exportCanvas = () => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const { width, height } = storyCanvasRef.current.getCanvas();
-    if (!ctx) return;
-    canvas.width = width;
-    canvas.height = height;
-    ctx.beginPath();
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(backgroundCanvasRef.current.getCanvas(), 0, 0, width, height);
-    ctx.drawImage(characterCanvasRef.current.getCanvas(), 0, 0, width, height);
-    ctx.drawImage(storyCanvasRef.current.getCanvas(), 0, 0, width, height);
-    const link = document.createElement("a");
-    link.download = "output.png";
-    link.href = canvas
-      .toDataURL("image/png")
-      .replace("image/png", "image/octet-stream");
-    link.click();
-    console.log(JSON.stringify(storyTextShapes));
-  };
-
   const isAllControllersJoined = (): boolean => {
     return [
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    ].some((role) => role in joinedControllers);
   };
+
   const onNextPage = () => {
     console.log("posting this canvas page");
     if (hubState === HubState.DrawingSession) {
@@ -799,14 +776,6 @@ export default function HubCanvasPage() {
                 />
               </div>
             </div>
-            <Button onClick={() => exportCanvas()}>Export</Button>
-            <Button onClick={onNextPage}>
-              {currentPageIdx && story && currentPageIdx >= story.pages ? (
-                <>Finish</>
-              ) : (
-                <>Next Page</>
-              )}
-            </Button>
           </Grid>
         </Grid>
       </div>
