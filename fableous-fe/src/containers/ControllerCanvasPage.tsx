@@ -233,6 +233,7 @@ export default function ControllerCanvasPage() {
   };
 
   const handleDone = () => {
+    if (isDone) return;
     wsConn?.send(
       JSON.stringify({
         type: WSMessageType.Control,
@@ -528,6 +529,7 @@ export default function ControllerCanvasPage() {
                   layer={role}
                   pageNum={currentPageIdx}
                   isShown={controllerState === ControllerState.DrawingSession}
+                  onDraw={() => setIsDone(false)}
                   setCursor={setCursor}
                   textShapes={textShapes}
                   setTextShapes={setTextShapes}
@@ -579,7 +581,7 @@ export default function ControllerCanvasPage() {
                   icon: (
                     <Icon
                       fontSize="medium"
-                      style={{ color: isDone ? "green" : "inherit" }}
+                      style={{ color: isDone ? "#41A041" : "inherit" }}
                     >
                       check_circle
                     </Icon>
