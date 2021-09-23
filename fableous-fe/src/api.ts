@@ -136,6 +136,7 @@ export const restAPI = {
       method: "delete",
     }),
   },
+  // @TODO: create POST for story saving
 } as ApiEndpoints;
 
 export const wsAPI = {

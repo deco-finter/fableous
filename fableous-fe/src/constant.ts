@@ -11,6 +11,8 @@ export enum WSMessageType {
   Join = "JOIN",
   Control = "CONTROL",
   Ping = "PING",
+  Image = "IMAGE",
+  Manifest = "MANIFEST",
 }
 
 export enum ToolMode {
