@@ -257,17 +257,19 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (filename string) {
 	var err error
 	var data []byte
-	if data, err = utils.ExtractPayload(message, isBase64); err != nil {
+	var page int
+	if data, page, err = utils.ExtractPayload(message, isBase64); err != nil {
 		log.Println(err)
 		return
 	}
-	directory := fmt.Sprintf("%s/%d", utils.GetSessionStaticDir(sess.sessionID, sess.classroomID), sess.currentPage)
+	directory := fmt.Sprintf("%s/%d", utils.GetSessionStaticDir(sess.sessionID, sess.classroomID), page)
 	if _, err = os.Stat(directory); os.IsNotExist(err) {
 		if err = os.MkdirAll(directory, 0700); err != nil {
 			log.Println(err)
 			return
 		}
 	}
+	log.Println(message.Type)
 	switch message.Type {
 	case constants.WSMessageTypeAudio:
 		filename = fmt.Sprintf("%d.ogg", time.Now().Unix())
