@@ -25,6 +25,8 @@ export interface WSControlMessageData {
   sessionId?: string;
   currentPage?: number;
   nextPage?: boolean;
+  help?: boolean;
+  done?: boolean;
 }
 
 // for WSMessageType.Join

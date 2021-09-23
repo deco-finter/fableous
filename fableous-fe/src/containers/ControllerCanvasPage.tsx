@@ -13,6 +13,7 @@ import {
   Typography,
   makeStyles,
   Chip,
+  ChipProps,
 } from "@material-ui/core";
 import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
@@ -56,7 +57,7 @@ const ROLE_ICON = {
   [ControllerRole.Story]: (
     <>
       <Icon fontSize="small" className="align-middle mr-1">
-        text_fields
+        textsms
       </Icon>
       Story
     </>
@@ -126,6 +127,7 @@ export default function ControllerCanvasPage() {
   const [cursor, setCursor] = useState<Cursor | undefined>();
   const [achievements, setAchievements] =
     useState<Achievement>(EmptyAchievement);
+  const [isDone, setIsDone] = useState(false);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -137,6 +139,7 @@ export default function ControllerCanvasPage() {
               const msgData = msg.data as WSControlMessageData;
               if (msgData.nextPage) {
                 setCurrentPageIdx((prev) => prev + 1);
+                setIsDone(false);
               } else if (msgData.classroomId) {
                 setSessionInfo(msgData);
                 setCurrentPageIdx(msgData.currentPage || 0);
@@ -225,6 +228,20 @@ export default function ControllerCanvasPage() {
     });
   };
 
+  const handleHelp = () => {
+    enqueueSnackbar("Help requested!", { variant: "info" });
+  };
+
+  const handleDone = () => {
+    wsConn?.send(
+      JSON.stringify({
+        type: WSMessageType.Control,
+        data: { nextPage: true } as WSControlMessageData,
+      })
+    );
+    setIsDone(true);
+  };
+
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
@@ -249,6 +266,7 @@ export default function ControllerCanvasPage() {
       setSessionInfo(undefined);
       setStoryDetails(undefined);
       setCurrentPageIdx(0);
+      setIsDone(false);
     }
   }, [controllerState]);
 
@@ -552,6 +570,23 @@ export default function ControllerCanvasPage() {
                   confetti
                   notify
                 />,
+                {
+                  icon: <Icon fontSize="small">pan_tool</Icon>,
+                  label: "Help",
+                  onClick: handleHelp,
+                } as ChipProps,
+                {
+                  icon: (
+                    <Icon
+                      fontSize="medium"
+                      style={{ color: isDone ? "green" : "inherit" }}
+                    >
+                      check_circle
+                    </Icon>
+                  ),
+                  label: "Done",
+                  onClick: handleDone,
+                } as ChipProps,
               ]}
             />
           </Grid>

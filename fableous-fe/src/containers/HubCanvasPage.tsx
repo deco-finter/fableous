@@ -6,14 +6,11 @@ import {
   Chip,
   ChipProps,
   CircularProgress,
-  IconButton,
 } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import { Formik, FormikHelpers } from "formik";
 import Icon from "@material-ui/core/Icon";
-import MusicNoteIcon from "@material-ui/icons/MusicNote";
-import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
@@ -727,31 +724,22 @@ export default function HubCanvasPage() {
                   notify
                 />,
                 {
-                  label: (
-                    <>
-                      <IconButton
-                        className="p-0 mr-1"
-                        color="primary"
-                        disableRipple
-                      >
-                        <MusicNoteIcon fontSize="medium" />
-                        <PlayArrowIcon
-                          fontSize="small"
-                          color="primary"
-                          className="absolute -bottom-1 -right-1.5"
-                        />
-                      </IconButton>
-                      Play Audio
-                    </>
-                  ),
+                  icon: <Icon fontSize="medium">music_note</Icon>,
+                  label: "Play Audio",
                   onClick: playAudio,
                   disabled: audioPaths.length === 0,
                 } as ChipProps,
                 {
+                  icon:
+                    currentPageIdx >= (story?.pages || -1) ? (
+                      <Icon fontSize="medium">check_circle</Icon>
+                    ) : (
+                      <Icon fontSize="medium">skip_next</Icon>
+                    ),
                   label:
                     currentPageIdx >= (story?.pages || -1)
                       ? "Finish"
-                      : "Next page",
+                      : "Next Page",
                   onClick: onNextPage,
                 } as ChipProps,
               ]}
