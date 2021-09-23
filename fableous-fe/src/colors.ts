@@ -20,7 +20,7 @@ export const colors = {
     main: "#AAAAAA",
   },
   black: "#000000",
-  green: "#41A041",
+  green: "#43A047",
 };
 
 export const generateColor = (seed: string): string => {
