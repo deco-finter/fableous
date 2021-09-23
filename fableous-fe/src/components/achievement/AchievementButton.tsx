@@ -101,20 +101,25 @@ export default function AchievementButton(props: {
     <>
       <Chip
         onClick={() => setShowing(true)}
+        color="primary"
+        variant="outlined"
         label={
-          <IconButton className="p-0" color="primary" disableRipple>
-            <Icon fontSize="medium">emoji_events</Icon>
-            <ReactCanvasConfetti
-              resize
-              width={1024}
-              height={1024}
-              useWorker
-              refConfetti={(ref) => {
-                confettiRef.current = ref;
-              }}
-              className={classes.confetti}
-            />
-          </IconButton>
+          <>
+            <IconButton className="p-0 mr-2" color="primary" disableRipple>
+              <Icon fontSize="medium">emoji_events</Icon>
+              <ReactCanvasConfetti
+                resize
+                width={1024}
+                height={1024}
+                useWorker
+                refConfetti={(ref) => {
+                  confettiRef.current = ref;
+                }}
+                className={classes.confetti}
+              />
+            </IconButton>
+            Achievements
+          </>
         }
       />
       <Dialog

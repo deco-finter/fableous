@@ -728,21 +728,24 @@ export default function HubCanvasPage() {
                 />,
                 {
                   label: (
-                    <IconButton
-                      className="relative p-0"
-                      color="primary"
-                      disableRipple
-                    >
-                      <MusicNoteIcon fontSize="medium" />
-                      <PlayArrowIcon
-                        fontSize="small"
+                    <>
+                      <IconButton
+                        className="p-0 mr-1"
                         color="primary"
-                        className="absolute -bottom-1 -right-1.5"
-                      />
-                    </IconButton>
+                        disableRipple
+                      >
+                        <MusicNoteIcon fontSize="medium" />
+                        <PlayArrowIcon
+                          fontSize="small"
+                          color="primary"
+                          className="absolute -bottom-1 -right-1.5"
+                        />
+                      </IconButton>
+                      Play Audio
+                    </>
                   ),
                   onClick: playAudio,
-                  disabled: audioPaths.length === 0,
+                  // disabled: audioPaths.length === 0,
                 } as ChipProps,
                 {
                   label:
