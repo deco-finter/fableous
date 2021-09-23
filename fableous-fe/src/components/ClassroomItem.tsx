@@ -296,8 +296,12 @@ export default function ClassroomItem(props: {
           <Button onClick={() => setStopping(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteOngoingSession} color="secondary">
-            Stop <Icon fontSize="small">stop</Icon>
+          <Button
+            onClick={handleDeleteOngoingSession}
+            color="secondary"
+            endIcon={<Icon fontSize="small">stop</Icon>}
+          >
+            Stop
           </Button>
         </DialogActions>
       </Dialog>
