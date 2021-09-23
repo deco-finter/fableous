@@ -275,6 +275,7 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 		filename = "image.png"
 	case constants.WSMessageTypeManifest:
 		filename = "manifest.json"
+		log.Println(string(data))
 	default:
 		return
 	}
