@@ -247,8 +247,7 @@ export default function HubCanvasPage() {
     ].every((role) => role in joinedControllers);
   };
 
-  const postCanvas = () => {
-    // TODO: transfer finishCanvas to postCanvas
+  const onNextPage = () => {
     console.log("posting this canvas page");
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -273,10 +272,7 @@ export default function HubCanvasPage() {
         texts: storyTextShapes,
       })
     );
-  };
-
-  const onNextPage = () => {
-    postCanvas();
+    setHubState(HubState.DrawingSession);
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
@@ -284,11 +280,6 @@ export default function HubCanvasPage() {
       if (prev > 0) achievementNextPage();
       return prev + 1;
     });
-  };
-
-  const finishCanvas = () => {
-    postCanvas();
-    setHubState(HubState.DrawingSession);
   };
 
   const onBeginDrawing = () => {
@@ -776,11 +767,13 @@ export default function HubCanvasPage() {
               </div>
             </div>
             <Button onClick={() => exportCanvas()}>Export</Button>
-            {currentPageIdx && story && currentPageIdx >= story.pages ? (
-              <Button onClick={finishCanvas}>Finish</Button>
-            ) : (
-              <Button onClick={onNextPage}>Next page</Button>
-            )}
+            <Button onClick={onNextPage}>
+              {currentPageIdx && story && currentPageIdx >= story.pages ? (
+                <>Finish</>
+              ) : (
+                <>Next Page</>
+              )}
+            </Button>
           </Grid>
         </Grid>
       </div>
