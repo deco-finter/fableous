@@ -223,13 +223,13 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
 			go func() {
-				if filename := m.SavePayload(sess, message, true); filename != "" {
+				if filename, page := m.SavePayload(sess, message, true); filename != "" {
 					_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
 						Type: constants.WSMessageTypeAudio,
 						Role: role,
 						Data: datatransfers.WSMessageData{
 							WSPaintMessageData: datatransfers.WSPaintMessageData{
-								Text: fmt.Sprintf("%s/%s/%d/%s", sess.classroomID, sess.sessionID, sess.currentPage, filename),
+								Text: fmt.Sprintf("%s/%s/%d/%s", sess.classroomID, sess.sessionID, page, filename),
 							},
 						},
 					})
@@ -253,10 +253,9 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 	return
 }
 
-func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (filename string) {
+func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (filename string, page int) {
 	var err error
 	var data []byte
-	var page int
 	if data, page, err = utils.ExtractPayload(message, isBase64); err != nil {
 		log.Println(err)
 		return
