@@ -1,9 +1,10 @@
 import {
   Grid,
-  // Paper,
+  Paper,
   ImageList,
   ImageListItem,
   IconButton,
+  Button,
 } from "@material-ui/core";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@material-ui/icons";
 import useAxios from "axios-hooks";
@@ -82,12 +83,12 @@ export default function StoryDetailPage() {
       >
         <Grid container className="mb-4">
           {/* TODO disini buat taro info2 diatas canvas, kek title, dll, tinggi nya bakal secukupnya utk nampung content */}
-          {/* <Grid item xs={12}>
-            <Paper>row of info here</Paper>
+          <Grid item xs={12}>
+            ehe
           </Grid>
           <Grid item xs={9}>
             <Paper>hihi</Paper>
-          </Grid> */}
+          </Grid>
           <Grid
             item
             xs={3}
@@ -116,24 +117,30 @@ export default function StoryDetailPage() {
             >
               <ArrowUpwardOutlined fontSize="medium" />
             </IconButton>
-            <ImageList cols={1} gap={4}>
+            <ImageList
+              cols={1}
+              gap={0}
+              rowHeight={canvasOffsetHeight / (story?.data?.pages || 1)}
+            >
               {Array.from(
                 { length: story?.data?.pages || 0 },
                 (_, i) => i + 1
               ).map((pageIndex) => (
                 <ImageListItem key={pageIndex}>
-                  <img
-                    src={
-                      restAPI.gallery.getAsset(
-                        classroomId,
-                        sessionId,
-                        pageIndex,
-                        "image.png"
-                      ).url
-                    }
-                    alt={story?.data?.title}
-                    loading="lazy"
-                  />
+                  <Button onClick={() => setPage(pageIndex)}>
+                    <img
+                      src={
+                        restAPI.gallery.getAsset(
+                          classroomId,
+                          sessionId,
+                          pageIndex,
+                          "image.png"
+                        ).url
+                      }
+                      alt={story?.data?.title}
+                      loading="lazy"
+                    />
+                  </Button>
                 </ImageListItem>
               ))}
             </ImageList>
