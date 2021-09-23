@@ -42,6 +42,12 @@ import { ASPECT_RATIO } from "../components/canvas/constants";
 import LayerIcon from "../components/canvas/LayerIcon";
 import ChipRow from "../components/ChipRow";
 
+const INIT_FLAG = {
+  [ControllerRole.Story]: false,
+  [ControllerRole.Character]: false,
+  [ControllerRole.Background]: false,
+};
+
 enum HubState {
   SessionForm = "SESSION_FORM",
   WaitingRoom = "WAITING_ROOM",
@@ -119,20 +125,12 @@ export default function HubCanvasPage() {
     {
       [key in StudentRole]: boolean;
     }
-  >({
-    [ControllerRole.Story]: false,
-    [ControllerRole.Character]: false,
-    [ControllerRole.Background]: false,
-  });
+  >(INIT_FLAG);
   const [doneControllers, setDoneControllers] = useState<
     {
       [key in StudentRole]: boolean;
     }
-  >({
-    [ControllerRole.Story]: false,
-    [ControllerRole.Character]: false,
-    [ControllerRole.Background]: false,
-  });
+  >(INIT_FLAG);
 
   const broadcastAchievement = useCallback(() => {
     if (hubState === HubState.DrawingSession) {
@@ -354,16 +352,8 @@ export default function HubCanvasPage() {
       if (prev > 0) achievementNextPage();
       return prev + 1;
     });
-    setHelpControllers({
-      [ControllerRole.Story]: false,
-      [ControllerRole.Character]: false,
-      [ControllerRole.Background]: false,
-    });
-    setDoneControllers({
-      [ControllerRole.Story]: false,
-      [ControllerRole.Character]: false,
-      [ControllerRole.Background]: false,
-    });
+    setHelpControllers(INIT_FLAG);
+    setDoneControllers(INIT_FLAG);
   };
   const onBeginDrawing = () => {
     onNextPage();
