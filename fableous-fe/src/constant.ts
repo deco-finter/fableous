@@ -30,6 +30,8 @@ export enum ControllerRole {
   Hub = "HUB",
 }
 
+export type StudentRole = Exclude<ControllerRole, ControllerRole.Hub>;
+
 export const ROLE_ICON = {
   [ControllerRole.Story]: {
     icon: "textsms",
