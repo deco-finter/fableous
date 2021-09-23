@@ -520,7 +520,7 @@ export default function ControllerCanvasPage() {
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
               style={{
-                border: "3px solid black",
+                border: "1px solid #0004",
               }}
             >
               <div

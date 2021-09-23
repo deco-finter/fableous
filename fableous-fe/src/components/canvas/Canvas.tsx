@@ -933,7 +933,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           }}
           style={{
             position: "absolute",
-            borderWidth: 4,
             width: offsetWidth,
             borderRadius: "30px",
             // allows onPointerMove to be fired continuously on touch,
