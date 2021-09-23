@@ -218,8 +218,8 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText,
-			constants.WSMessageTypeCheckpoint, constants.WSMessageTypeUndo, constants.WSMessageTypeCursor:
+		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeCheckpoint,
+			constants.WSMessageTypeUndo, constants.WSMessageTypeCursor, constants.WSMessageTypeControl:
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
 			go func() {
