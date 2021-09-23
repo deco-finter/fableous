@@ -6,6 +6,8 @@ import {
   Chip,
   ChipProps,
   CircularProgress,
+  IconButton,
+  Paper,
 } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
@@ -28,12 +30,13 @@ import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
-import { WSMessageType, ControllerRole } from "../constant";
+import { WSMessageType, ControllerRole, ROLE_ICON } from "../constant";
 import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
 import ChipRow from "../components/ChipRow";
+import { colors } from "../colors";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -105,6 +108,9 @@ export default function HubCanvasPage() {
   ] = useAchievement({
     debug: true,
   });
+  const [focusLayer, setFocusLayer] = useState<ControllerRole | undefined>(
+    undefined
+  );
 
   const broadcastAchievement = useCallback(() => {
     if (hubState === HubState.DrawingSession) {
@@ -617,7 +623,97 @@ export default function HubCanvasPage() {
           </Grid>
         </Grid>
         <Grid container className="flex-1 my-4">
-          <Grid item xs={12}>
+          <Grid item xs={2} md={1}>
+            <div className="h-full flex flex-col justify-center items-center">
+              <div
+                className="overflow-y-scroll overflow-x-hidden"
+                style={{
+                  height: canvasOffsetHeight || "100%",
+                  maxHeight: "100%",
+                  maxWidth: "80px",
+                }}
+              >
+                <Paper className="p-1 flex flex-col justify-around items-center min-h-full">
+                  <IconButton
+                    color={
+                      focusLayer === ControllerRole.Story
+                        ? "secondary"
+                        : "primary"
+                    }
+                    style={
+                      focusLayer && focusLayer !== ControllerRole.Story
+                        ? {
+                            color: colors.gray.main,
+                          }
+                        : {}
+                    }
+                    onClick={() =>
+                      setFocusLayer(
+                        focusLayer === ControllerRole.Story
+                          ? undefined
+                          : ControllerRole.Story
+                      )
+                    }
+                  >
+                    <Icon fontSize="large">
+                      {ROLE_ICON[ControllerRole.Story].icon}
+                    </Icon>
+                  </IconButton>
+                  <IconButton
+                    color={
+                      focusLayer === ControllerRole.Character
+                        ? "secondary"
+                        : "primary"
+                    }
+                    style={
+                      focusLayer && focusLayer !== ControllerRole.Character
+                        ? {
+                            color: colors.gray.main,
+                          }
+                        : {}
+                    }
+                    onClick={() =>
+                      setFocusLayer(
+                        focusLayer === ControllerRole.Character
+                          ? undefined
+                          : ControllerRole.Character
+                      )
+                    }
+                  >
+                    <Icon fontSize="large">
+                      {ROLE_ICON[ControllerRole.Character].icon}
+                    </Icon>
+                  </IconButton>
+                  <IconButton
+                    color={
+                      focusLayer === ControllerRole.Background
+                        ? "secondary"
+                        : "primary"
+                    }
+                    style={
+                      focusLayer && focusLayer !== ControllerRole.Background
+                        ? {
+                            color: colors.gray.main,
+                          }
+                        : {}
+                    }
+                    onClick={() =>
+                      setFocusLayer(
+                        focusLayer === ControllerRole.Background
+                          ? undefined
+                          : ControllerRole.Background
+                      )
+                    }
+                  >
+                    <Icon fontSize="large">
+                      {ROLE_ICON[ControllerRole.Background].icon}
+                    </Icon>
+                  </IconButton>
+                </Paper>
+              </div>
+            </div>
+          </Grid>
+          <Grid item xs={10} md={11}>
             <div
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
@@ -626,7 +722,11 @@ export default function HubCanvasPage() {
               }}
             >
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Story &&
+                  "invisible"
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -636,13 +736,17 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={storyCursor}
-                  name="Story"
+                  name={ROLE_ICON[ControllerRole.Story].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Character &&
+                  "invisible"
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -652,13 +756,17 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={characterCursor}
-                  name="Character"
+                  name={ROLE_ICON[ControllerRole.Character].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Background &&
+                  "invisible"
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -668,13 +776,17 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={backgroundCursor}
-                  name="Background"
+                  name={ROLE_ICON[ControllerRole.Background].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Story &&
+                  "invisible"
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}
               >
                 <Canvas
@@ -692,7 +804,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Character &&
+                  "invisible"
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}
               >
                 <Canvas
@@ -710,7 +826,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Background &&
+                  "invisible"
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}
               >
                 <Canvas
