@@ -105,6 +105,7 @@ export default function ControllerCanvasPage() {
   const [achievements, setAchievements] =
     useState<Achievement>(EmptyAchievement);
   const [isDone, setIsDone] = useState(false);
+  const [helpCooldown, setHelpCooldown] = useState(false);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -206,6 +207,10 @@ export default function ControllerCanvasPage() {
   };
 
   const handleHelp = () => {
+    setHelpCooldown(true);
+    setTimeout(() => {
+      setHelpCooldown(false);
+    }, 15000);
     enqueueSnackbar("Help requested!", { variant: "info" });
     wsConn?.send(
       JSON.stringify({
@@ -593,6 +598,7 @@ export default function ControllerCanvasPage() {
                   icon: <Icon fontSize="small">pan_tool</Icon>,
                   label: "Help",
                   onClick: handleHelp,
+                  disabled: helpCooldown,
                 } as ChipProps,
                 {
                   icon: (
