@@ -288,7 +288,7 @@ export default function HubCanvasPage() {
 
   const finishCanvas = () => {
     postCanvas();
-    // TODO: redirect HUB's url page
+    setHubState(HubState.DrawingSession);
   };
 
   const onBeginDrawing = () => {
