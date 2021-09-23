@@ -43,6 +43,7 @@ import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
+import { colors } from "../colors";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -442,29 +443,22 @@ export default function ControllerCanvasPage() {
           controllerState !== ControllerState.DrawingSession && "invisible"
         }`}
       >
-        <Grid container className="mb-4">
+        <Grid container>
           <Grid item xs={12}>
             <ChipRow
-              left={`Title: ${storyDetails?.title}`}
-              middle={[
-                <AchievementButton
-                  achievements={achievements}
-                  confetti
-                  notify
-                />,
+              primary
+              chips={[
+                <Chip label={storyDetails?.title} color="primary" />,
+                ...(storyDetails?.description.split(",") || []),
                 <Chip
-                  className="flex-initial"
                   label={ROLE_ICON[role]}
-                  color="primary"
-                  variant="outlined"
+                  style={{ color: colors.orange.main }}
                 />,
-                `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
               ]}
-              right={storyDetails?.description.split(",") || []}
             />
           </Grid>
         </Grid>
-        <Grid container spacing={2} className="flex-1 mb-4">
+        <Grid container className="flex-1 my-4">
           <Grid item xs={2} md={1}>
             <CanvasToolbar
               ref={canvasRef}
@@ -546,6 +540,20 @@ export default function ControllerCanvasPage() {
                 />
               </div>
             </div>
+          </Grid>
+        </Grid>
+        <Grid container>
+          <Grid item xs={12}>
+            <ChipRow
+              chips={[
+                `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
+              ]}
+            />
           </Grid>
         </Grid>
       </div>
