@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -269,20 +268,19 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 			return
 		}
 	}
-	log.Println(message.Type)
+	log.Println(message.Type, page)
 	switch message.Type {
 	case constants.WSMessageTypeAudio:
-		filename = fmt.Sprintf("%d.ogg", time.Now().Unix())
+		filename = "audio.ogg"
 	case constants.WSMessageTypeImage:
 		filename = "image.png"
 	case constants.WSMessageTypeManifest:
 		filename = "manifest.json"
-		log.Println(string(data))
 	default:
 		return
 	}
 	var file *os.File
-	if file, err = os.OpenFile(fmt.Sprintf("%s/%s", directory, filename), os.O_WRONLY|os.O_CREATE, 0700); err != nil {
+	if file, err = os.OpenFile(fmt.Sprintf("%s/%s", directory, filename), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0700); err != nil {
 		log.Println(err)
 		return
 	}
