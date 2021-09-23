@@ -1,16 +1,13 @@
-/* eslint-disable */
 import {
-  Button,
   Grid,
-  Typography,
-  CircularProgress,
-  Paper,
+  // Paper,
   ImageList,
   ImageListItem,
+  IconButton,
 } from "@material-ui/core";
+import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@material-ui/icons";
 import useAxios from "axios-hooks";
-import { useEffect, useState, useRef, useCallback } from "react";
-import { Alert } from "@material-ui/lab";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { restAPI } from "../api";
 import { APIResponse, Manifest, Session } from "../data";
@@ -31,13 +28,11 @@ export default function StoryDetailPage() {
     runAudio: () => {},
   });
 
-  const [
-    { data: story, loading: getStoryLoading, error: getStoryError },
-    executeGetClassroomDetail,
-  ] = useAxios<APIResponse<Session>, APIResponse<undefined>>(
-    restAPI.session.getOne(classroomId, sessionId),
-    { manual: true }
-  );
+  const [{ data: story, loading: getStoryLoading }, executeGetClassroomDetail] =
+    useAxios<APIResponse<Session>, APIResponse<undefined>>(
+      restAPI.session.getOne(classroomId, sessionId),
+      { manual: true }
+    );
 
   const [page, setPage] = useState(1);
   const [{ data: manifest, loading: getManifestLoading }, executeGetManifest] =
@@ -73,93 +68,6 @@ export default function StoryDetailPage() {
 
   return (
     <Grid container className="relative">
-      {/* <Grid item xs={12} className="mb-4">
-        <Typography variant="h2">
-          {Object.keys(manifest?.texts || {}).length} texts
-        </Typography>
-        <Typography variant="h2">{story?.data?.title}</Typography>
-      </Grid>
-      {getStoryLoading && (
-        <Grid container justifyContent="center">
-          <CircularProgress />
-        </Grid>
-      )}
-      {getStoryError && <Alert severity="error">Failed loading Gallery!</Alert>}
-      {!getStoryLoading && !getStoryError && (
-        <Grid container spacing={2}>
-          {story?.data && (
-            <Grid item key={story.data.pages}>
-              <h1>{page}</h1>
-              <div className="grid">
-                <div
-                  style={{
-                    gridRowStart: 1,
-                    gridColumnStart: 1,
-                    zIndex: 10,
-                  }}
-                >
-                  <Canvas
-                    ref={canvasRef}
-                    wsConn={undefined}
-                    role={ControllerRole.Hub}
-                    layer={ControllerRole.Story}
-                    pageNum={page}
-                    isShown={
-                      !getStoryLoading &&
-                      !!story &&
-                      !getManifestLoading &&
-                      !!manifest
-                    } // ensures canvas is loaded withh proper dimensions
-                    isGallery
-                    setTextShapes={setTextShapes}
-                    textShapes={textShapes}
-                    audioPaths={audioPaths}
-                    setAudioPaths={setAudioPaths}
-                  />
-                </div>
-                <div
-                  style={{
-                    gridRowStart: 1,
-                    gridColumnStart: 1,
-                    zIndex: 1,
-                    pointerEvents: "none", // forwards pointer events to next layer
-                  }}
-                >
-                  <img
-                    src={
-                      restAPI.gallery.getAsset(
-                        classroomId,
-                        sessionId,
-                        page,
-                        "image.png"
-                      ).url
-                    }
-                    alt={story.data.title}
-                    style={{
-                      borderWidth: 4,
-                    }}
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={() => page > 1 && setPage(page - 1)}
-                disabled={page === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={() =>
-                  page < (story.data?.pages || 1) && setPage(page + 1)
-                }
-                disabled={page === story.data.pages}
-              >
-                Next
-              </Button>
-            </Grid>
-          )}
-        </Grid>
-      )} */}
-
       {/* TODO ga perlu taro apa2 disini hrsnya, kecuali lu ada 2 different layout kek contoh di HubPage,
        pertama muncul form terus muncul canvas, nah form nya taro disini */}
 
@@ -174,21 +82,41 @@ export default function StoryDetailPage() {
       >
         <Grid container className="mb-4">
           {/* TODO disini buat taro info2 diatas canvas, kek title, dll, tinggi nya bakal secukupnya utk nampung content */}
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <Paper>row of info here</Paper>
-            <div>ehehhe</div>
           </Grid>
           <Grid item xs={9}>
             <Paper>hihi</Paper>
-          </Grid>
-          <Grid item xs={3} style={{ backgroundColor: "salmon" }}>
+          </Grid> */}
+          <Grid
+            item
+            xs={3}
+            style={{ backgroundColor: "salmon", justifyContent: "center" }}
+          >
             {/* <Paper>hoho</Paper> */}
           </Grid>
         </Grid>
         <Grid container className="flex-1 mb-4">
           {/* TODO disini area yg utk canvas, dimana tinggi bakal nge expand sampe nyentuh bawah layar */}
-          <Grid item xs={2}>
-            <ImageList cols={1}>
+          <Grid
+            item
+            xs={2}
+            style={{
+              backgroundColor: "white",
+              alignSelf: "center",
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: "30px",
+            }}
+          >
+            <IconButton
+              onClick={() => page > 1 && setPage(page - 1)}
+              disabled={page === 1}
+              style={{ alignSelf: "center" }}
+            >
+              <ArrowUpwardOutlined fontSize="medium" />
+            </IconButton>
+            <ImageList cols={1} gap={4}>
               {Array.from(
                 { length: story?.data?.pages || 0 },
                 (_, i) => i + 1
@@ -203,14 +131,22 @@ export default function StoryDetailPage() {
                         "image.png"
                       ).url
                     }
-                    // srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
-
+                    alt={story?.data?.title}
                     loading="lazy"
                   />
                 </ImageListItem>
               ))}
             </ImageList>
-            slideshow
+            <div className="place-self-center">
+              <IconButton
+                onClick={() =>
+                  page < (story?.data?.pages || 1) && setPage(page + 1)
+                }
+                disabled={page === story?.data?.pages}
+              >
+                <ArrowDownwardOutlined fontSize="medium" />
+              </IconButton>
+            </div>
           </Grid>
           <Grid item xs={10}>
             <div
@@ -221,6 +157,7 @@ export default function StoryDetailPage() {
               ref={canvasContainerRef}
             >
               <div
+                className="grid"
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -245,6 +182,7 @@ export default function StoryDetailPage() {
                   textShapes={textShapes}
                   audioPaths={audioPaths}
                   setAudioPaths={setAudioPaths}
+                  offsetWidth={canvasOffsetWidth}
                 />
               </div>
               {/* TODO ini gw tambahin classname supaya image nya ke center, ref supaya bisa itung desired width <img /> */}
@@ -259,6 +197,7 @@ export default function StoryDetailPage() {
               >
                 <img
                   width={canvasOffsetWidth}
+                  height={canvasOffsetHeight}
                   src={
                     restAPI.gallery.getAsset(
                       classroomId,
