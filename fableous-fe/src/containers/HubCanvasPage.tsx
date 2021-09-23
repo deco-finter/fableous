@@ -164,14 +164,16 @@ export default function HubCanvasPage() {
                   variant: "info",
                 });
               }
-              setHelpControllers((prev) => ({
-                ...prev,
-                [msg.role as StudentRole]: help,
-              }));
-              setDoneControllers((prev) => ({
-                ...prev,
-                [msg.role as StudentRole]: done,
-              }));
+              if (!done && help)
+                setHelpControllers((prev) => ({
+                  ...prev,
+                  [msg.role as StudentRole]: help,
+                }));
+              if (!help)
+                setDoneControllers((prev) => ({
+                  ...prev,
+                  [msg.role as StudentRole]: done,
+                }));
             }
             break;
           case WSMessageType.Join:
