@@ -165,6 +165,9 @@ export default function HubCanvasPage() {
                   ...prev,
                   [msg.role as StudentRole]: true,
                 }));
+                enqueueSnackbar(`${ROLE_ICON[msg.role].text} needs a hand!`, {
+                  variant: "info",
+                });
               }
               if (done) {
                 setDoneControllers((prev) => ({
