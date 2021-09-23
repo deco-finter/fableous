@@ -281,6 +281,8 @@ export default function StoryItem(props: {
                   <div className="flex-grow" />
                   <Button
                     size="small"
+                    variant="outlined"
+                    startIcon={<Icon fontSize="small">cancel</Icon>}
                     className={classes.actionButton}
                     disabled={putLoading || deleteLoading}
                     onClick={() => {
@@ -290,15 +292,17 @@ export default function StoryItem(props: {
                       });
                     }}
                   >
-                    <Icon fontSize="small">cancel</Icon>
+                    Cancel
                   </Button>
                   <Button
                     size="small"
+                    variant="outlined"
+                    startIcon={<Icon fontSize="small">save</Icon>}
                     className={classes.actionButton}
                     disabled={putLoading || deleteLoading}
                     type="submit"
                   >
-                    <Icon fontSize="small">save</Icon>
+                    Save
                   </Button>
                 </CardActions>
               ) : (
@@ -306,21 +310,24 @@ export default function StoryItem(props: {
                   {editable && (
                     <Button
                       size="small"
+                      variant="outlined"
+                      startIcon={<Icon fontSize="small">edit</Icon>}
                       onClick={handleEdit}
                       className={classes.actionButton}
                     >
-                      <Icon fontSize="small">edit</Icon>
+                      Edit
                     </Button>
                   )}
                   <div className="flex-grow" />
                   <Button
                     size="small"
-                    variant="contained"
                     color="secondary"
+                    variant="contained"
+                    endIcon={<Icon fontSize="small">book</Icon>}
                     component={Link}
                     to={`/gallery/${classroomId}/${session.id}`}
                   >
-                    Read <Icon fontSize="small">book</Icon>
+                    Read
                   </Button>
                 </CardActions>
               )}

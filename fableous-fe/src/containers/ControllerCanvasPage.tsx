@@ -417,11 +417,12 @@ export default function ControllerCanvasPage() {
                       </Grid>
                       <Grid item xs={12} className="flex justify-end">
                         <Button
-                          variant="contained"
                           color="secondary"
+                          variant="contained"
+                          endIcon={<Icon fontSize="small">brush</Icon>}
                           type="submit"
                         >
-                          Join <Icon>brush</Icon>
+                          Join
                         </Button>
                       </Grid>
                     </Grid>
@@ -450,12 +451,13 @@ export default function ControllerCanvasPage() {
             <Button
               variant="contained"
               color="primary"
+              endIcon={<Icon fontSize="small">brush</Icon>}
               className="mb-2"
               onClick={() => {
                 setControllerState(ControllerState.JoinForm);
               }}
             >
-              Join another session <Icon>brush</Icon>
+              Join another session
             </Button>
           </Grid>
           <Grid item xs={12}>

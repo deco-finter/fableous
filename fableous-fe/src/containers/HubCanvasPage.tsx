@@ -526,14 +526,14 @@ export default function HubCanvasPage() {
                       </Grid>
                       <Grid item xs={12} className="flex justify-end">
                         <Button
-                          variant="contained"
                           color="secondary"
+                          variant="contained"
+                          endIcon={<Icon fontSize="small">play_arrow</Icon>}
                           disabled={postLoading}
                           type="submit"
                           style={{ height: "100%" }}
                         >
-                          start
-                          <Icon>play_arrow</Icon>
+                          Start
                         </Button>
                       </Grid>
                     </Grid>
@@ -660,12 +660,13 @@ export default function HubCanvasPage() {
                   <Chip color="primary" label={classroomToken} />
                   <div className="flex flex-grow" />
                   <Button
-                    variant="contained"
                     color="secondary"
+                    variant="contained"
+                    endIcon={<Icon fontSize="small">brush</Icon>}
                     onClick={onBeginDrawing}
                     disabled={!isAllControllersJoined()}
                   >
-                    Begin Drawing <Icon>brush</Icon>
+                    Begin Drawing
                   </Button>
                 </Grid>
               </Grid>

@@ -154,18 +154,22 @@ export default function ClassroomListPage() {
                         <div className="flex-grow" />
                         <Button
                           size="small"
+                          variant="outlined"
+                          startIcon={<Icon fontSize="small">cancel</Icon>}
                           disabled={postLoading}
                           onClick={handleCancel}
                           type="button"
                         >
-                          <Icon fontSize="small">cancel</Icon>
+                          Cancel
                         </Button>
                         <Button
                           size="small"
+                          variant="outlined"
+                          startIcon={<Icon fontSize="small">save</Icon>}
                           disabled={postLoading}
                           type="submit"
                         >
-                          <Icon fontSize="small">save</Icon>
+                          Save
                         </Button>
                       </CardActions>
                     </form>
