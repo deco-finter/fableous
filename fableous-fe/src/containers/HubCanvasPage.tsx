@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import {
@@ -7,7 +6,6 @@ import {
   Chip,
   ChipProps,
   CircularProgress,
-  IconButton,
   Paper,
 } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
@@ -36,8 +34,8 @@ import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
+import LayerIcon from "../components/canvas/LayerIcon";
 import ChipRow from "../components/ChipRow";
-import { colors } from "../colors";
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -635,117 +633,24 @@ export default function HubCanvasPage() {
                 }}
               >
                 <Paper className="p-1 flex flex-col justify-around items-center min-h-full px-2">
-                  <div className="flex flex-col justify-center items-center">
-                    <IconButton
-                      style={{
-                        color:
-                          focusLayer === ControllerRole.Story
-                            ? colors.orange.main
-                            : !focusLayer
-                            ? colors.blue.main
-                            : colors.gray.main,
-                      }}
-                      onClick={() =>
-                        setFocusLayer(
-                          focusLayer === ControllerRole.Story
-                            ? undefined
-                            : ControllerRole.Story
-                        )
-                      }
-                    >
-                      <Icon fontSize="large">
-                        {ROLE_ICON[ControllerRole.Story].icon}
-                      </Icon>
-                    </IconButton>
-                    <Typography
-                      variant="subtitle2"
-                      className="-mt-4 font-bold"
-                      style={{
-                        color:
-                          focusLayer === ControllerRole.Story
-                            ? colors.orange.main
-                            : !focusLayer
-                            ? colors.blue.main
-                            : colors.gray.main,
-                      }}
-                    >
-                      {ROLE_ICON[ControllerRole.Story].text}
-                    </Typography>
-                  </div>
-                  <div className="flex flex-col justify-center items-center">
-                    <IconButton
-                      style={{
-                        color:
-                          focusLayer === ControllerRole.Character
-                            ? colors.orange.main
-                            : !focusLayer
-                            ? colors.blue.main
-                            : colors.gray.main,
-                      }}
-                      onClick={() =>
-                        setFocusLayer(
-                          focusLayer === ControllerRole.Character
-                            ? undefined
-                            : ControllerRole.Character
-                        )
-                      }
-                    >
-                      <Icon fontSize="large">
-                        {ROLE_ICON[ControllerRole.Character].icon}
-                      </Icon>
-                    </IconButton>
-                    <Typography
-                      variant="subtitle2"
-                      className="-mt-4 font-bold"
-                      style={{
-                        color:
-                          focusLayer === ControllerRole.Character
-                            ? colors.orange.main
-                            : !focusLayer
-                            ? colors.blue.main
-                            : colors.gray.main,
-                      }}
-                    >
-                      {ROLE_ICON[ControllerRole.Character].text}
-                    </Typography>
-                  </div>
-                  <div className="flex flex-col justify-center items-center">
-                    <IconButton
-                      style={{
-                        color:
-                          focusLayer === ControllerRole.Background
-                            ? colors.orange.main
-                            : !focusLayer
-                            ? colors.blue.main
-                            : colors.gray.main,
-                      }}
-                      onClick={() =>
-                        setFocusLayer(
-                          focusLayer === ControllerRole.Background
-                            ? undefined
-                            : ControllerRole.Background
-                        )
-                      }
-                    >
-                      <Icon fontSize="large">
-                        {ROLE_ICON[ControllerRole.Background].icon}
-                      </Icon>
-                    </IconButton>
-                    <Typography
-                      variant="subtitle2"
-                      className="-mt-4 font-bold"
-                      style={{
-                        color:
-                          focusLayer === ControllerRole.Background
-                            ? colors.orange.main
-                            : !focusLayer
-                            ? colors.blue.main
-                            : colors.gray.main,
-                      }}
-                    >
-                      {ROLE_ICON[ControllerRole.Background].text}
-                    </Typography>
-                  </div>
+                  <LayerIcon
+                    role={ControllerRole.Story}
+                    focusLayer={focusLayer}
+                    setFocusLayer={setFocusLayer}
+                    joinedControllers={joinedControllers}
+                  />
+                  <LayerIcon
+                    role={ControllerRole.Character}
+                    focusLayer={focusLayer}
+                    setFocusLayer={setFocusLayer}
+                    joinedControllers={joinedControllers}
+                  />
+                  <LayerIcon
+                    role={ControllerRole.Background}
+                    focusLayer={focusLayer}
+                    setFocusLayer={setFocusLayer}
+                    joinedControllers={joinedControllers}
+                  />
                 </Paper>
               </div>
             </div>
