@@ -1,6 +1,13 @@
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import { ChipProps, IconButton } from "@material-ui/core";
+import {
+  Card,
+  CardContent,
+  Chip,
+  ChipProps,
+  CircularProgress,
+  IconButton,
+} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import { Formik, FormikHelpers } from "formik";
@@ -9,7 +16,7 @@ import MusicNoteIcon from "@material-ui/icons/MusicNote";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
 import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
@@ -19,6 +26,7 @@ import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
 import { WSMessageType, ControllerRole } from "../constant";
+import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
@@ -32,7 +40,6 @@ enum HubState {
 
 export default function HubCanvasPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
-  const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
@@ -146,9 +153,14 @@ export default function HubCanvasPage() {
 
               // show error if controller disconnects during drawing session
               if (!joining && hubState === HubState.DrawingSession) {
-                enqueueSnackbar(`${role} got disconnected`, {
-                  variant: "error",
-                });
+                enqueueSnackbar(
+                  `${
+                    role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
+                  } leaves the room!`,
+                  {
+                    variant: "error",
+                  }
+                );
               }
             }
             break;
@@ -163,7 +175,7 @@ export default function HubCanvasPage() {
 
   const wsErrorHandler = useCallback(
     (err: Event) => {
-      enqueueSnackbar("connection error", { variant: "error" });
+      enqueueSnackbar("Connection error!", { variant: "error" });
       console.error("ws conn error", err);
       clearWsConn();
       setHubState(HubState.SessionForm);
@@ -199,7 +211,7 @@ export default function HubCanvasPage() {
         actions.resetForm();
       })
       .catch((err: any) => {
-        enqueueSnackbar("failed to create session", { variant: "error" });
+        enqueueSnackbar("Failed to start session!", { variant: "error" });
         console.error("post session error", err);
       });
   };
@@ -232,7 +244,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].some((role) => role in joinedControllers);
+    ].every((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
@@ -304,10 +316,12 @@ export default function HubCanvasPage() {
     if (currentPageIdx && story && currentPageIdx > story.pages) {
       // TODO send canvas result to backend here
       // assume backend will close ws conn
+      enqueueSnackbar("Story completed!", { variant: "success" });
       setHubState(HubState.SessionForm);
       achievementReset();
     }
-  }, [currentPageIdx, story, clearWsConn, achievementReset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPageIdx, story, enqueueSnackbar]);
 
   // broadcast achievement to all joined controllers on achievement update
   useEffect(() => {
@@ -317,120 +331,238 @@ export default function HubCanvasPage() {
   return (
     <Grid container className="flex-col flex-1 relative">
       {hubState !== HubState.DrawingSession && (
-        <>
-          <Grid item xs={12}>
-            <Button
-              onClick={() => history.goBack()}
-              startIcon={<Icon>arrow_backward</Icon>}
-            >
-              Back
-            </Button>
-          </Grid>
-          <Grid item xs={12} className="mb-4">
-            <Typography variant="h2">
+        <Grid item xs={12} className="mb-8">
+          <BackButton className="mb-2" />
+          <Typography variant="h2">
+            {
               {
-                {
-                  [HubState.SessionForm]: "story",
-                  [HubState.WaitingRoom]: "lobby",
-                  [HubState.DrawingSession]: "",
-                }[hubState]
-              }
-            </Typography>
-          </Grid>
-        </>
+                [HubState.SessionForm]: "New Story",
+                [HubState.WaitingRoom]: "Lobby",
+                [HubState.DrawingSession]: "",
+              }[hubState]
+            }
+          </Typography>
+        </Grid>
       )}
       {hubState === HubState.SessionForm && (
-        <Formik
-          initialValues={
-            {
-              title: "",
-              description: "",
-              pages: 1,
-            } as Story
-          }
-          validationSchema={yup.object({
-            title: yup.string().required("required"),
-            description: yup.string().required("required"),
-            pages: yup.number().positive("must be positive"),
-          })}
-          onSubmit={handleCreateSession}
-        >
-          {(formik) => (
-            <form onSubmit={formik.handleSubmit}>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="title"
-                  label="Title"
-                  overrides={{
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="description"
-                  label="Description"
-                  overrides={{
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <FormikTextField
-                  formik={formik}
-                  name="pages"
-                  label="Pages"
-                  overrides={{
-                    type: "number",
-                    variant: "outlined",
-                    disabled: postLoading,
-                    className: "mb-4",
-                  }}
-                />
-              </div>
-              <div>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={postLoading}
-                  type="submit"
-                >
-                  create
-                </Button>
-              </div>
-            </form>
-          )}
-        </Formik>
+        <Grid item xs={12} sm={8} md={6} lg={4}>
+          <Card>
+            <Formik
+              initialValues={
+                {
+                  title: "",
+                  description: "",
+                  pages: 1,
+                } as Story
+              }
+              validationSchema={yup.object({
+                title: yup.string().required("Title required"),
+                description: yup.string().required("Description required"),
+                pages: yup
+                  .number()
+                  .required("Number of pages required")
+                  .integer("Invalid numbergit")
+                  .positive("Must have at least one page")
+                  .lessThan(21, "Maximum is 20 pages"),
+              })}
+              onSubmit={handleCreateSession}
+            >
+              {(formik) => (
+                <form onSubmit={formik.handleSubmit} autoComplete="off">
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} className="flex-grow flex flex-col">
+                        <FormikTextField
+                          formik={formik}
+                          name="title"
+                          label="Title"
+                          overrides={{
+                            autoFocus: true,
+                            variant: "outlined",
+                            disabled: postLoading,
+                          }}
+                        />
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={6}
+                        className="flex-grow flex flex-col"
+                      >
+                        <FormikTextField
+                          formik={formik}
+                          name="description"
+                          label="Description"
+                          overrides={{
+                            variant: "outlined",
+                            disabled: postLoading,
+                          }}
+                        />
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={6}
+                        className="flex-grow flex flex-col"
+                      >
+                        <FormikTextField
+                          formik={formik}
+                          name="pages"
+                          label="Pages"
+                          overrides={{
+                            type: "number",
+                            variant: "outlined",
+                            disabled: postLoading,
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} className="flex justify-end">
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          disabled={postLoading}
+                          type="submit"
+                          style={{ height: "100%" }}
+                        >
+                          start
+                          <Icon>play_arrow</Icon>
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </form>
+              )}
+            </Formik>
+          </Card>
+        </Grid>
       )}
       {hubState === HubState.WaitingRoom && (
-        <Grid item xs={12}>
-          <Typography variant="h6">
-            token: <span>{classroomToken || "-"}</span>
-          </Typography>
-          <Typography variant="h6">
-            Joined Students ({Object.keys(joinedControllers).length}/3)
-          </Typography>
-          <ul>
-            {Object.entries(joinedControllers).map(([role, name]) => (
-              <li key={role}>
-                {role} - {name}
-              </li>
-            ))}
-          </ul>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={onBeginDrawing}
-            disabled={!isAllControllersJoined()}
-          >
-            begin drawing
-          </Button>
+        <Grid item xs={12} sm={8} md={6} lg={4}>
+          <Card>
+            <CardContent>
+              <Grid container spacing={1}>
+                <Grid item xs={12}>
+                  <Typography variant="h6">
+                    Joined Students ({Object.keys(joinedControllers).length}/3)
+                  </Typography>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  style={{
+                    color: joinedControllers[ControllerRole.Story]
+                      ? "inherit"
+                      : "gray",
+                  }}
+                >
+                  <Grid container>
+                    <Grid item xs={4}>
+                      <Icon fontSize="small" className="align-middle">
+                        text_fields
+                      </Icon>
+                      Story
+                    </Grid>
+                    <Grid item xs={8}>
+                      <div className="ml-4">
+                        {joinedControllers[ControllerRole.Story] ? (
+                          <>{joinedControllers[ControllerRole.Story]}</>
+                        ) : (
+                          <>
+                            waiting to join{" "}
+                            <CircularProgress
+                              size={12}
+                              thickness={8}
+                              className="ml-1"
+                            />
+                          </>
+                        )}
+                      </div>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  style={{
+                    color: joinedControllers[ControllerRole.Character]
+                      ? "inherit"
+                      : "gray",
+                  }}
+                >
+                  <Grid container>
+                    <Grid item xs={4}>
+                      <Icon fontSize="small" className="align-middle">
+                        directions_run
+                      </Icon>
+                      Character
+                    </Grid>
+                    <Grid item xs={8}>
+                      <div className="ml-4">
+                        {joinedControllers[ControllerRole.Character] ? (
+                          <>{joinedControllers[ControllerRole.Character]}</>
+                        ) : (
+                          <>
+                            waiting to join{" "}
+                            <CircularProgress
+                              size={12}
+                              thickness={8}
+                              className="ml-1"
+                            />
+                          </>
+                        )}
+                      </div>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  style={{
+                    color: joinedControllers[ControllerRole.Background]
+                      ? "inherit"
+                      : "gray",
+                  }}
+                >
+                  <Grid container>
+                    <Grid item xs={4}>
+                      <Icon fontSize="small" className="align-middle">
+                        image
+                      </Icon>
+                      Background
+                    </Grid>
+                    <Grid item xs={8}>
+                      <div className="ml-4">
+                        {joinedControllers[ControllerRole.Background] ? (
+                          <>{joinedControllers[ControllerRole.Background]}</>
+                        ) : (
+                          <>
+                            waiting to join{" "}
+                            <CircularProgress
+                              size={12}
+                              thickness={8}
+                              className="ml-1"
+                            />
+                          </>
+                        )}
+                      </div>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid item xs={12} className="flex mt-2">
+                  <Chip color="primary" label={classroomToken} />
+                  <div className="flex flex-grow" />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={onBeginDrawing}
+                    disabled={!isAllControllersJoined()}
+                  >
+                    Begin Drawing <Icon>brush</Icon>
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
         </Grid>
       )}
       <div
