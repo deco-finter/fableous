@@ -64,11 +64,11 @@ export default function AchievementButton(props: {
   const confettiRef = useRef<ConfettiTypes | null>(null);
 
   const confettiOptions: ConfettiOptions = {
-    startVelocity: 12,
-    scalar: 0.75,
-    gravity: 0.4,
-    ticks: 300,
-    drift: -0.1,
+    startVelocity: 14,
+    scalar: 0.8,
+    gravity: 0.35,
+    ticks: 500,
+    drift: 0.1,
   };
 
   const notifyAchievement = (type: AchievementType) => {
