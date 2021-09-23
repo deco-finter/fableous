@@ -240,11 +240,14 @@ export default function HubCanvasPage() {
   };
 
   const isAllControllersJoined = (): boolean => {
-    return [
-      ControllerRole.Story,
-      ControllerRole.Character,
-      ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    return (
+      [
+        ControllerRole.Story,
+        ControllerRole.Character,
+        ControllerRole.Background,
+      ].every((role) => role in joinedControllers) ||
+      process.env.NODE_ENV === "development"
+    );
   };
 
   const onNextPage = () => {
