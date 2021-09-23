@@ -19,7 +19,13 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
-import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import {
+  Manifest,
+  Story,
+  WSControlMessageData,
+  WSJoinMessageData,
+  WSMessage,
+} from "../data";
 import AchievementButton from "../components/achievement/AchievementButton";
 import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
@@ -216,29 +222,6 @@ export default function HubCanvasPage() {
       });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const exportCanvas = () => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const { width, height } = storyCanvasRef.current.getCanvas();
-    if (!ctx) return;
-    canvas.width = width;
-    canvas.height = height;
-    ctx.beginPath();
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(backgroundCanvasRef.current.getCanvas(), 0, 0, width, height);
-    ctx.drawImage(characterCanvasRef.current.getCanvas(), 0, 0, width, height);
-    ctx.drawImage(storyCanvasRef.current.getCanvas(), 0, 0, width, height);
-    const link = document.createElement("a");
-    link.download = "output.png";
-    link.href = canvas
-      .toDataURL("image/png")
-      .replace("image/png", "image/octet-stream");
-    link.click();
-    console.log(JSON.stringify(storyTextShapes));
-  };
-
   const isAllControllersJoined = (): boolean => {
     return (
       [
@@ -251,6 +234,59 @@ export default function HubCanvasPage() {
   };
 
   const onNextPage = () => {
+    console.log("posting this canvas page");
+    if (hubState === HubState.DrawingSession) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const { width, height } = storyCanvasRef.current.getCanvas();
+      if (!ctx) return;
+      canvas.width = width;
+      canvas.height = height;
+      ctx.beginPath();
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(
+        backgroundCanvasRef.current.getCanvas(),
+        0,
+        0,
+        width,
+        height
+      );
+      ctx.drawImage(
+        characterCanvasRef.current.getCanvas(),
+        0,
+        0,
+        width,
+        height
+      );
+      ctx.drawImage(storyCanvasRef.current.getCanvas(), 0, 0, width, height);
+      const link = document.createElement("a");
+      link.download = "output.png";
+      const dataUrl = canvas.toDataURL();
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Image,
+          data: {
+            id: currentPageIdx,
+            text: dataUrl,
+          },
+        } as WSMessage)
+      );
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Manifest,
+          data: {
+            id: currentPageIdx,
+            text: JSON.stringify({
+              texts: storyTextShapes,
+              audios: audioPaths,
+              achievements,
+            } as Manifest),
+          },
+        } as WSMessage)
+      );
+    }
+    setHubState(HubState.DrawingSession);
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
@@ -259,7 +295,6 @@ export default function HubCanvasPage() {
       return prev + 1;
     });
   };
-
   const onBeginDrawing = () => {
     onNextPage();
     setHubState(HubState.DrawingSession);
