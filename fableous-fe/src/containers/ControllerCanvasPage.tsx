@@ -207,16 +207,16 @@ export default function ControllerCanvasPage() {
 
   const handleHelp = () => {
     enqueueSnackbar("Help requested!", { variant: "info" });
+    wsConn?.send(
+      JSON.stringify({
+        type: WSMessageType.Control,
+        data: { help: true } as WSControlMessageData,
+      })
+    );
   };
 
   const handleDone = () => {
     if (isDone) return;
-    wsConn?.send(
-      JSON.stringify({
-        type: WSMessageType.Control,
-        data: { nextPage: true } as WSControlMessageData,
-      })
-    );
     setIsDone(true);
   };
 
@@ -268,6 +268,17 @@ export default function ControllerCanvasPage() {
       setControllerState(ControllerState.StoryFinished);
     }
   }, [currentPageIdx, storyDetails, controllerState]);
+
+  // send done control message on change
+  useEffect(() => {
+    if (controllerState === ControllerState.DrawingSession)
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Control,
+          data: { done: isDone } as WSControlMessageData,
+        })
+      );
+  }, [controllerState, isDone, wsConn]);
 
   return (
     <Grid
