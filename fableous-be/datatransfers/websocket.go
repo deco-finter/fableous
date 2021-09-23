@@ -31,6 +31,8 @@ type WSControlMessageData struct {
 	SessionID      string `json:"sessionId,omitempty"`
 	CurrentPage    *int   `json:"currentPage,omitempty"`
 	NextPage       *bool  `json:"nextPage,omitempty"`
+	Help           *bool  `json:"help,omitempty"`
+	Done           *bool  `json:"done,omitempty"`
 }
 
 type WSAchievementMessageData struct {
