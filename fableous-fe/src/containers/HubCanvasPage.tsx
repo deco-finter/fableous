@@ -154,9 +154,20 @@ export default function HubCanvasPage() {
                 setJoinedControllers((prev) => {
                   const prevCopy = { ...prev };
                   delete prevCopy[role];
-
                   return prevCopy;
                 });
+                switch (role) {
+                  case ControllerRole.Story:
+                    setStoryCursor(undefined);
+                    break;
+                  case ControllerRole.Character:
+                    setCharacterCursor(undefined);
+                    break;
+                  case ControllerRole.Background:
+                    setBackgroundCursor(undefined);
+                    break;
+                  default:
+                }
               }
 
               // show error if controller disconnects during drawing session
