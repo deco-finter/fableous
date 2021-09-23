@@ -19,7 +19,13 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
-import { Story, WSControlMessageData, WSJoinMessageData } from "../data";
+import {
+  Manifest,
+  Story,
+  WSControlMessageData,
+  WSJoinMessageData,
+  WSMessage,
+} from "../data";
 import AchievementButton from "../components/achievement/AchievementButton";
 import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
@@ -216,38 +222,71 @@ export default function HubCanvasPage() {
       });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const exportCanvas = () => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const { width, height } = storyCanvasRef.current.getCanvas();
-    if (!ctx) return;
-    canvas.width = width;
-    canvas.height = height;
-    ctx.beginPath();
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(backgroundCanvasRef.current.getCanvas(), 0, 0, width, height);
-    ctx.drawImage(characterCanvasRef.current.getCanvas(), 0, 0, width, height);
-    ctx.drawImage(storyCanvasRef.current.getCanvas(), 0, 0, width, height);
-    const link = document.createElement("a");
-    link.download = "output.png";
-    link.href = canvas
-      .toDataURL("image/png")
-      .replace("image/png", "image/octet-stream");
-    link.click();
-    console.log(JSON.stringify(storyTextShapes));
-  };
-
   const isAllControllersJoined = (): boolean => {
-    return [
-      ControllerRole.Story,
-      ControllerRole.Character,
-      ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    return (
+      [
+        ControllerRole.Story,
+        ControllerRole.Character,
+        ControllerRole.Background,
+      ].every((role) => role in joinedControllers) ||
+      process.env.NODE_ENV === "development"
+    );
   };
 
   const onNextPage = () => {
+    console.log("posting this canvas page");
+    if (hubState === HubState.DrawingSession) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const { width, height } = storyCanvasRef.current.getCanvas();
+      if (!ctx) return;
+      canvas.width = width;
+      canvas.height = height;
+      ctx.beginPath();
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(
+        backgroundCanvasRef.current.getCanvas(),
+        0,
+        0,
+        width,
+        height
+      );
+      ctx.drawImage(
+        characterCanvasRef.current.getCanvas(),
+        0,
+        0,
+        width,
+        height
+      );
+      ctx.drawImage(storyCanvasRef.current.getCanvas(), 0, 0, width, height);
+      const link = document.createElement("a");
+      link.download = "output.png";
+      const dataUrl = canvas.toDataURL();
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Image,
+          data: {
+            id: currentPageIdx,
+            text: dataUrl,
+          },
+        } as WSMessage)
+      );
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Manifest,
+          data: {
+            id: currentPageIdx,
+            text: JSON.stringify({
+              texts: storyTextShapes,
+              audios: audioPaths,
+              achievements,
+            } as Manifest),
+          },
+        } as WSMessage)
+      );
+    }
+    setHubState(HubState.DrawingSession);
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
@@ -256,7 +295,6 @@ export default function HubCanvasPage() {
       return prev + 1;
     });
   };
-
   const onBeginDrawing = () => {
     onNextPage();
     setHubState(HubState.DrawingSession);
@@ -570,48 +608,18 @@ export default function HubCanvasPage() {
           hubState !== HubState.DrawingSession && "invisible"
         }`}
       >
-        <Grid container className="mb-4">
+        <Grid container>
           <Grid item xs={12}>
             <ChipRow
-              left={`Title: ${story?.title}`}
-              middle={[
-                <AchievementButton
-                  achievements={achievements}
-                  confetti
-                  notify
-                />,
-                {
-                  label:
-                    currentPageIdx >= (story?.pages || -1)
-                      ? "Finish"
-                      : "Next page",
-                  onClick: onNextPage,
-                } as ChipProps,
-                `Page ${currentPageIdx} of ${story?.pages || "-"}`,
-                {
-                  label: (
-                    <IconButton
-                      className="relative p-0"
-                      color="primary"
-                      disableRipple
-                    >
-                      <MusicNoteIcon fontSize="medium" />
-                      <PlayArrowIcon
-                        fontSize="small"
-                        color="primary"
-                        className="absolute -bottom-1 -right-1.5"
-                      />
-                    </IconButton>
-                  ),
-                  onClick: playAudio,
-                  disabled: audioPaths.length === 0,
-                } as ChipProps,
+              primary
+              chips={[
+                <Chip label={story?.title} color="primary" />,
+                ...(story?.description.split(",") || []),
               ]}
-              right={story?.description.split(",") || []}
             />
           </Grid>
         </Grid>
-        <Grid container className="flex-1 mb-4">
+        <Grid container className="flex-1 my-4">
           <Grid item xs={12}>
             <div
               ref={canvasContainerRef}
@@ -741,6 +749,48 @@ export default function HubCanvasPage() {
                 />
               </div>
             </div>
+          </Grid>
+        </Grid>
+        <Grid container>
+          <Grid item xs={12}>
+            <ChipRow
+              chips={[
+                `Page ${currentPageIdx} of ${story?.pages || "-"}`,
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
+                {
+                  label: (
+                    <>
+                      <IconButton
+                        className="p-0 mr-1"
+                        color="primary"
+                        disableRipple
+                      >
+                        <MusicNoteIcon fontSize="medium" />
+                        <PlayArrowIcon
+                          fontSize="small"
+                          color="primary"
+                          className="absolute -bottom-1 -right-1.5"
+                        />
+                      </IconButton>
+                      Play Audio
+                    </>
+                  ),
+                  onClick: playAudio,
+                  // disabled: audioPaths.length === 0,
+                } as ChipProps,
+                {
+                  label:
+                    currentPageIdx >= (story?.pages || -1)
+                      ? "Finish"
+                      : "Next page",
+                  onClick: onNextPage,
+                } as ChipProps,
+              ]}
+            />
           </Grid>
         </Grid>
       </div>

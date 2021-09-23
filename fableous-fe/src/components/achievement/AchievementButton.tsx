@@ -64,11 +64,11 @@ export default function AchievementButton(props: {
   const confettiRef = useRef<ConfettiTypes | null>(null);
 
   const confettiOptions: ConfettiOptions = {
-    startVelocity: 12,
-    scalar: 0.75,
-    gravity: 0.4,
-    ticks: 300,
-    drift: -0.1,
+    startVelocity: 14,
+    scalar: 0.8,
+    gravity: 0.35,
+    ticks: 500,
+    drift: 0.1,
   };
 
   const notifyAchievement = (type: AchievementType) => {
@@ -101,20 +101,25 @@ export default function AchievementButton(props: {
     <>
       <Chip
         onClick={() => setShowing(true)}
+        color="primary"
+        variant="outlined"
         label={
-          <IconButton className="p-0" color="primary" disableRipple>
-            <Icon fontSize="medium">emoji_events</Icon>
-            <ReactCanvasConfetti
-              resize
-              width={1024}
-              height={1024}
-              useWorker
-              refConfetti={(ref) => {
-                confettiRef.current = ref;
-              }}
-              className={classes.confetti}
-            />
-          </IconButton>
+          <>
+            <IconButton className="p-0 mr-2" color="primary" disableRipple>
+              <Icon fontSize="medium">emoji_events</Icon>
+              <ReactCanvasConfetti
+                resize
+                width={1024}
+                height={1024}
+                useWorker
+                refConfetti={(ref) => {
+                  confettiRef.current = ref;
+                }}
+                className={classes.confetti}
+              />
+            </IconButton>
+            Achievements
+          </>
         }
       />
       <Dialog

@@ -82,7 +82,7 @@ export interface ControllerJoin {
 }
 export interface Manifest {
   texts: TextShapeMap;
-  audios: { text: string }[];
+  audios: string[];
   achievements: Achievement;
 }
 

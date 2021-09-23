@@ -63,6 +63,7 @@ export default function App() {
           "&:last-of-type": {
             marginRight: 0,
           },
+          backgroundColor: colors.white,
         },
         label: {
           fontSize: "1.25rem",
@@ -75,7 +76,7 @@ export default function App() {
         },
         outlinedPrimary: {
           backgroundColor: colors.white,
-          color: colors.blue.light,
+          color: colors.blue.main,
         },
         clickable: {
           "&:hover": {
