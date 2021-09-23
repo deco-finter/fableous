@@ -250,21 +250,6 @@ export default function HubCanvasPage() {
   const postCanvas = () => {
     // TODO: transfer finishCanvas to postCanvas
     console.log("posting this canvas page");
-  };
-
-  const onNextPage = () => {
-    postCanvas();
-    wsConn?.send(
-      JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
-    );
-    setCurrentPageIdx((prev) => {
-      if (prev > 0) achievementNextPage();
-      return prev + 1;
-    });
-  };
-
-  const finishCanvas = () => {
-    // TODO: only use this function to finalize the canvas
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const { width, height } = storyCanvasRef.current.getCanvas();
@@ -281,7 +266,29 @@ export default function HubCanvasPage() {
     link.download = "output.png";
     const dataUrl = canvas.toDataURL();
     wsConn?.send(JSON.stringify({ type: WSMessageType.Image, data: dataUrl }));
-    // wsConn?.send(JSON.stringify({ type: WSMessageType.Manifest, data: {} }));
+    wsConn?.send(
+      JSON.stringify({
+        type: WSMessageType.Manifest,
+        data: { audio: audioPaths },
+        texts: storyTextShapes,
+      })
+    );
+  };
+
+  const onNextPage = () => {
+    postCanvas();
+    wsConn?.send(
+      JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
+    );
+    setCurrentPageIdx((prev) => {
+      if (prev > 0) achievementNextPage();
+      return prev + 1;
+    });
+  };
+
+  const finishCanvas = () => {
+    postCanvas();
+    // TODO: redirect HUB's url page
   };
 
   const onBeginDrawing = () => {
