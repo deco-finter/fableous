@@ -227,7 +227,7 @@ export default function HubCanvasPage() {
       ControllerRole.Story,
       ControllerRole.Character,
       ControllerRole.Background,
-    ].some((role) => role in joinedControllers);
+    ].every((role) => role in joinedControllers);
   };
 
   const onNextPage = () => {
