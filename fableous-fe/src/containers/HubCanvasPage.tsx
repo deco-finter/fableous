@@ -559,6 +559,7 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
                   pageNum={currentPageIdx}
+                  isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                   setCursor={setStoryCursor}
                   setTextShapes={setStoryTextShapes}
@@ -577,6 +578,7 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
                   pageNum={currentPageIdx}
+                  isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                   setCursor={setCharacterCursor}
                   setTextShapes={setCharacterTextShapes}
@@ -595,6 +597,7 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
                   pageNum={currentPageIdx}
+                  isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                   setCursor={setBackgroundCursor}
                   setTextShapes={setBackgroundTextShapes}
