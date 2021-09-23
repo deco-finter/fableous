@@ -223,11 +223,14 @@ export default function HubCanvasPage() {
   };
 
   const isAllControllersJoined = (): boolean => {
-    return [
-      ControllerRole.Story,
-      ControllerRole.Character,
-      ControllerRole.Background,
-    ].every((role) => role in joinedControllers);
+    return (
+      [
+        ControllerRole.Story,
+        ControllerRole.Character,
+        ControllerRole.Background,
+      ].every((role) => role in joinedControllers) ||
+      process.env.NODE_ENV === "development"
+    );
   };
 
   const onNextPage = () => {
@@ -605,48 +608,18 @@ export default function HubCanvasPage() {
           hubState !== HubState.DrawingSession && "invisible"
         }`}
       >
-        <Grid container className="mb-4">
+        <Grid container>
           <Grid item xs={12}>
             <ChipRow
-              left={`Title: ${story?.title}`}
-              middle={[
-                <AchievementButton
-                  achievements={achievements}
-                  confetti
-                  notify
-                />,
-                {
-                  label:
-                    currentPageIdx >= (story?.pages || -1)
-                      ? "Finish"
-                      : "Next page",
-                  onClick: onNextPage,
-                } as ChipProps,
-                `Page ${currentPageIdx} of ${story?.pages || "-"}`,
-                {
-                  label: (
-                    <IconButton
-                      className="relative p-0"
-                      color="primary"
-                      disableRipple
-                    >
-                      <MusicNoteIcon fontSize="medium" />
-                      <PlayArrowIcon
-                        fontSize="small"
-                        color="primary"
-                        className="absolute -bottom-1 -right-1.5"
-                      />
-                    </IconButton>
-                  ),
-                  onClick: playAudio,
-                  disabled: audioPaths.length === 0,
-                } as ChipProps,
+              primary
+              chips={[
+                <Chip label={story?.title} color="primary" />,
+                ...(story?.description.split(",") || []),
               ]}
-              right={story?.description.split(",") || []}
             />
           </Grid>
         </Grid>
-        <Grid container className="flex-1 mb-4">
+        <Grid container className="flex-1 my-4">
           <Grid item xs={12}>
             <div
               ref={canvasContainerRef}
@@ -776,6 +749,48 @@ export default function HubCanvasPage() {
                 />
               </div>
             </div>
+          </Grid>
+        </Grid>
+        <Grid container>
+          <Grid item xs={12}>
+            <ChipRow
+              chips={[
+                `Page ${currentPageIdx} of ${story?.pages || "-"}`,
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
+                {
+                  label: (
+                    <>
+                      <IconButton
+                        className="p-0 mr-1"
+                        color="primary"
+                        disableRipple
+                      >
+                        <MusicNoteIcon fontSize="medium" />
+                        <PlayArrowIcon
+                          fontSize="small"
+                          color="primary"
+                          className="absolute -bottom-1 -right-1.5"
+                        />
+                      </IconButton>
+                      Play Audio
+                    </>
+                  ),
+                  onClick: playAudio,
+                  // disabled: audioPaths.length === 0,
+                } as ChipProps,
+                {
+                  label:
+                    currentPageIdx >= (story?.pages || -1)
+                      ? "Finish"
+                      : "Next page",
+                  onClick: onNextPage,
+                } as ChipProps,
+              ]}
+            />
           </Grid>
         </Grid>
       </div>
