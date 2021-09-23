@@ -745,7 +745,7 @@ export default function HubCanvasPage() {
                     </>
                   ),
                   onClick: playAudio,
-                  // disabled: audioPaths.length === 0,
+                  disabled: audioPaths.length === 0,
                 } as ChipProps,
                 {
                   label:
