@@ -590,7 +590,7 @@ export default function ControllerCanvasPage() {
                   style={{
                     width: canvasOffsetWidth,
                     height: canvasOffsetHeight,
-                    borderRadius: "30px",
+                    borderRadius: "24px",
                   }}
                 />
               </div>

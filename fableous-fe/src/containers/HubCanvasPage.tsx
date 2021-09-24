@@ -892,7 +892,7 @@ export default function HubCanvasPage() {
                     width: `${canvasOffsetWidth}px`,
                     // if not decrement by 1, canvas will be larger than screen height
                     height: `${canvasOffsetHeight - 1}px`,
-                    borderRadius: "30px",
+                    borderRadius: "24px",
                   }}
                 />
               </div>
