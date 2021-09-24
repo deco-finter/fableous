@@ -146,6 +146,8 @@ export default function ProfilePage() {
                       <div className="flex-grow" />
                       <Button
                         size="small"
+                        variant="outlined"
+                        startIcon={<Icon fontSize="small">cancel</Icon>}
                         disabled={putLoading}
                         onClick={() => {
                           handleCancel();
@@ -154,16 +156,27 @@ export default function ProfilePage() {
                           });
                         }}
                       >
-                        <Icon fontSize="small">cancel</Icon>
+                        Cancel
                       </Button>
-                      <Button size="small" disabled={putLoading} type="submit">
-                        <Icon fontSize="small">save</Icon>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Icon fontSize="small">save</Icon>}
+                        disabled={putLoading}
+                        type="submit"
+                      >
+                        Save
                       </Button>
                     </CardActions>
                   ) : (
                     <CardActions>
-                      <Button size="small" onClick={handleEdit}>
-                        <Icon fontSize="small">edit</Icon>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Icon fontSize="small">edit</Icon>}
+                        onClick={handleEdit}
+                      >
+                        Edit
                       </Button>
                     </CardActions>
                   )}

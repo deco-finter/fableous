@@ -41,6 +41,7 @@ interface CanvasProps {
   pageNum: number;
   isGallery?: boolean;
   isShown?: boolean;
+  onDraw?: () => void;
   offsetWidth?: number;
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
@@ -58,6 +59,7 @@ interface CanvasProps {
 const defaultProps = {
   isGallery: false,
   isShown: true,
+  onDraw: () => {},
   offsetWidth: 0,
   setCursor: undefined,
   toolColor: "#000000ff",
@@ -84,6 +86,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       pageNum,
       isGallery,
       isShown,
+      onDraw = defaultProps.onDraw,
       offsetWidth = defaultProps.offsetWidth,
       setCursor,
       setTextShapes,
@@ -676,6 +679,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
       const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
       placeCursor(normX, normY, normWidth, toolMode);
+      onDraw();
       switch (toolMode) {
         case ToolMode.Paint:
           setDragging(true);
@@ -801,12 +805,14 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         getCanvas: () => canvasRef.current,
         runUndo: () => {
           placeUndo();
+          onDraw();
         },
         runAudio: () => {
           recordAudio();
+          onDraw();
         },
       }),
-      [canvasRef, placeUndo, recordAudio]
+      [canvasRef, onDraw, placeUndo, recordAudio]
     );
 
     // setup on component mount
@@ -927,9 +933,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           }}
           style={{
             position: "absolute",
-            borderWidth: 4,
             width: offsetWidth,
-            borderRadius: "30px",
+            borderRadius: "24px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
