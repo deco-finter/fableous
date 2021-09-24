@@ -23,6 +23,7 @@ import FormikTextField from "./FormikTextField";
 import { restAPI } from "../api";
 import { colors, generateColor, getBestTextColor } from "../colors";
 import { APIResponse, Session } from "../data";
+import FormikTagField from "./FormikTagField";
 
 export default function StoryItem(props: {
   session: Session;
@@ -223,13 +224,40 @@ export default function StoryItem(props: {
                   </div>
                 )}
                 {editing ? (
-                  <FormikTextField
+                  // <FormikTextField
+                  //   formik={formik}
+                  //   name="description"
+                  //   label="Description"
+                  //   overrides={{
+                  //     disabled: putLoading,
+                  //     variant: "outlined",
+                  //     className: "mb-4",
+                  //     InputProps: {
+                  //       classes: {
+                  //         root: classes.inputRoot,
+                  //         input: classes.inputInput,
+                  //       },
+                  //     },
+                  //     InputLabelProps: {
+                  //       classes: {
+                  //         root: classes.inputInput,
+                  //       },
+                  //     },
+                  //   }}
+                  // />
+                  <FormikTagField
                     formik={formik}
                     name="description"
                     label="Description"
+                    maxTags={3}
+                    maxTagLength={10}
+                    tagProps={{
+                      color: "secondary",
+                    }}
                     overrides={{
-                      disabled: putLoading,
+                      inputMode: "text",
                       variant: "outlined",
+                      disabled: putLoading,
                       className: "mb-4",
                       InputProps: {
                         classes: {

@@ -9,14 +9,28 @@ export default function FormikTagField(props: {
   formik: FormikProps<any>;
   name: string;
   label: string;
+  options?: string[];
   maxTags?: number;
   maxTagLength?: number;
   tagProps?: ChipProps;
   overrides?: TextFieldProps;
 }) {
-  const { formik, name, label, maxTags, maxTagLength, tagProps, overrides } =
-    props;
-  const [value, setValue] = useState<string[]>([]);
+  const {
+    formik,
+    name,
+    label,
+    options,
+    maxTags,
+    maxTagLength,
+    tagProps,
+    overrides,
+  } = props;
+  const [value, setValue] = useState<string[]>(
+    formik.values[name]
+      .split(",")
+      .map((tag: string) => tag.trim())
+      .filter((tag: string) => tag.length > 0)
+  );
   const [inputValue, setInputValue] = useState("");
 
   const handleChange = (event: React.ChangeEvent<{}>, newValue: string[]) => {
@@ -56,7 +70,7 @@ export default function FormikTagField(props: {
       inputValue={inputValue}
       inputMode={overrides?.inputMode || "text"}
       disabled={overrides?.disabled}
-      options={[] as string[]}
+      options={options || []}
       freeSolo={formik.values[name].split(",").length < 3}
       noOptionsText="Maximum number of tags"
       onChange={handleChange}
@@ -75,6 +89,11 @@ export default function FormikTagField(props: {
           label={label}
           error={formik.touched[name] && !!formik.errors[name]}
           helperText={formik.touched[name] ? formik.errors[name] : ""}
+          InputProps={{ ...params.InputProps, ...overrides?.InputProps }}
+          InputLabelProps={{
+            ...params.InputLabelProps,
+            ...overrides?.InputLabelProps,
+          }}
         />
       )}
     />
@@ -82,6 +101,7 @@ export default function FormikTagField(props: {
 }
 
 FormikTagField.defaultProps = {
+  options: [],
   maxTags: undefined,
   maxTagLength: undefined,
   tagProps: {},
