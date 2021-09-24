@@ -491,7 +491,8 @@ export default function ControllerCanvasPage() {
       </div>
       <div
         className={`flex flex-col w-full ${
-          controllerState !== ControllerState.DrawingSession && "invisible"
+          controllerState !== ControllerState.DrawingSession &&
+          "invisible overflow-y-hidden"
         }`}
         style={{
           // 64px navbar height, 20px content top padding, 48px content bot padding
@@ -607,8 +608,9 @@ export default function ControllerCanvasPage() {
                   className="place-self-center bg-white"
                   style={{
                     width: canvasOffsetWidth,
-                    // if not decrement by 1, canvas will be larger than screen height
+                    // -1 so height can shrink
                     height: canvasOffsetHeight - 1,
+                    maxHeight: "100%",
                     borderRadius: "24px",
                   }}
                 />

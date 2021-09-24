@@ -4,7 +4,7 @@
 /* eslint-disable no-case-declarations */
 import { useEffect, useRef } from "react";
 import { scaleUpXY } from "./helpers";
-import { ASPECT_RATIO, SCALE } from "./constants";
+import { SCALE } from "./constants";
 import { ToolMode } from "../../constant";
 
 export interface Cursor {
@@ -110,18 +110,21 @@ const CursorScreen = (props: CursorScreenProps) => {
 
   return (
     <div
-      className="place-self-center"
+      className="relative place-self-center"
       style={{
         width: offsetWidth,
-        height: offsetWidth * ASPECT_RATIO,
+        // -1 so height can shrink
+        height: offsetHeight - 1,
+        maxHeight: "100%",
       }}
     >
       <canvas
         ref={canvasRef}
         style={{
+          position: "absolute",
           borderRadius: "24px",
-          width: offsetWidth,
-          height: offsetHeight,
+          width: "100%",
+          height: "100%",
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",

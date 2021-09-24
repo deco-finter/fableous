@@ -698,7 +698,7 @@ export default function HubCanvasPage() {
       </div>
       <div
         className={`flex flex-col w-full ${
-          hubState !== HubState.DrawingSession && "invisible"
+          hubState !== HubState.DrawingSession && "invisible overflow-y-hidden"
         }`}
         style={{
           // 64px navbar height, 20px content top padding, 48px content bot padding
@@ -889,8 +889,9 @@ export default function HubCanvasPage() {
                   className="place-self-center bg-white"
                   style={{
                     width: canvasOffsetWidth,
-                    // if not decrement by 1, canvas will be larger than screen height
+                    // -1 so height can shrink
                     height: canvasOffsetHeight - 1,
+                    maxHeight: "100%",
                     borderRadius: "24px",
                   }}
                 />

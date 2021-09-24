@@ -22,7 +22,7 @@ import {
   scaleUpXY,
   translateXY,
 } from "./helpers";
-import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
+import { SCALE, SELECT_PADDING } from "./constants";
 import { Cursor } from "./CursorScreen";
 import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
 import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
@@ -911,7 +911,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         className="relative place-self-center"
         style={{
           width: offsetWidth,
-          height: offsetWidth * ASPECT_RATIO,
+          // -1 so height can shrink
+          height: offsetHeight - 1,
+          maxHeight: "100%",
         }}
       >
         <canvas
@@ -932,8 +934,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
               showKeyboard(true);
           }}
           style={{
-            width: offsetWidth,
-            height: offsetHeight,
+            position: "absolute",
+            width: "100%",
+            height: "100%",
             borderRadius: "24px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
