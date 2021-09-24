@@ -159,7 +159,6 @@ export default function HubCanvasPage() {
               if (classroomTokenFromWs) {
                 setClassroomToken(classroomTokenFromWs);
               }
-              console.log(msg);
               if (help) {
                 enqueueSnackbar(`${ROLE_ICON[msg.role].text} needs a hand!`, {
                   variant: "info",
