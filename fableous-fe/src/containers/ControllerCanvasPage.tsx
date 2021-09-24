@@ -1,13 +1,22 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import Radio from "@material-ui/core/Radio";
-import { makeStyles } from "@material-ui/core/styles";
-import RadioGroup from "@material-ui/core/RadioGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
+import {
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  FormControl,
+  Grid,
+  Icon,
+  InputLabel,
+  MenuItem,
+  Select,
+  Typography,
+  makeStyles,
+  Chip,
+  ChipProps,
+} from "@material-ui/core";
 import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
-import Typography from "@material-ui/core/Typography";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
@@ -29,12 +38,18 @@ import {
   EmptyAchievement,
 } from "../components/achievement/achievement";
 import AchievementButton from "../components/achievement/AchievementButton";
-import { ControllerRole, ToolMode, WSMessageType } from "../constant";
+import {
+  ControllerRole,
+  ROLE_ICON,
+  ToolMode,
+  WSMessageType,
+} from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
+import { colors } from "../colors";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -89,6 +104,8 @@ export default function ControllerCanvasPage() {
   const [cursor, setCursor] = useState<Cursor | undefined>();
   const [achievements, setAchievements] =
     useState<Achievement>(EmptyAchievement);
+  const [isDone, setIsDone] = useState(false);
+  const [helpCooldown, setHelpCooldown] = useState(false);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -100,6 +117,7 @@ export default function ControllerCanvasPage() {
               const msgData = msg.data as WSControlMessageData;
               if (msgData.nextPage) {
                 setCurrentPageIdx((prev) => prev + 1);
+                setIsDone(false);
               } else if (msgData.classroomId) {
                 setSessionInfo(msgData);
                 setCurrentPageIdx(msgData.currentPage || 0);
@@ -111,11 +129,11 @@ export default function ControllerCanvasPage() {
                   })
                   .catch((error) => {
                     if (error.response.status === 404) {
-                      enqueueSnackbar("no on going session", {
+                      enqueueSnackbar("No on going session!", {
                         variant: "error",
                       });
                     } else {
-                      enqueueSnackbar("unknown error", { variant: "error" });
+                      enqueueSnackbar("Unknown error!", { variant: "error" });
                     }
                     console.error("get ongoing session", error);
                   });
@@ -126,7 +144,7 @@ export default function ControllerCanvasPage() {
             {
               const msgData = msg.data as WSJoinMessageData;
               if (!msgData.joining && msgData.role === ControllerRole.Hub) {
-                enqueueSnackbar(`${ControllerRole.Hub} got disconnected`, {
+                enqueueSnackbar("Room closed!", {
                   variant: "error",
                 });
                 // assume backend will close ws conn
@@ -147,12 +165,13 @@ export default function ControllerCanvasPage() {
   );
 
   const wsOpenHandler = useCallback(() => {
+    enqueueSnackbar("Successfully joined room!", { variant: "success" });
     setControllerState(ControllerState.WaitingRoom);
-  }, []);
+  }, [enqueueSnackbar]);
 
   const wsErrorHandler = useCallback(
     (err: Event) => {
-      enqueueSnackbar("connection error", { variant: "error" });
+      enqueueSnackbar("Failed to join room!", { variant: "error" });
       console.error("ws conn error", err);
       clearWsConn();
       setControllerState(ControllerState.JoinForm);
@@ -187,6 +206,26 @@ export default function ControllerCanvasPage() {
     });
   };
 
+  const handleHelp = () => {
+    setHelpCooldown(true);
+    setTimeout(() => {
+      setHelpCooldown(false);
+    }, 15000);
+    enqueueSnackbar("Help requested!", { variant: "info" });
+    wsConn?.send(
+      JSON.stringify({
+        type: WSMessageType.Control,
+        role,
+        data: { help: true } as WSControlMessageData,
+      })
+    );
+  };
+
+  const handleDone = () => {
+    if (isDone) return;
+    setIsDone(true);
+  };
+
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
@@ -211,6 +250,7 @@ export default function ControllerCanvasPage() {
       setSessionInfo(undefined);
       setStoryDetails(undefined);
       setCurrentPageIdx(0);
+      setIsDone(false);
     }
   }, [controllerState]);
 
@@ -235,6 +275,18 @@ export default function ControllerCanvasPage() {
     }
   }, [currentPageIdx, storyDetails, controllerState]);
 
+  // send done control message on change
+  useEffect(() => {
+    if (controllerState === ControllerState.DrawingSession)
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Control,
+          role,
+          data: { done: isDone } as WSControlMessageData,
+        })
+      );
+  }, [controllerState, isDone, role, wsConn]);
+
   return (
     <Grid
       container
@@ -246,246 +298,356 @@ export default function ControllerCanvasPage() {
           gridColumnStart: 1,
         }}
       >
-        <Grid item xs={12} className="mb-4">
+        <Grid item xs={12} className="mb-8">
           <Typography variant="h2">
             {
               {
-                [ControllerState.JoinForm]: "join",
-                [ControllerState.WaitingRoom]: "",
+                [ControllerState.JoinForm]: "Join Room",
+                [ControllerState.WaitingRoom]: "Lobby",
                 [ControllerState.DrawingSession]: "",
-                [ControllerState.StoryFinished]: "finished",
+                [ControllerState.StoryFinished]: "Finished!",
               }[controllerState]
             }
           </Typography>
-          {controllerState === ControllerState.JoinForm && (
-            <Formik
-              initialValues={
-                {
-                  name: "",
-                  token: "",
-                  role: ControllerRole.Story,
-                } as ControllerJoin
-              }
-              validationSchema={yup.object().shape({
-                name: yup.string().required("required"),
-                token: yup
-                  .string()
-                  .required("required")
-                  .length(4, "must be 4 characters")
-                  .uppercase("must be all uppercase characters"),
-              })}
-              onSubmit={handleJoinSession}
-            >
-              {(formik) => (
-                <form onSubmit={formik.handleSubmit}>
-                  <div>
-                    <FormikTextField
-                      formik={formik}
-                      name="name"
-                      label="Name"
-                      overrides={{
-                        autoFocus: true,
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <FormikTextField
-                      formik={formik}
-                      name="token"
-                      label="Token"
-                      overrides={{
-                        onChange: (ev: React.ChangeEvent<HTMLInputElement>) => {
-                          const evUpperCase = { ...ev };
-                          evUpperCase.target.value =
-                            ev.target.value?.toUpperCase();
-                          formik.handleChange(evUpperCase);
-                        },
-                      }}
-                    />
-                  </div>
-
-                  <RadioGroup
-                    name="role"
-                    value={formik.values.role}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                  >
-                    <FormControlLabel
-                      value={ControllerRole.Story}
-                      control={<Radio />}
-                      label="Story"
-                    />
-                    <FormControlLabel
-                      value={ControllerRole.Character}
-                      control={<Radio />}
-                      label="Character"
-                    />
-                    <FormControlLabel
-                      value={ControllerRole.Background}
-                      control={<Radio />}
-                      label="Background"
-                    />
-                  </RadioGroup>
-                  <Button type="submit">Join Session</Button>
-                </form>
-              )}
-            </Formik>
-          )}
-          <div
-            className={
-              controllerState !== ControllerState.JoinForm ? "block" : "hidden"
-            }
-          >
-            {controllerState === ControllerState.WaitingRoom && (
-              <Typography variant="h6" component="p">
-                waiting for hub to start..
-              </Typography>
-            )}
-            {controllerState === ControllerState.StoryFinished && (
-              <>
-                <div>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    className="mb-2"
-                    onClick={() => {
-                      setControllerState(ControllerState.JoinForm);
-                      setAchievements(EmptyAchievement);
-                    }}
-                  >
-                    Join another session
-                  </Button>
-                </div>
-                <div>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    component={Link}
-                    to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
-                  >
-                    View story in gallery
-                  </Button>
-                </div>
-              </>
-            )}
+        </Grid>
+        {controllerState === ControllerState.JoinForm && (
+          <Grid item xs={12} sm={8} md={6} lg={4}>
+            <Card>
+              <Formik
+                initialValues={
+                  {
+                    name: "",
+                    token: "",
+                    role: ControllerRole.Story,
+                  } as ControllerJoin
+                }
+                validationSchema={yup.object().shape({
+                  name: yup
+                    .string()
+                    .required("Name required")
+                    .test(
+                      "len",
+                      "Name too long",
+                      (val) => (val || "").length <= 24
+                    ),
+                  token: yup
+                    .string()
+                    .required("Token required")
+                    .length(4, "Invalid token")
+                    .uppercase("Invalid token"),
+                })}
+                onSubmit={handleJoinSession}
+              >
+                {(formik) => (
+                  <form onSubmit={formik.handleSubmit} autoComplete="off">
+                    <CardContent>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} className="flex-grow flex flex-col">
+                          <FormikTextField
+                            formik={formik}
+                            name="name"
+                            label="Name"
+                            overrides={{
+                              autoFocus: true,
+                              variant: "outlined",
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Grid container spacing={2}>
+                            <Grid
+                              item
+                              xs={12}
+                              sm={6}
+                              className="flex-grow flex flex-col"
+                            >
+                              <FormikTextField
+                                formik={formik}
+                                name="token"
+                                label="Token"
+                                overrides={{
+                                  variant: "outlined",
+                                  onChange: (
+                                    ev: React.ChangeEvent<HTMLInputElement>
+                                  ) => {
+                                    const evUpperCase = { ...ev };
+                                    if (ev.target.value.length > 4) {
+                                      return;
+                                    }
+                                    evUpperCase.target.value =
+                                      ev.target.value?.toUpperCase();
+                                    formik.handleChange(evUpperCase);
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid
+                              item
+                              xs={12}
+                              sm={6}
+                              className="flex-grow flex flex-col"
+                            >
+                              <FormControl variant="outlined">
+                                <InputLabel>Role</InputLabel>
+                                <Select
+                                  name="role"
+                                  label="Role"
+                                  value={formik.values.role}
+                                  onChange={formik.handleChange}
+                                  onBlur={formik.handleBlur}
+                                >
+                                  <MenuItem value={ControllerRole.Story}>
+                                    <Icon
+                                      fontSize="small"
+                                      className="align-middle mr-1"
+                                    >
+                                      {ROLE_ICON[ControllerRole.Story].icon}
+                                    </Icon>
+                                    {ROLE_ICON[ControllerRole.Story].text}
+                                  </MenuItem>
+                                  <MenuItem value={ControllerRole.Character}>
+                                    <Icon
+                                      fontSize="small"
+                                      className="align-middle mr-1"
+                                    >
+                                      {ROLE_ICON[ControllerRole.Character].icon}
+                                    </Icon>
+                                    {ROLE_ICON[ControllerRole.Character].text}
+                                  </MenuItem>
+                                  <MenuItem value={ControllerRole.Background}>
+                                    <Icon
+                                      fontSize="small"
+                                      className="align-middle mr-1"
+                                    >
+                                      {
+                                        ROLE_ICON[ControllerRole.Background]
+                                          .icon
+                                      }
+                                    </Icon>
+                                    {ROLE_ICON[ControllerRole.Background].text}
+                                  </MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                        <Grid item xs={12} className="flex justify-end">
+                          <Button
+                            color="secondary"
+                            variant="contained"
+                            endIcon={<Icon fontSize="small">brush</Icon>}
+                            type="submit"
+                          >
+                            Join
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </form>
+                )}
+              </Formik>
+            </Card>
+          </Grid>
+        )}
+        {controllerState === ControllerState.WaitingRoom && (
+          <div className="flex">
+            <Card className="flex-shrink">
+              <CardContent>
+                <Typography variant="h6" component="p">
+                  Waiting for session to begin
+                  <CircularProgress size={12} thickness={8} className="ml-2" />
+                </Typography>
+              </CardContent>
+            </Card>
           </div>
-        </Grid>
-      </div>
-      <div
-        className={`flex flex-col w-full ${
-          controllerState !== ControllerState.DrawingSession && "invisible"
-        }`}
-        style={{
-          // 64px navbar height and 20px content top padding
-          height: "calc(100vh - 84px)",
-          gridRowStart: 1,
-          gridColumnStart: 1,
-        }}
-      >
-        <Grid container className="mb-4">
-          <Grid item xs={12}>
-            <ChipRow
-              left={`Title: ${storyDetails?.title}`}
-              middle={[
-                <AchievementButton
-                  achievements={achievements}
-                  confetti
-                  notify
-                />,
-                role[0].toUpperCase() + role.slice(1).toLowerCase(),
-                `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
-              ]}
-              right={storyDetails?.description.split(",") || []}
-            />
-          </Grid>
-        </Grid>
-        <Grid container spacing={2} className="relative flex-1 mb-4">
-          <Grid item xs={2} md={1}>
-            <CanvasToolbar
-              ref={canvasRef}
-              role={role}
-              offsetHeight={`${canvasOffsetHeight}px`}
-              toolColor={toolColor}
-              setToolColor={setToolColor}
-              toolMode={toolMode}
-              setToolMode={setToolMode}
-              toolWidth={toolWidth}
-              setToolWidth={setToolWidth}
-            />
-          </Grid>
-          <Grid item xs={10} md={11}>
-            <div
-              ref={canvasContainerRef}
-              className="grid place-items-stretch h-full"
-              style={{
-                border: "3px solid black",
-              }}
-            >
-              <div
-                className="grid"
-                style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 20,
-                  pointerEvents: "none", // forwards pointer events to next layer
+        )}
+        {controllerState === ControllerState.StoryFinished && (
+          <>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="primary"
+                endIcon={<Icon fontSize="small">brush</Icon>}
+                className="mb-2"
+                onClick={() => {
+                  setControllerState(ControllerState.JoinForm);
                 }}
               >
-                <CursorScreen
-                  cursor={cursor}
-                  isShown={controllerState === ControllerState.DrawingSession}
-                  offsetWidth={canvasOffsetWidth}
-                  offsetHeight={canvasOffsetHeight}
-                />
-              </div>
-              <div
-                className="grid"
-                style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 10,
-                }}
+                Join another session
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="secondary"
+                component={Link}
+                to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
               >
-                <Canvas
-                  ref={canvasRef}
-                  wsConn={wsConn}
-                  role={role}
-                  layer={role}
-                  pageNum={currentPageIdx}
-                  isShown={controllerState === ControllerState.DrawingSession}
-                  setCursor={setCursor}
-                  textShapes={textShapes}
-                  setTextShapes={setTextShapes}
-                  audioPaths={audioPaths}
-                  setAudioPaths={setAudioPaths}
-                  toolColor={toolColor}
-                  toolMode={toolMode}
-                  setToolMode={setToolMode}
-                  toolWidth={toolWidth}
-                  offsetWidth={canvasOffsetWidth}
-                  offsetHeight={canvasOffsetHeight}
-                />
-              </div>
+                View story in gallery
+              </Button>
+            </Grid>
+          </>
+        )}
+        <div
+          className={`flex flex-col w-full ${
+            controllerState !== ControllerState.DrawingSession && "invisible"
+          }`}
+          style={{
+            // 64px navbar height and 20px content top padding
+            height: "calc(100vh - 84px)",
+            gridRowStart: 1,
+            gridColumnStart: 1,
+          }}
+        >
+          <Grid container className="mt-4">
+            <Grid item xs={12}>
+              <ChipRow
+                primary
+                chips={[
+                  <Chip label={storyDetails?.title} color="primary" />,
+                  <div className="flex gap-4">
+                    {(storyDetails?.description.split(",") || []).map((tag) => (
+                      <Chip label={tag} color="secondary" />
+                    ))}
+                  </div>,
+                  <Chip
+                    icon={
+                      <Icon
+                        fontSize="small"
+                        className="align-middle mr-1"
+                        style={{ color: colors.orange.main }}
+                      >
+                        {ROLE_ICON[role].icon}
+                      </Icon>
+                    }
+                    label={ROLE_ICON[role].text}
+                    style={{ color: colors.orange.main }}
+                  />,
+                ]}
+              />
+            </Grid>
+          </Grid>
+          <Grid container spacing={2} className="relative flex-1 my-4">
+            <Grid item xs={2} md={1}>
+              <CanvasToolbar
+                ref={canvasRef}
+                role={role}
+                offsetHeight={`${canvasOffsetHeight}px`}
+                toolColor={toolColor}
+                setToolColor={setToolColor}
+                toolMode={toolMode}
+                setToolMode={setToolMode}
+                toolWidth={toolWidth}
+                setToolWidth={setToolWidth}
+              />
+            </Grid>
+            <Grid item xs={10} md={11}>
               <div
-                className="grid"
+                ref={canvasContainerRef}
+                className="grid place-items-stretch h-full"
                 style={{
-                  gridRowStart: 1,
-                  gridColumnStart: 1,
-                  zIndex: 1,
+                  border: "1px solid #0004",
                 }}
               >
                 <div
-                  className="absolute place-self-center bg-white"
+                  className="grid"
                   style={{
-                    width: canvasOffsetWidth,
-                    // if not decrement by 1, canvas will be larger than screen height
-                    height: canvasOffsetHeight - 1,
-                    borderRadius: "30px",
+                    gridRowStart: 1,
+                    gridColumnStart: 1,
+                    zIndex: 20,
+                    pointerEvents: "none", // forwards pointer events to next layer
                   }}
-                />
+                >
+                  <CursorScreen
+                    cursor={cursor}
+                    isShown={controllerState === ControllerState.DrawingSession}
+                    offsetWidth={canvasOffsetWidth}
+                    offsetHeight={canvasOffsetHeight}
+                  />
+                </div>
+                <div
+                  className="grid"
+                  style={{
+                    gridRowStart: 1,
+                    gridColumnStart: 1,
+                    zIndex: 10,
+                  }}
+                >
+                  <Canvas
+                    ref={canvasRef}
+                    wsConn={wsConn}
+                    role={role}
+                    layer={role}
+                    pageNum={currentPageIdx}
+                    isShown={controllerState === ControllerState.DrawingSession}
+                    onDraw={() => setIsDone(false)}
+                    setCursor={setCursor}
+                    textShapes={textShapes}
+                    setTextShapes={setTextShapes}
+                    audioPaths={audioPaths}
+                    setAudioPaths={setAudioPaths}
+                    toolColor={toolColor}
+                    toolMode={toolMode}
+                    setToolMode={setToolMode}
+                    toolWidth={toolWidth}
+                    offsetWidth={canvasOffsetWidth}
+                    offsetHeight={canvasOffsetHeight}
+                  />
+                </div>
+                <div
+                  className="grid"
+                  style={{
+                    gridRowStart: 1,
+                    gridColumnStart: 1,
+                    zIndex: 1,
+                  }}
+                >
+                  <div
+                    className="absolute place-self-center bg-white"
+                    style={{
+                      width: canvasOffsetWidth,
+                      // if not decrement by 1, canvas will be larger than screen height
+                      height: canvasOffsetHeight - 1,
+                      borderRadius: "24px",
+                    }}
+                  />
+                </div>
               </div>
-            </div>
+            </Grid>
           </Grid>
-        </Grid>
+          <Grid container>
+            <Grid item xs={12}>
+              <ChipRow
+                chips={[
+                  `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
+                  <AchievementButton
+                    achievements={achievements}
+                    confetti
+                    notify
+                  />,
+                  {
+                    icon: <Icon fontSize="small">pan_tool</Icon>,
+                    label: "Help",
+                    onClick: handleHelp,
+                    disabled: helpCooldown,
+                  } as ChipProps,
+                  {
+                    icon: (
+                      <Icon
+                        fontSize="medium"
+                        style={{ color: isDone ? colors.green : "inherit" }}
+                      >
+                        check_circle
+                      </Icon>
+                    ),
+                    label: "Done",
+                    onClick: handleDone,
+                  } as ChipProps,
+                ]}
+              />
+            </Grid>
+          </Grid>
+        </div>
       </div>
     </Grid>
   );

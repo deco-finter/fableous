@@ -50,7 +50,7 @@ export default function StoryDetailPage() {
 
   useEffect(() => {
     if (manifest) setTextShapes(manifest.texts);
-    if (manifest) setAudioPaths(manifest.audios.map((audio) => audio.text));
+    if (manifest) setAudioPaths(manifest.audios);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manifest]);
 

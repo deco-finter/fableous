@@ -5,12 +5,28 @@ import { Link } from "react-router-dom";
 
 export default function NotFoundPage() {
   return (
-    <Grid item xs={12}>
-      <Typography variant="h2">404</Typography>
-      <Typography variant="subtitle1">not found</Typography>
-      <Button variant="contained" color="primary" component={Link} to="/">
-        go to home
-      </Button>
+    <Grid
+      container
+      justifyContent="center"
+      alignItems="center"
+      direction="column"
+      style={{ height: "80vh" }}
+    >
+      <Grid item>
+        <Typography variant="h1" className="text-center">
+          Oops!
+        </Typography>
+      </Grid>
+      <Grid item>
+        <Typography variant="subtitle1" className="text-center">
+          This page cannot be found.
+        </Typography>
+      </Grid>
+      <div className="mt-16">
+        <Button variant="contained" color="primary" component={Link} to="/">
+          go to home
+        </Button>
+      </div>
     </Grid>
   );
 }

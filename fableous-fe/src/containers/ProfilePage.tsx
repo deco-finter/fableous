@@ -1,26 +1,28 @@
 import {
   Button,
-  Icon,
   Grid,
   Typography,
   CircularProgress,
+  Card,
+  CardContent,
+  CardActions,
+  Icon,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import useAxios from "axios-hooks";
 import { Formik } from "formik";
 import { useSnackbar } from "notistack";
 import { useEffect, useState, useCallback } from "react";
-import { useHistory } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI } from "../api";
+import BackButton from "../components/BackButton";
 import FormikTextField from "../components/FormikTextField";
 import { APIResponse, User } from "../data";
 
 export default function ProfilePage() {
-  const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   const [user, setUser] = useState<User>();
-  const [isEditing, setIsEditing] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const [{ loading: getLoading, error: getError }, executeGet] = useAxios<
     APIResponse<User>,
@@ -54,7 +56,7 @@ export default function ProfilePage() {
     })
       .then(() => {
         setUser(newUser);
-        setIsEditing(false);
+        setEditing(false);
         enqueueSnackbar("sucessfully updated profile", {
           variant: "success",
         });
@@ -66,9 +68,12 @@ export default function ProfilePage() {
       });
   };
 
+  const handleEdit = () => {
+    setEditing(true);
+  };
+
   const handleCancel = () => {
-    getUserInfo();
-    setIsEditing(false);
+    setEditing(false);
   };
 
   useEffect(() => {
@@ -76,35 +81,23 @@ export default function ProfilePage() {
   }, [getUserInfo]);
 
   return (
-    <Grid>
-      <Button
-        onClick={() => history.goBack()}
-        startIcon={<Icon>arrow_backward</Icon>}
-      >
-        Back
-      </Button>
-      {(getLoading || putLoading) && <CircularProgress />}
+    <Grid container>
+      <Grid item xs={12} className="mb-8">
+        <BackButton className="mb-2" />
+        <Typography variant="h2">Manage Profile</Typography>
+      </Grid>
+      {getLoading && (
+        <Grid container justifyContent="center">
+          <CircularProgress />
+        </Grid>
+      )}
       {getError && <Alert severity="error">Failed loading profile!</Alert>}
-      {!getLoading && !getError && !putLoading && (
-        <>
-          <Typography variant="h2">{user?.name}&apos;s profile</Typography>
-          {!isEditing ? (
-            <>
-              <Typography variant="body1">Email: {user?.email}</Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  setIsEditing(true);
-                }}
-              >
-                edit profile
-              </Button>
-            </>
-          ) : (
+      {!getLoading && !getError && (
+        <Grid item xs={4}>
+          <Card elevation={8}>
             <Formik
               enableReinitialize
-              initialValues={user as User}
+              initialValues={user || { name: "", email: "" }}
               validationSchema={yup.object().shape({
                 name: yup
                   .string()
@@ -121,57 +114,77 @@ export default function ProfilePage() {
                   .email("Email invalid")
                   .required("Email is required"),
               })}
-              validateOnMount
               onSubmit={handleEditSubmit}
             >
               {(formik) => (
                 <form onSubmit={formik.handleSubmit} autoComplete="off">
-                  <div>
+                  <CardContent className="flex-grow flex flex-col">
                     <FormikTextField
                       formik={formik}
                       name="name"
                       label="Name"
                       overrides={{
                         autoFocus: true,
-                        disabled: putLoading,
+                        disabled: !editing || putLoading,
+                        variant: "outlined",
+                        className: "mb-4",
                       }}
                     />
-                  </div>
-                  <div>
                     <FormikTextField
                       formik={formik}
                       name="email"
                       label="Email"
                       overrides={{
-                        autoFocus: true,
-                        disabled: putLoading,
+                        autoFocus: false,
+                        disabled: !editing || putLoading,
+                        variant: "outlined",
                       }}
                     />
-                  </div>
-                  <div className="mt-4">
-                    <Button
-                      disabled={putLoading}
-                      type="submit"
-                      variant="contained"
-                      color="primary"
-                      className="mr-2"
-                    >
-                      update
-                    </Button>
-                    <Button
-                      disabled={putLoading}
-                      onClick={handleCancel}
-                      variant="contained"
-                      color="secondary"
-                    >
-                      cancel
-                    </Button>
-                  </div>
+                  </CardContent>
+                  {editing ? (
+                    <CardActions>
+                      <div className="flex-grow" />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Icon fontSize="small">cancel</Icon>}
+                        disabled={putLoading}
+                        onClick={() => {
+                          handleCancel();
+                          formik.resetForm({
+                            values: user,
+                          });
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Icon fontSize="small">save</Icon>}
+                        disabled={putLoading}
+                        type="submit"
+                      >
+                        Save
+                      </Button>
+                    </CardActions>
+                  ) : (
+                    <CardActions>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Icon fontSize="small">edit</Icon>}
+                        onClick={handleEdit}
+                      >
+                        Edit
+                      </Button>
+                    </CardActions>
+                  )}
                 </form>
               )}
             </Formik>
-          )}
-        </>
+          </Card>
+        </Grid>
       )}
     </Grid>
   );

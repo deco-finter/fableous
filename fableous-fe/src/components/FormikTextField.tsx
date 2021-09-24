@@ -1,12 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { TextField } from "@material-ui/core";
+import { TextField, TextFieldProps } from "@material-ui/core";
 import { FormikProps } from "formik";
 
 export default function FormikTextField(props: {
   formik: FormikProps<any>;
   name: string;
   label: string;
-  overrides?: { [propName: string]: any };
+  overrides?: TextFieldProps;
 }) {
   const { formik, name, label, overrides } = props;
   return (

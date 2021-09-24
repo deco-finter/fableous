@@ -11,6 +11,8 @@ export enum WSMessageType {
   Join = "JOIN",
   Control = "CONTROL",
   Ping = "PING",
+  Image = "IMAGE",
+  Manifest = "MANIFEST",
 }
 
 export enum ToolMode {
@@ -27,3 +29,24 @@ export enum ControllerRole {
   Story = "STORY",
   Hub = "HUB",
 }
+
+export type StudentRole = Exclude<ControllerRole, ControllerRole.Hub>;
+
+export const ROLE_ICON = {
+  [ControllerRole.Story]: {
+    icon: "textsms",
+    text: "Story",
+  },
+  [ControllerRole.Character]: {
+    icon: "directions_run",
+    text: "Character",
+  },
+  [ControllerRole.Background]: {
+    icon: "image",
+    text: "Background",
+  },
+  [ControllerRole.Hub]: {
+    icon: "web",
+    text: "Background",
+  },
+};

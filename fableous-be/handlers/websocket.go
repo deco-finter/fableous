@@ -219,18 +219,19 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText,
-			constants.WSMessageTypeCheckpoint, constants.WSMessageTypeUndo, constants.WSMessageTypeCursor:
+		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeCheckpoint,
+			constants.WSMessageTypeUndo, constants.WSMessageTypeCursor, constants.WSMessageTypeControl:
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
 			go func() {
-				if filename := m.SavePayload(sess, message, true); filename != "" {
+				message.Data.ID = sess.currentPage // override page numbber
+				if filename, page := m.SavePayload(sess, message, true); filename != "" {
 					_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
 						Type: constants.WSMessageTypeAudio,
 						Role: role,
 						Data: datatransfers.WSMessageData{
 							WSPaintMessageData: datatransfers.WSPaintMessageData{
-								Text: fmt.Sprintf("%s/%s/%d/%s", sess.classroomID, sess.sessionID, sess.currentPage, filename),
+								Text: fmt.Sprintf("%s/%s/%d/%s", sess.classroomID, sess.sessionID, page, filename),
 							},
 						},
 					})
@@ -254,20 +255,21 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 	return
 }
 
-func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (filename string) {
+func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (filename string, page int) {
 	var err error
 	var data []byte
-	if data, err = utils.ExtractPayload(message, isBase64); err != nil {
+	if data, page, err = utils.ExtractPayload(message, isBase64); err != nil {
 		log.Println(err)
 		return
 	}
-	directory := fmt.Sprintf("%s/%d", utils.GetSessionStaticDir(sess.sessionID, sess.classroomID), sess.currentPage)
+	directory := fmt.Sprintf("%s/%d", utils.GetSessionStaticDir(sess.sessionID, sess.classroomID), page)
 	if _, err = os.Stat(directory); os.IsNotExist(err) {
 		if err = os.MkdirAll(directory, 0700); err != nil {
 			log.Println(err)
 			return
 		}
 	}
+	log.Println(message.Type, page)
 	switch message.Type {
 	case constants.WSMessageTypeAudio:
 		filename = fmt.Sprintf("%d.ogg", time.Now().Unix())
@@ -279,7 +281,7 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 		return
 	}
 	var file *os.File
-	if file, err = os.OpenFile(fmt.Sprintf("%s/%s", directory, filename), os.O_WRONLY|os.O_CREATE, 0700); err != nil {
+	if file, err = os.OpenFile(fmt.Sprintf("%s/%s", directory, filename), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0700); err != nil {
 		log.Println(err)
 		return
 	}

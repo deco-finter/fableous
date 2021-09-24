@@ -93,7 +93,7 @@ export default function ClassroomListPage() {
 
   return (
     <Grid container>
-      <Grid item xs={12} className="mb-4">
+      <Grid item xs={12} className="mb-8">
         <Typography variant="h2">Classrooms</Typography>
       </Grid>
       {getLoading && (
@@ -137,7 +137,7 @@ export default function ClassroomListPage() {
                 >
                   {(formik) => (
                     <form onSubmit={formik.handleSubmit} autoComplete="off">
-                      <CardContent className="flex-grow">
+                      <CardContent className="flex-grow flex flex-col">
                         <FormikTextField
                           formik={formik}
                           name="name"
@@ -154,18 +154,22 @@ export default function ClassroomListPage() {
                         <div className="flex-grow" />
                         <Button
                           size="small"
+                          variant="outlined"
+                          startIcon={<Icon fontSize="small">cancel</Icon>}
                           disabled={postLoading}
                           onClick={handleCancel}
                           type="button"
                         >
-                          <Icon fontSize="small">cancel</Icon>
+                          Cancel
                         </Button>
                         <Button
                           size="small"
+                          variant="outlined"
+                          startIcon={<Icon fontSize="small">save</Icon>}
                           disabled={postLoading}
                           type="submit"
                         >
-                          <Icon fontSize="small">save</Icon>
+                          Save
                         </Button>
                       </CardActions>
                     </form>

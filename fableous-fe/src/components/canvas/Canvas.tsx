@@ -43,6 +43,7 @@ interface CanvasProps {
   isShown?: boolean;
   offsetWidth: number;
   offsetHeight: number;
+  onDraw?: () => void;
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
@@ -59,6 +60,7 @@ interface CanvasProps {
 const defaultProps = {
   isGallery: false,
   isShown: true,
+  onDraw: () => {},
   setCursor: undefined,
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
@@ -70,6 +72,7 @@ interface SimplePointerEventData {
   clientX: number;
   clientY: number;
   pointerType: "mouse" | "pen" | "touch";
+  onLeave: boolean;
 }
 
 // TODO after width of canvas DOM element is dynamic, attempt to make canvas drawing scaling dynamic
@@ -85,6 +88,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       isShown,
       offsetWidth,
       offsetHeight,
+      onDraw = defaultProps.onDraw,
       setCursor,
       setTextShapes,
       textShapes,
@@ -676,6 +680,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
       const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
       placeCursor(normX, normY, normWidth, toolMode);
+      onDraw();
       switch (toolMode) {
         case ToolMode.Paint:
           setDragging(true);
@@ -743,7 +748,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           }
           break;
         case ToolMode.Fill:
-          placeCheckpoint(toolMode);
+          if (!event.onLeave) placeCheckpoint(toolMode);
           break;
         default:
       }
@@ -755,6 +760,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     };
 
     const onPointerOut = (event: SimplePointerEventData) => {
+      event.onLeave = true;
       onPointerUp(event);
       if (setCursor) {
         setCursor(undefined);
@@ -771,6 +777,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             clientX: event.clientX,
             clientY: event.clientY,
             pointerType: event.pointerType,
+            onLeave: false,
           });
         }
       };
@@ -798,12 +805,14 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         getCanvas: () => canvasRef.current,
         runUndo: () => {
           placeUndo();
+          onDraw();
         },
         runAudio: () => {
           recordAudio();
+          onDraw();
         },
       }),
-      [canvasRef, placeUndo, recordAudio]
+      [canvasRef, onDraw, placeUndo, recordAudio]
     );
 
     // setup on component mount
@@ -923,10 +932,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
               showKeyboard(true);
           }}
           style={{
-            borderWidth: 4,
             width: offsetWidth,
             height: offsetHeight,
-            borderRadius: "30px",
+            borderRadius: "24px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
