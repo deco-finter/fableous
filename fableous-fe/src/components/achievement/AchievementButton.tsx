@@ -47,7 +47,6 @@ const useStyles = makeStyles(() => ({
   },
   confetti: {
     pointerEvents: "none",
-    position: "fixed",
     zIndex: 1200,
   },
 }));
@@ -103,24 +102,22 @@ export default function AchievementButton(props: {
         onClick={() => setShowing(true)}
         color="primary"
         variant="outlined"
-        label={
+        icon={
           <>
-            <IconButton className="p-0 mr-2" color="primary" disableRipple>
-              <Icon fontSize="medium">emoji_events</Icon>
-              <ReactCanvasConfetti
-                resize
-                width={1024}
-                height={1024}
-                useWorker
-                refConfetti={(ref) => {
-                  confettiRef.current = ref;
-                }}
-                className={classes.confetti}
-              />
-            </IconButton>
-            Achievements
+            <Icon fontSize="medium">emoji_events</Icon>
+            <ReactCanvasConfetti
+              resize
+              width={1024}
+              height={1024}
+              useWorker
+              refConfetti={(ref) => {
+                confettiRef.current = ref;
+              }}
+              className={`${classes.confetti} fixed`}
+            />
           </>
         }
+        label="Achievements"
       />
       <Dialog
         open={showing}

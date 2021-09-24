@@ -175,15 +175,14 @@ export default function ClassroomItem(props: {
                     }}
                   />
                 ) : (
-                  <>
-                    <Typography
-                      variant="h5"
-                      component="h2"
-                      className="overflow-ellipsis overflow-hidden"
-                    >
-                      {classroom.name}
-                    </Typography>
-                  </>
+                  <Typography
+                    variant="h5"
+                    component="h2"
+                    className="overflow-ellipsis overflow-hidden cursor-text"
+                    onDoubleClick={handleEdit}
+                  >
+                    {classroom.name}
+                  </Typography>
                 )}
               </CardContent>
               <div className="flex-grow" />
@@ -192,6 +191,8 @@ export default function ClassroomItem(props: {
                   <div className="flex-grow" />
                   <Button
                     size="small"
+                    variant="outlined"
+                    startIcon={<Icon fontSize="small">cancel</Icon>}
                     disabled={putLoading || deleteLoading}
                     onClick={() => {
                       handleCancel();
@@ -200,25 +201,35 @@ export default function ClassroomItem(props: {
                       });
                     }}
                   >
-                    <Icon fontSize="small">cancel</Icon>
+                    Cancel
                   </Button>
                   <Button
                     size="small"
+                    variant="outlined"
+                    startIcon={<Icon fontSize="small">save</Icon>}
                     disabled={putLoading || deleteLoading}
                     type="submit"
                   >
-                    <Icon fontSize="small">save</Icon>
+                    Save
                   </Button>
                 </CardActions>
               ) : (
                 <CardActions>
-                  <Button size="small" onClick={handleEdit}>
-                    <Icon fontSize="small">edit</Icon>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<Icon fontSize="small">edit</Icon>}
+                    onClick={handleEdit}
+                  >
+                    Edit
                   </Button>
                   <div className="flex-grow" />
                   <Button
                     size="small"
+                    variant="contained"
+                    color="primary"
                     component={Link}
+                    endIcon={<Icon fontSize="small">book</Icon>}
                     to={`/gallery/${classroom.id}`}
                   >
                     Gallery
@@ -227,21 +238,24 @@ export default function ClassroomItem(props: {
                     (ongoingSession ? (
                       <Button
                         size="small"
-                        variant="outlined"
+                        color="default"
+                        variant="contained"
+                        endIcon={<Icon fontSize="small">stop</Icon>}
                         disabled={deleteOngoingSessionLoading}
                         onClick={() => setStopping(true)}
                       >
-                        Stop <Icon fontSize="small">stop</Icon>
+                        Stop
                       </Button>
                     ) : (
                       <Button
                         size="small"
-                        variant="contained"
                         color="secondary"
+                        variant="contained"
+                        endIcon={<Icon fontSize="small">play_arrow</Icon>}
                         component={Link}
                         to={`/classroom/${classroom.id}/hub`}
                       >
-                        Start <Icon fontSize="small">play_arrow</Icon>
+                        Start
                       </Button>
                     ))}
                 </CardActions>
@@ -281,8 +295,12 @@ export default function ClassroomItem(props: {
           <Button onClick={() => setStopping(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteOngoingSession} color="secondary">
-            Stop <Icon fontSize="small">stop</Icon>
+          <Button
+            onClick={handleDeleteOngoingSession}
+            color="secondary"
+            endIcon={<Icon fontSize="small">stop</Icon>}
+          >
+            Stop
           </Button>
         </DialogActions>
       </Dialog>

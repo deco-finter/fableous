@@ -2,8 +2,8 @@
 /* eslint-disable no-bitwise */
 export const colors = {
   orange: {
-    light: "#FF857B",
-    main: "#E45D3F",
+    light: "#FF704F",
+    main: "#E6411B",
     dark: "#FF594B",
   },
   blue: {
@@ -20,6 +20,7 @@ export const colors = {
     main: "#AAAAAA",
   },
   black: "#000000",
+  green: "#43A047",
 };
 
 export const generateColor = (seed: string): string => {
