@@ -316,7 +316,14 @@ export default function ControllerCanvasPage() {
                 } as ControllerJoin
               }
               validationSchema={yup.object().shape({
-                name: yup.string().required("Name required"),
+                name: yup
+                  .string()
+                  .required("Name required")
+                  .test(
+                    "len",
+                    "Name too long",
+                    (val) => (val || "").length <= 24
+                  ),
                 token: yup
                   .string()
                   .required("Token required")
