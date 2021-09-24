@@ -105,6 +105,13 @@ export default function App() {
           borderRadius: 16,
         },
       },
+      MuiSelect: {
+        select: {
+          "&:focus": {
+            borderRadius: 16,
+          },
+        },
+      },
       MuiButton: {
         root: {
           borderRadius: 16,
