@@ -886,7 +886,7 @@ export default function HubCanvasPage() {
                 }}
               >
                 <div
-                  className="absolute place-self-center bg-white"
+                  className="place-self-center bg-white"
                   style={{
                     width: canvasOffsetWidth,
                     // if not decrement by 1, canvas will be larger than screen height

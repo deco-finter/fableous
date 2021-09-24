@@ -908,7 +908,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     return (
       <div
-        className="absolute place-self-center"
+        className="relative place-self-center"
         style={{
           width: offsetWidth,
           height: offsetWidth * ASPECT_RATIO,

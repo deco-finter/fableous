@@ -110,7 +110,7 @@ const CursorScreen = (props: CursorScreenProps) => {
 
   return (
     <div
-      className="absolute place-self-center"
+      className="place-self-center"
       style={{
         width: offsetWidth,
         height: offsetWidth * ASPECT_RATIO,
