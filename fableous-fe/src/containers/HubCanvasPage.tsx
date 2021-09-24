@@ -7,7 +7,6 @@ import {
   CircularProgress,
   Grid,
   Icon,
-  Paper,
   Typography,
 } from "@material-ui/core";
 import useAxios from "axios-hooks";
@@ -39,9 +38,9 @@ import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
-import LayerIcon from "../components/canvas/LayerIcon";
 import ChipRow from "../components/ChipRow";
 import FormikTagField from "../components/FormikTagField";
+import LayerToolbar from "../components/canvas/LayerToolbar";
 
 const INIT_FLAG = {
   [ControllerRole.Story]: false,
@@ -711,38 +710,15 @@ export default function HubCanvasPage() {
         </Grid>
         <Grid container spacing={2} className="flex-1 my-4">
           <Grid item xs={2} md={1}>
-            <div className="h-full flex flex-col justify-center items-center">
-              <div
-                className="overflow-y-scroll overflow-x-hidden"
-                style={{
-                  height: canvasOffsetHeight || "100%",
-                  maxHeight: "100%",
-                }}
-              >
-                <Paper className="p-1 flex flex-col justify-around items-center min-h-full px-2 items-stretch">
-                  {[
-                    ControllerRole.Story,
-                    ControllerRole.Character,
-                    ControllerRole.Background,
-                  ].map((role) => (
-                    <LayerIcon
-                      role={role as StudentRole}
-                      focusLayer={focusLayer}
-                      setFocusLayer={setFocusLayer}
-                      onClick={() =>
-                        setHelpControllers({
-                          ...helpControllers,
-                          [role]: false,
-                        })
-                      }
-                      joinedControllers={joinedControllers}
-                      needsHelp={helpControllers[role as StudentRole]}
-                      isDone={doneControllers[role as StudentRole]}
-                    />
-                  ))}
-                </Paper>
-              </div>
-            </div>
+            <LayerToolbar
+              offsetHeight={`${canvasOffsetHeight}px`}
+              focusLayer={focusLayer}
+              setFocusLayer={setFocusLayer}
+              joinedControllers={joinedControllers}
+              helpControllers={helpControllers}
+              setHelpControllers={setHelpControllers}
+              doneControllers={doneControllers}
+            />
           </Grid>
           <Grid item xs={10} md={11}>
             <div
