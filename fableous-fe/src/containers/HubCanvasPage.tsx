@@ -702,26 +702,29 @@ export default function HubCanvasPage() {
           hubState !== HubState.DrawingSession && "invisible"
         }`}
       >
-        <Grid container>
+        <Grid container className="mt-4">
           <Grid item xs={12}>
             <ChipRow
               primary
               chips={[
                 <Chip label={story?.title} color="primary" />,
-                ...(story?.description.split(",") || []),
+                <div className="flex gap-4">
+                  {(story?.description.split(",") || []).map((tag) => (
+                    <Chip label={tag} color="secondary" />
+                  ))}
+                </div>,
               ]}
             />
           </Grid>
         </Grid>
-        <Grid container className="flex-1 my-4">
+        <Grid container spacing={2} className="flex-1 my-4">
           <Grid item xs={2} md={1}>
             <div className="h-full flex flex-col justify-center items-center">
               <div
-                className="overflow-y-scroll overflow-x-hidden mr-4"
+                className="overflow-y-scroll overflow-x-hidden"
                 style={{
                   height: canvasOffsetHeight || "100%",
                   maxHeight: "100%",
-                  maxWidth: "100px",
                 }}
               >
                 <Paper className="p-1 flex flex-col justify-around items-center min-h-full px-2 items-stretch">

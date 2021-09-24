@@ -477,13 +477,17 @@ export default function ControllerCanvasPage() {
           controllerState !== ControllerState.DrawingSession && "invisible"
         }`}
       >
-        <Grid container>
+        <Grid container className="mt-4">
           <Grid item xs={12}>
             <ChipRow
               primary
               chips={[
                 <Chip label={storyDetails?.title} color="primary" />,
-                ...(storyDetails?.description.split(",") || []),
+                <div className="flex gap-4">
+                  {(storyDetails?.description.split(",") || []).map((tag) => (
+                    <Chip label={tag} color="secondary" />
+                  ))}
+                </div>,
                 <Chip
                   icon={
                     <Icon
@@ -501,7 +505,7 @@ export default function ControllerCanvasPage() {
             />
           </Grid>
         </Grid>
-        <Grid container className="flex-1 my-4">
+        <Grid container spacing={2} className="flex-1 my-4">
           <Grid item xs={2} md={1}>
             <CanvasToolbar
               ref={canvasRef}

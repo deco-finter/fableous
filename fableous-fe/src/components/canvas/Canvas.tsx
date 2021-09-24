@@ -934,7 +934,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           style={{
             position: "absolute",
             width: offsetWidth,
-            borderRadius: "30px",
+            borderRadius: "24px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes
             touchAction: "none",
