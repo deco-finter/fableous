@@ -41,7 +41,8 @@ interface CanvasProps {
   pageNum: number;
   isGallery?: boolean;
   isShown?: boolean;
-  offsetWidth?: number;
+  offsetWidth: number;
+  offsetHeight: number;
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
@@ -58,7 +59,6 @@ interface CanvasProps {
 const defaultProps = {
   isGallery: false,
   isShown: true,
-  offsetWidth: 0,
   setCursor: undefined,
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
@@ -83,7 +83,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       pageNum,
       isGallery,
       isShown,
-      offsetWidth = defaultProps.offsetWidth,
+      offsetWidth,
+      offsetHeight,
       setCursor,
       setTextShapes,
       textShapes,
@@ -786,9 +787,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
-      const canvasOffsetWidth = canvas.offsetWidth;
-      canvas.width = canvasOffsetWidth * SCALE;
-      canvas.height = canvas.width * ASPECT_RATIO;
+      canvas.width = canvas.offsetWidth * SCALE;
+      canvas.height = canvas.offsetHeight * SCALE;
     }, [canvasRef]);
 
     // exposes callbacks to parent, to be used by toolbar
@@ -925,6 +925,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           style={{
             borderWidth: 4,
             width: offsetWidth,
+            height: offsetHeight,
             borderRadius: "30px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes

@@ -18,11 +18,12 @@ interface CursorScreenProps {
   cursor: Cursor | undefined;
   name?: string;
   isShown?: boolean;
-  offsetWidth?: number;
+  offsetWidth: number;
+  offsetHeight: number;
 }
 
 const CursorScreen = (props: CursorScreenProps) => {
-  const { cursor, name, isShown, offsetWidth = 0 } = props;
+  const { cursor, name, isShown, offsetWidth, offsetHeight } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const cursorRef = useRef<Cursor>(cursor as Cursor);
   cursorRef.current = cursor as Cursor;
@@ -93,9 +94,8 @@ const CursorScreen = (props: CursorScreenProps) => {
   // set canvas size onmount and when canvas appears or becomes hidden
   useEffect(() => {
     const canvas = canvasRef.current;
-    const canvasOffsetWidth = canvas.offsetWidth;
-    canvas.width = canvasOffsetWidth * SCALE;
-    canvas.height = canvas.width * ASPECT_RATIO;
+    canvas.width = canvas.offsetWidth * SCALE;
+    canvas.height = canvas.offsetHeight * SCALE;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
@@ -123,6 +123,7 @@ const CursorScreen = (props: CursorScreenProps) => {
           borderColor: "blue",
           borderRadius: "30px",
           width: offsetWidth,
+          height: offsetHeight,
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",
@@ -140,7 +141,6 @@ const CursorScreen = (props: CursorScreenProps) => {
 CursorScreen.defaultProps = {
   name: "",
   isShown: true,
-  offsetWidth: 0,
 };
 
 export default CursorScreen;

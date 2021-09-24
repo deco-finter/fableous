@@ -515,6 +515,7 @@ export default function HubCanvasPage() {
                   name="Story"
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -531,6 +532,7 @@ export default function HubCanvasPage() {
                   name="Character"
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -547,6 +549,7 @@ export default function HubCanvasPage() {
                   name="Background"
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -561,6 +564,7 @@ export default function HubCanvasPage() {
                   pageNum={currentPageIdx}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                   setCursor={setStoryCursor}
                   setTextShapes={setStoryTextShapes}
                   textShapes={storyTextShapes}
@@ -580,6 +584,7 @@ export default function HubCanvasPage() {
                   pageNum={currentPageIdx}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                   setCursor={setCharacterCursor}
                   setTextShapes={setCharacterTextShapes}
                   textShapes={CharacterTextShapes}
@@ -599,6 +604,7 @@ export default function HubCanvasPage() {
                   pageNum={currentPageIdx}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                   setCursor={setBackgroundCursor}
                   setTextShapes={setBackgroundTextShapes}
                   textShapes={BackgroundTextShapes}

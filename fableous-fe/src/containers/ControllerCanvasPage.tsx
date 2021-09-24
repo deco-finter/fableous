@@ -434,6 +434,7 @@ export default function ControllerCanvasPage() {
                   cursor={cursor}
                   isShown={controllerState === ControllerState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -461,6 +462,7 @@ export default function ControllerCanvasPage() {
                   setToolMode={setToolMode}
                   toolWidth={toolWidth}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
