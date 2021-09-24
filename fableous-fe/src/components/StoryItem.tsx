@@ -266,9 +266,7 @@ export default function StoryItem(props: {
                   <>
                     <hr className={classes.splitter} />
                     <div
-                      className={`${classes.description} ${
-                        editable && "cursor-text"
-                      }`}
+                      className={`${classes.description}`}
                       onDoubleClick={() => editable && handleEdit()}
                     >
                       {session.description.split(",").map((tag) => (
@@ -276,7 +274,9 @@ export default function StoryItem(props: {
                           label={tag.trim()}
                           size="small"
                           key={tag}
-                          className={classes.descriptionChip}
+                          className={`${classes.descriptionChip} ${
+                            editable && "cursor-text"
+                          }`}
                         />
                       ))}
                     </div>
