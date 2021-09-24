@@ -167,7 +167,15 @@ export default function StoryItem(props: {
               .string()
               .trim()
               .required("Title is required")
-              .test("len", "Name too long", (val) => (val || "").length <= 32),
+              .test("len", "Title too long", (val) => (val || "").length <= 32),
+            description: yup
+              .string()
+              .required("Description required")
+              .test(
+                "len",
+                "Description too long",
+                (val) => (val || "").length <= 32
+              ),
           })}
           validateOnBlur={false}
           onSubmit={handleEditSubmit}
