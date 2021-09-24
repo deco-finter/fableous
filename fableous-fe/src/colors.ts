@@ -2,8 +2,8 @@
 /* eslint-disable no-bitwise */
 export const colors = {
   orange: {
-    light: "#FF857B",
-    main: "#E45D3F",
+    light: "#FF704F",
+    main: "#E6411B",
     dark: "#FF594B",
   },
   blue: {
