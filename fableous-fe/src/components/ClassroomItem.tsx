@@ -175,15 +175,14 @@ export default function ClassroomItem(props: {
                     }}
                   />
                 ) : (
-                  <>
-                    <Typography
-                      variant="h5"
-                      component="h2"
-                      className="overflow-ellipsis overflow-hidden"
-                    >
-                      {classroom.name}
-                    </Typography>
-                  </>
+                  <Typography
+                    variant="h5"
+                    component="h2"
+                    className="overflow-ellipsis overflow-hidden cursor-text"
+                    onDoubleClick={handleEdit}
+                  >
+                    {classroom.name}
+                  </Typography>
                 )}
               </CardContent>
               <div className="flex-grow" />

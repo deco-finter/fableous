@@ -225,34 +225,16 @@ export default function StoryItem(props: {
                     <Typography
                       variant="h4"
                       component="h2"
-                      className={`w-full overflow-ellipsis overflow-hidden ${classes.title}`}
+                      className={`w-full overflow-ellipsis overflow-hidden ${
+                        classes.title
+                      } ${editable && "cursor-text"}`}
+                      onDoubleClick={() => editable && handleEdit()}
                     >
                       {session.title}
                     </Typography>
                   </div>
                 )}
                 {editing ? (
-                  // <FormikTextField
-                  //   formik={formik}
-                  //   name="description"
-                  //   label="Description"
-                  //   overrides={{
-                  //     disabled: putLoading,
-                  //     variant: "outlined",
-                  //     className: "mb-4",
-                  //     InputProps: {
-                  //       classes: {
-                  //         root: classes.inputRoot,
-                  //         input: classes.inputInput,
-                  //       },
-                  //     },
-                  //     InputLabelProps: {
-                  //       classes: {
-                  //         root: classes.inputInput,
-                  //       },
-                  //     },
-                  //   }}
-                  // />
                   <FormikTagField
                     formik={formik}
                     name="description"
@@ -283,7 +265,12 @@ export default function StoryItem(props: {
                 ) : (
                   <>
                     <hr className={classes.splitter} />
-                    <div className={classes.description}>
+                    <div
+                      className={`${classes.description} ${
+                        editable && "cursor-text"
+                      }`}
+                      onDoubleClick={() => editable && handleEdit()}
+                    >
                       {session.description.split(",").map((tag) => (
                         <Chip
                           label={tag.trim()}
