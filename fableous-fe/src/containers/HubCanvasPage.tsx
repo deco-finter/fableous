@@ -1,17 +1,17 @@
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
 import {
+  Button,
   Card,
   CardContent,
   Chip,
   ChipProps,
   CircularProgress,
+  Grid,
+  Icon,
   Paper,
+  Typography,
 } from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import { Formik, FormikHelpers } from "formik";
-import Icon from "@material-ui/core/Icon";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
@@ -41,6 +41,7 @@ import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
 import LayerIcon from "../components/canvas/LayerIcon";
 import ChipRow from "../components/ChipRow";
+import FormikTagField from "../components/FormikTagField";
 
 const INIT_FLAG = {
   [ControllerRole.Story]: false,
@@ -466,8 +467,22 @@ export default function HubCanvasPage() {
                 } as Story
               }
               validationSchema={yup.object({
-                title: yup.string().required("Title required"),
-                description: yup.string().required("Description required"),
+                title: yup
+                  .string()
+                  .required("Title required")
+                  .test(
+                    "len",
+                    "Title too long",
+                    (val) => (val || "").length <= 32
+                  ),
+                description: yup
+                  .string()
+                  .required("Description required")
+                  .test(
+                    "len",
+                    "Description too long",
+                    (val) => (val || "").length <= 32
+                  ),
                 pages: yup
                   .number()
                   .required("Number of pages required")
@@ -481,7 +496,12 @@ export default function HubCanvasPage() {
                 <form onSubmit={formik.handleSubmit} autoComplete="off">
                   <CardContent>
                     <Grid container spacing={2}>
-                      <Grid item xs={12} className="flex-grow flex flex-col">
+                      <Grid
+                        item
+                        xs={12}
+                        sm={8}
+                        className="flex-grow flex flex-col"
+                      >
                         <FormikTextField
                           formik={formik}
                           name="title"
@@ -496,23 +516,7 @@ export default function HubCanvasPage() {
                       <Grid
                         item
                         xs={12}
-                        sm={6}
-                        className="flex-grow flex flex-col"
-                      >
-                        <FormikTextField
-                          formik={formik}
-                          name="description"
-                          label="Description"
-                          overrides={{
-                            variant: "outlined",
-                            disabled: postLoading,
-                          }}
-                        />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
+                        sm={4}
                         className="flex-grow flex flex-col"
                       >
                         <FormikTextField
@@ -521,6 +525,23 @@ export default function HubCanvasPage() {
                           label="Pages"
                           overrides={{
                             type: "number",
+                            variant: "outlined",
+                            disabled: postLoading,
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} className="flex-grow flex flex-col">
+                        <FormikTagField
+                          formik={formik}
+                          name="description"
+                          label="Description"
+                          maxTags={3}
+                          maxTagLength={10}
+                          tagProps={{
+                            color: "secondary",
+                          }}
+                          overrides={{
+                            inputMode: "text",
                             variant: "outlined",
                             disabled: postLoading,
                           }}
