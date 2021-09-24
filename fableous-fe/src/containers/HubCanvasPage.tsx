@@ -593,7 +593,7 @@ export default function HubCanvasPage() {
                       Story
                     </Grid>
                     <Grid item xs={8}>
-                      <div className="ml-4">
+                      <div className="ml-4 overflow-ellipsis overflow-hidden">
                         {joinedControllers[ControllerRole.Story] ? (
                           <>{joinedControllers[ControllerRole.Story]}</>
                         ) : (
@@ -627,7 +627,7 @@ export default function HubCanvasPage() {
                       Character
                     </Grid>
                     <Grid item xs={8}>
-                      <div className="ml-4">
+                      <div className="ml-4 overflow-ellipsis overflow-hidden">
                         {joinedControllers[ControllerRole.Character] ? (
                           <>{joinedControllers[ControllerRole.Character]}</>
                         ) : (
@@ -661,7 +661,7 @@ export default function HubCanvasPage() {
                       Background
                     </Grid>
                     <Grid item xs={8}>
-                      <div className="ml-4">
+                      <div className="ml-4 overflow-ellipsis overflow-hidden">
                         {joinedControllers[ControllerRole.Background] ? (
                           <>{joinedControllers[ControllerRole.Background]}</>
                         ) : (
