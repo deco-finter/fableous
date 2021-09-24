@@ -408,16 +408,9 @@ export default function HubCanvasPage() {
       setStory(undefined);
       setClassroomToken("");
       setJoinedControllers({});
-      setHelpControllers({
-        [ControllerRole.Story]: false,
-        [ControllerRole.Character]: false,
-        [ControllerRole.Background]: false,
-      });
-      setDoneControllers({
-        [ControllerRole.Story]: false,
-        [ControllerRole.Character]: false,
-        [ControllerRole.Background]: false,
-      });
+      setFocusLayer(undefined);
+      setHelpControllers(INIT_FLAG);
+      setDoneControllers(INIT_FLAG);
     }
   }, [hubState]);
 
