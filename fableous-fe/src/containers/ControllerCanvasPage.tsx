@@ -488,166 +488,166 @@ export default function ControllerCanvasPage() {
             </Grid>
           </>
         )}
-        <div
-          className={`flex flex-col w-full ${
-            controllerState !== ControllerState.DrawingSession && "invisible"
-          }`}
-          style={{
-            // 64px navbar height and 20px content top padding
-            height: "calc(100vh - 84px)",
-            gridRowStart: 1,
-            gridColumnStart: 1,
-          }}
-        >
-          <Grid container className="mt-4">
-            <Grid item xs={12}>
-              <ChipRow
-                primary
-                chips={[
-                  <Chip label={storyDetails?.title} color="primary" />,
-                  <div className="flex gap-4">
-                    {(storyDetails?.description.split(",") || []).map((tag) => (
-                      <Chip label={tag} color="secondary" />
-                    ))}
-                  </div>,
-                  <Chip
-                    icon={
-                      <Icon
-                        fontSize="small"
-                        className="align-middle mr-1"
-                        style={{ color: colors.orange.main }}
-                      >
-                        {ROLE_ICON[role].icon}
-                      </Icon>
-                    }
-                    label={ROLE_ICON[role].text}
-                    style={{ color: colors.orange.main }}
-                  />,
-                ]}
-              />
-            </Grid>
+      </div>
+      <div
+        className={`flex flex-col w-full ${
+          controllerState !== ControllerState.DrawingSession && "invisible"
+        }`}
+        style={{
+          // 64px navbar height, 20px content top padding, 48px content bot padding
+          height: "calc(100vh - 132px)",
+          gridRowStart: 1,
+          gridColumnStart: 1,
+        }}
+      >
+        <Grid container className="mt-4">
+          <Grid item xs={12}>
+            <ChipRow
+              primary
+              chips={[
+                <Chip label={storyDetails?.title} color="primary" />,
+                <div className="flex gap-4">
+                  {(storyDetails?.description.split(",") || []).map((tag) => (
+                    <Chip label={tag} color="secondary" />
+                  ))}
+                </div>,
+                <Chip
+                  icon={
+                    <Icon
+                      fontSize="small"
+                      className="align-middle mr-1"
+                      style={{ color: colors.orange.main }}
+                    >
+                      {ROLE_ICON[role].icon}
+                    </Icon>
+                  }
+                  label={ROLE_ICON[role].text}
+                  style={{ color: colors.orange.main }}
+                />,
+              ]}
+            />
           </Grid>
-          <Grid container spacing={2} className="relative flex-1 my-4">
-            <Grid item xs={2} md={1}>
-              <CanvasToolbar
-                ref={canvasRef}
-                role={role}
-                offsetHeight={`${canvasOffsetHeight}px`}
-                toolColor={toolColor}
-                setToolColor={setToolColor}
-                toolMode={toolMode}
-                setToolMode={setToolMode}
-                toolWidth={toolWidth}
-                setToolWidth={setToolWidth}
-              />
-            </Grid>
-            <Grid item xs={10} md={11}>
+        </Grid>
+        <Grid container spacing={2} className="relative flex-1 my-4">
+          <Grid item xs={2} md={1}>
+            <CanvasToolbar
+              ref={canvasRef}
+              role={role}
+              offsetHeight={`${canvasOffsetHeight}px`}
+              toolColor={toolColor}
+              setToolColor={setToolColor}
+              toolMode={toolMode}
+              setToolMode={setToolMode}
+              toolWidth={toolWidth}
+              setToolWidth={setToolWidth}
+            />
+          </Grid>
+          <Grid item xs={10} md={11}>
+            <div
+              ref={canvasContainerRef}
+              className="grid place-items-stretch h-full"
+              style={{
+                border: "1px solid #0004",
+              }}
+            >
               <div
-                ref={canvasContainerRef}
-                className="grid place-items-stretch h-full"
+                className="grid"
                 style={{
-                  border: "1px solid #0004",
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 20,
+                  pointerEvents: "none", // forwards pointer events to next layer
+                }}
+              >
+                <CursorScreen
+                  cursor={cursor}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                  offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
+                />
+              </div>
+              <div
+                className="grid"
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 10,
+                }}
+              >
+                <Canvas
+                  ref={canvasRef}
+                  wsConn={wsConn}
+                  role={role}
+                  layer={role}
+                  pageNum={currentPageIdx}
+                  isShown={controllerState === ControllerState.DrawingSession}
+                  onDraw={() => setIsDone(false)}
+                  setCursor={setCursor}
+                  textShapes={textShapes}
+                  setTextShapes={setTextShapes}
+                  audioPaths={audioPaths}
+                  setAudioPaths={setAudioPaths}
+                  toolColor={toolColor}
+                  toolMode={toolMode}
+                  setToolMode={setToolMode}
+                  toolWidth={toolWidth}
+                  offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
+                />
+              </div>
+              <div
+                className="grid"
+                style={{
+                  gridRowStart: 1,
+                  gridColumnStart: 1,
+                  zIndex: 1,
                 }}
               >
                 <div
-                  className="grid"
+                  className="absolute place-self-center bg-white"
                   style={{
-                    gridRowStart: 1,
-                    gridColumnStart: 1,
-                    zIndex: 20,
-                    pointerEvents: "none", // forwards pointer events to next layer
+                    width: canvasOffsetWidth,
+                    // if not decrement by 1, canvas will be larger than screen height
+                    height: canvasOffsetHeight - 1,
+                    borderRadius: "24px",
                   }}
-                >
-                  <CursorScreen
-                    cursor={cursor}
-                    isShown={controllerState === ControllerState.DrawingSession}
-                    offsetWidth={canvasOffsetWidth}
-                    offsetHeight={canvasOffsetHeight}
-                  />
-                </div>
-                <div
-                  className="grid"
-                  style={{
-                    gridRowStart: 1,
-                    gridColumnStart: 1,
-                    zIndex: 10,
-                  }}
-                >
-                  <Canvas
-                    ref={canvasRef}
-                    wsConn={wsConn}
-                    role={role}
-                    layer={role}
-                    pageNum={currentPageIdx}
-                    isShown={controllerState === ControllerState.DrawingSession}
-                    onDraw={() => setIsDone(false)}
-                    setCursor={setCursor}
-                    textShapes={textShapes}
-                    setTextShapes={setTextShapes}
-                    audioPaths={audioPaths}
-                    setAudioPaths={setAudioPaths}
-                    toolColor={toolColor}
-                    toolMode={toolMode}
-                    setToolMode={setToolMode}
-                    toolWidth={toolWidth}
-                    offsetWidth={canvasOffsetWidth}
-                    offsetHeight={canvasOffsetHeight}
-                  />
-                </div>
-                <div
-                  className="grid"
-                  style={{
-                    gridRowStart: 1,
-                    gridColumnStart: 1,
-                    zIndex: 1,
-                  }}
-                >
-                  <div
-                    className="absolute place-self-center bg-white"
-                    style={{
-                      width: canvasOffsetWidth,
-                      // if not decrement by 1, canvas will be larger than screen height
-                      height: canvasOffsetHeight - 1,
-                      borderRadius: "24px",
-                    }}
-                  />
-                </div>
+                />
               </div>
-            </Grid>
+            </div>
           </Grid>
-          <Grid container>
-            <Grid item xs={12}>
-              <ChipRow
-                chips={[
-                  `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
-                  <AchievementButton
-                    achievements={achievements}
-                    confetti
-                    notify
-                  />,
-                  {
-                    icon: <Icon fontSize="small">pan_tool</Icon>,
-                    label: "Help",
-                    onClick: handleHelp,
-                    disabled: helpCooldown,
-                  } as ChipProps,
-                  {
-                    icon: (
-                      <Icon
-                        fontSize="medium"
-                        style={{ color: isDone ? colors.green : "inherit" }}
-                      >
-                        check_circle
-                      </Icon>
-                    ),
-                    label: "Done",
-                    onClick: handleDone,
-                  } as ChipProps,
-                ]}
-              />
-            </Grid>
+        </Grid>
+        <Grid container>
+          <Grid item xs={12}>
+            <ChipRow
+              chips={[
+                `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
+                <AchievementButton
+                  achievements={achievements}
+                  confetti
+                  notify
+                />,
+                {
+                  icon: <Icon fontSize="small">pan_tool</Icon>,
+                  label: "Help",
+                  onClick: handleHelp,
+                  disabled: helpCooldown,
+                } as ChipProps,
+                {
+                  icon: (
+                    <Icon
+                      fontSize="medium"
+                      style={{ color: isDone ? colors.green : "inherit" }}
+                    >
+                      check_circle
+                    </Icon>
+                  ),
+                  label: "Done",
+                  onClick: handleDone,
+                } as ChipProps,
+              ]}
+            />
           </Grid>
-        </div>
+        </Grid>
       </div>
     </Grid>
   );

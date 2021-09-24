@@ -701,8 +701,8 @@ export default function HubCanvasPage() {
           hubState !== HubState.DrawingSession && "invisible"
         }`}
         style={{
-          // 64px navbar height and 20px content top padding
-          height: "calc(100vh - 84px)",
+          // 64px navbar height, 20px content top padding, 48px content bot padding
+          height: "calc(100vh - 132px)",
           gridRowStart: 1,
           gridColumnStart: 1,
         }}
