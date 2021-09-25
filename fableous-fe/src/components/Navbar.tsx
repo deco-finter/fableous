@@ -1,10 +1,11 @@
-import { makeStyles } from "@material-ui/core";
+import { Icon, makeStyles } from "@material-ui/core";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import { Link, useHistory } from "react-router-dom";
 import { useContext } from "react";
+
 import { AuthContext } from "./AuthProvider";
 
 const useStyles = makeStyles(() => ({
@@ -36,14 +37,17 @@ export default function Navbar() {
             <Button
               variant="outlined"
               className="text-white"
+              startIcon={<Icon fontSize="small">person</Icon>}
               component={Link}
               to="/profile"
             >
               Profile
             </Button>
+
             <Button
               variant="outlined"
               className="ml-4 text-white"
+              startIcon={<Icon fontSize="small">logout</Icon>}
               onClick={onLogout}
             >
               Logout
@@ -54,6 +58,7 @@ export default function Navbar() {
             <Button
               variant="outlined"
               className="text-white"
+              startIcon={<Icon fontSize="small">login</Icon>}
               component={Link}
               to="/login"
             >
@@ -62,6 +67,7 @@ export default function Navbar() {
             <Button
               variant="outlined"
               className="ml-4 text-white"
+              startIcon={<Icon fontSize="small">person</Icon>}
               component={Link}
               to="/register"
             >

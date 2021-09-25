@@ -139,7 +139,10 @@ export default function App() {
                 <InjectAxiosRespInterceptor />
                 <ThemeProvider theme={theme}>
                   <Navbar />
-                  <Container className="flex flex-col flex-1 pt-5 pb-12">
+                  <Container
+                    className="flex flex-col flex-1 pt-5 pb-12"
+                    disableGutters
+                  >
                     <Routes />
                   </Container>
                 </ThemeProvider>
