@@ -13,6 +13,7 @@ import {
   Typography,
   makeStyles,
   Chip,
+  ChipProps,
 } from "@material-ui/core";
 import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
@@ -37,7 +38,12 @@ import {
   EmptyAchievement,
 } from "../components/achievement/achievement";
 import AchievementButton from "../components/achievement/AchievementButton";
-import { ControllerRole, ToolMode, WSMessageType } from "../constant";
+import {
+  ControllerRole,
+  ROLE_ICON,
+  ToolMode,
+  WSMessageType,
+} from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
@@ -51,34 +57,6 @@ enum ControllerState {
   DrawingSession = "DRAWING_SESSION",
   StoryFinished = "STORY_FINISHED",
 }
-
-const ROLE_ICON = {
-  [ControllerRole.Story]: (
-    <>
-      <Icon fontSize="small" className="align-middle mr-1">
-        text_fields
-      </Icon>
-      Story
-    </>
-  ),
-  [ControllerRole.Character]: (
-    <>
-      <Icon fontSize="small" className="align-middle mr-1">
-        directions_run
-      </Icon>
-      Character
-    </>
-  ),
-  [ControllerRole.Background]: (
-    <>
-      <Icon fontSize="small" className="align-middle mr-1">
-        image
-      </Icon>
-      Background
-    </>
-  ),
-  [ControllerRole.Hub]: undefined,
-};
 
 const useStyles = makeStyles({
   disableMobileHoldInteraction: {
@@ -126,6 +104,8 @@ export default function ControllerCanvasPage() {
   const [cursor, setCursor] = useState<Cursor | undefined>();
   const [achievements, setAchievements] =
     useState<Achievement>(EmptyAchievement);
+  const [isDone, setIsDone] = useState(false);
+  const [helpCooldown, setHelpCooldown] = useState(false);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
@@ -137,6 +117,7 @@ export default function ControllerCanvasPage() {
               const msgData = msg.data as WSControlMessageData;
               if (msgData.nextPage) {
                 setCurrentPageIdx((prev) => prev + 1);
+                setIsDone(false);
               } else if (msgData.classroomId) {
                 setSessionInfo(msgData);
                 setCurrentPageIdx(msgData.currentPage || 0);
@@ -225,6 +206,26 @@ export default function ControllerCanvasPage() {
     });
   };
 
+  const handleHelp = () => {
+    setHelpCooldown(true);
+    setTimeout(() => {
+      setHelpCooldown(false);
+    }, 15000);
+    enqueueSnackbar("Help requested!", { variant: "info" });
+    wsConn?.send(
+      JSON.stringify({
+        type: WSMessageType.Control,
+        role,
+        data: { help: true } as WSControlMessageData,
+      })
+    );
+  };
+
+  const handleDone = () => {
+    if (isDone) return;
+    setIsDone(true);
+  };
+
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
@@ -249,6 +250,7 @@ export default function ControllerCanvasPage() {
       setSessionInfo(undefined);
       setStoryDetails(undefined);
       setCurrentPageIdx(0);
+      setIsDone(false);
     }
   }, [controllerState]);
 
@@ -272,6 +274,18 @@ export default function ControllerCanvasPage() {
       setControllerState(ControllerState.StoryFinished);
     }
   }, [currentPageIdx, storyDetails, controllerState]);
+
+  // send done control message on change
+  useEffect(() => {
+    if (controllerState === ControllerState.DrawingSession)
+      wsConn?.send(
+        JSON.stringify({
+          type: WSMessageType.Control,
+          role,
+          data: { done: isDone } as WSControlMessageData,
+        })
+      );
+  }, [controllerState, isDone, role, wsConn]);
 
   return (
     <Grid
@@ -302,7 +316,14 @@ export default function ControllerCanvasPage() {
                 } as ControllerJoin
               }
               validationSchema={yup.object().shape({
-                name: yup.string().required("Name required"),
+                name: yup
+                  .string()
+                  .required("Name required")
+                  .test(
+                    "len",
+                    "Name too long",
+                    (val) => (val || "").length <= 24
+                  ),
                 token: yup
                   .string()
                   .required("Token required")
@@ -370,13 +391,31 @@ export default function ControllerCanvasPage() {
                                 onBlur={formik.handleBlur}
                               >
                                 <MenuItem value={ControllerRole.Story}>
-                                  {ROLE_ICON[ControllerRole.Story]}
+                                  <Icon
+                                    fontSize="small"
+                                    className="align-middle mr-1"
+                                  >
+                                    {ROLE_ICON[ControllerRole.Story].icon}
+                                  </Icon>
+                                  {ROLE_ICON[ControllerRole.Story].text}
                                 </MenuItem>
                                 <MenuItem value={ControllerRole.Character}>
-                                  {ROLE_ICON[ControllerRole.Character]}
+                                  <Icon
+                                    fontSize="small"
+                                    className="align-middle mr-1"
+                                  >
+                                    {ROLE_ICON[ControllerRole.Character].icon}
+                                  </Icon>
+                                  {ROLE_ICON[ControllerRole.Character].text}
                                 </MenuItem>
                                 <MenuItem value={ControllerRole.Background}>
-                                  {ROLE_ICON[ControllerRole.Background]}
+                                  <Icon
+                                    fontSize="small"
+                                    className="align-middle mr-1"
+                                  >
+                                    {ROLE_ICON[ControllerRole.Background].icon}
+                                  </Icon>
+                                  {ROLE_ICON[ControllerRole.Background].text}
                                 </MenuItem>
                               </Select>
                             </FormControl>
@@ -385,11 +424,12 @@ export default function ControllerCanvasPage() {
                       </Grid>
                       <Grid item xs={12} className="flex justify-end">
                         <Button
-                          variant="contained"
                           color="secondary"
+                          variant="contained"
+                          endIcon={<Icon fontSize="small">brush</Icon>}
                           type="submit"
                         >
-                          Join <Icon>brush</Icon>
+                          Join
                         </Button>
                       </Grid>
                     </Grid>
@@ -418,12 +458,13 @@ export default function ControllerCanvasPage() {
             <Button
               variant="contained"
               color="primary"
+              endIcon={<Icon fontSize="small">brush</Icon>}
               className="mb-2"
               onClick={() => {
                 setControllerState(ControllerState.JoinForm);
               }}
             >
-              Join another session <Icon>brush</Icon>
+              Join another session
             </Button>
           </Grid>
           <Grid item xs={12}>
@@ -443,22 +484,35 @@ export default function ControllerCanvasPage() {
           controllerState !== ControllerState.DrawingSession && "invisible"
         }`}
       >
-        <Grid container>
+        <Grid container className="mt-4">
           <Grid item xs={12}>
             <ChipRow
               primary
               chips={[
                 <Chip label={storyDetails?.title} color="primary" />,
-                ...(storyDetails?.description.split(",") || []),
+                <div className="flex gap-4">
+                  {(storyDetails?.description.split(",") || []).map((tag) => (
+                    <Chip label={tag} color="secondary" />
+                  ))}
+                </div>,
                 <Chip
-                  label={ROLE_ICON[role]}
+                  icon={
+                    <Icon
+                      fontSize="small"
+                      className="align-middle mr-1"
+                      style={{ color: colors.orange.main }}
+                    >
+                      {ROLE_ICON[role].icon}
+                    </Icon>
+                  }
+                  label={ROLE_ICON[role].text}
                   style={{ color: colors.orange.main }}
                 />,
               ]}
             />
           </Grid>
         </Grid>
-        <Grid container className="flex-1 my-4">
+        <Grid container spacing={2} className="flex-1 my-4">
           <Grid item xs={2} md={1}>
             <CanvasToolbar
               ref={canvasRef}
@@ -477,7 +531,7 @@ export default function ControllerCanvasPage() {
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
               style={{
-                border: "3px solid black",
+                border: "1px solid #0004",
               }}
             >
               <div
@@ -510,6 +564,7 @@ export default function ControllerCanvasPage() {
                   layer={role}
                   pageNum={currentPageIdx}
                   isShown={controllerState === ControllerState.DrawingSession}
+                  onDraw={() => setIsDone(false)}
                   setCursor={setCursor}
                   textShapes={textShapes}
                   setTextShapes={setTextShapes}
@@ -535,7 +590,7 @@ export default function ControllerCanvasPage() {
                   style={{
                     width: canvasOffsetWidth,
                     height: canvasOffsetHeight,
-                    borderRadius: "30px",
+                    borderRadius: "24px",
                   }}
                 />
               </div>
@@ -552,6 +607,24 @@ export default function ControllerCanvasPage() {
                   confetti
                   notify
                 />,
+                {
+                  icon: <Icon fontSize="small">pan_tool</Icon>,
+                  label: "Help",
+                  onClick: handleHelp,
+                  disabled: helpCooldown,
+                } as ChipProps,
+                {
+                  icon: (
+                    <Icon
+                      fontSize="medium"
+                      style={{ color: isDone ? colors.green : "inherit" }}
+                    >
+                      check_circle
+                    </Icon>
+                  ),
+                  label: "Done",
+                  onClick: handleDone,
+                } as ChipProps,
               ]}
             />
           </Grid>

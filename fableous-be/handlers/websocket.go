@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -218,8 +219,8 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText,
-			constants.WSMessageTypeCheckpoint, constants.WSMessageTypeUndo, constants.WSMessageTypeCursor:
+		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeCheckpoint,
+			constants.WSMessageTypeUndo, constants.WSMessageTypeCursor, constants.WSMessageTypeControl:
 			_ = sess.hubConn.WriteJSON(message)
 		case constants.WSMessageTypeAudio:
 			go func() {
@@ -271,7 +272,7 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 	log.Println(message.Type, page)
 	switch message.Type {
 	case constants.WSMessageTypeAudio:
-		filename = "audio.ogg"
+		filename = fmt.Sprintf("%d.ogg", time.Now().Unix())
 	case constants.WSMessageTypeImage:
 		filename = "image.png"
 	case constants.WSMessageTypeManifest:

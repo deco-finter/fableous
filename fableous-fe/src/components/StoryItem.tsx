@@ -23,6 +23,7 @@ import FormikTextField from "./FormikTextField";
 import { restAPI } from "../api";
 import { colors, generateColor, getBestTextColor } from "../colors";
 import { APIResponse, Session } from "../data";
+import FormikTagField from "./FormikTagField";
 
 export default function StoryItem(props: {
   session: Session;
@@ -166,7 +167,15 @@ export default function StoryItem(props: {
               .string()
               .trim()
               .required("Title is required")
-              .test("len", "Name too long", (val) => (val || "").length <= 32),
+              .test("len", "Title too long", (val) => (val || "").length <= 32),
+            description: yup
+              .string()
+              .required("Description required")
+              .test(
+                "len",
+                "Description too long",
+                (val) => (val || "").length <= 32
+              ),
           })}
           validateOnBlur={false}
           onSubmit={handleEditSubmit}
@@ -216,20 +225,29 @@ export default function StoryItem(props: {
                     <Typography
                       variant="h4"
                       component="h2"
-                      className={`w-full overflow-ellipsis overflow-hidden ${classes.title}`}
+                      className={`w-full overflow-ellipsis overflow-hidden ${
+                        classes.title
+                      } ${editable && "cursor-text"}`}
+                      onDoubleClick={() => editable && handleEdit()}
                     >
                       {session.title}
                     </Typography>
                   </div>
                 )}
                 {editing ? (
-                  <FormikTextField
+                  <FormikTagField
                     formik={formik}
                     name="description"
                     label="Description"
+                    maxTags={3}
+                    maxTagLength={10}
+                    tagProps={{
+                      color: "secondary",
+                    }}
                     overrides={{
-                      disabled: putLoading,
+                      inputMode: "text",
                       variant: "outlined",
+                      disabled: putLoading,
                       className: "mb-4",
                       InputProps: {
                         classes: {
@@ -247,13 +265,18 @@ export default function StoryItem(props: {
                 ) : (
                   <>
                     <hr className={classes.splitter} />
-                    <div className={classes.description}>
+                    <div
+                      className={`${classes.description}`}
+                      onDoubleClick={() => editable && handleEdit()}
+                    >
                       {session.description.split(",").map((tag) => (
                         <Chip
                           label={tag.trim()}
                           size="small"
                           key={tag}
-                          className={classes.descriptionChip}
+                          className={`${classes.descriptionChip} ${
+                            editable && "cursor-text"
+                          }`}
                         />
                       ))}
                     </div>
@@ -281,6 +304,8 @@ export default function StoryItem(props: {
                   <div className="flex-grow" />
                   <Button
                     size="small"
+                    variant="outlined"
+                    startIcon={<Icon fontSize="small">cancel</Icon>}
                     className={classes.actionButton}
                     disabled={putLoading || deleteLoading}
                     onClick={() => {
@@ -290,15 +315,17 @@ export default function StoryItem(props: {
                       });
                     }}
                   >
-                    <Icon fontSize="small">cancel</Icon>
+                    Cancel
                   </Button>
                   <Button
                     size="small"
+                    variant="outlined"
+                    startIcon={<Icon fontSize="small">save</Icon>}
                     className={classes.actionButton}
                     disabled={putLoading || deleteLoading}
                     type="submit"
                   >
-                    <Icon fontSize="small">save</Icon>
+                    Save
                   </Button>
                 </CardActions>
               ) : (
@@ -306,21 +333,24 @@ export default function StoryItem(props: {
                   {editable && (
                     <Button
                       size="small"
+                      variant="outlined"
+                      startIcon={<Icon fontSize="small">edit</Icon>}
                       onClick={handleEdit}
                       className={classes.actionButton}
                     >
-                      <Icon fontSize="small">edit</Icon>
+                      Edit
                     </Button>
                   )}
                   <div className="flex-grow" />
                   <Button
                     size="small"
-                    variant="contained"
                     color="secondary"
+                    variant="contained"
+                    endIcon={<Icon fontSize="small">book</Icon>}
                     component={Link}
                     to={`/gallery/${classroomId}/${session.id}`}
                   >
-                    Read <Icon fontSize="small">book</Icon>
+                    Read
                   </Button>
                 </CardActions>
               )}
