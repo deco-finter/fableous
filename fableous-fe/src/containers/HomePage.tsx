@@ -1,4 +1,4 @@
-import { Button, Grid, Typography } from "@material-ui/core";
+import { Button, Grid, Icon, Typography } from "@material-ui/core";
 import { Link } from "react-router-dom";
 
 export default function HomePage() {
@@ -27,6 +27,7 @@ export default function HomePage() {
           variant="contained"
           color="secondary"
           component={Link}
+          endIcon={<Icon fontSize="small">brush</Icon>}
           to="/join"
         >
           Join
