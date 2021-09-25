@@ -1,15 +1,18 @@
 import {
   Grid,
-  Paper,
   ImageList,
   ImageListItem,
   IconButton,
   Button,
+  Chip,
+  Icon,
+  ChipProps,
 } from "@material-ui/core";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@material-ui/icons";
 import useAxios from "axios-hooks";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import AchievementButton from "../components/achievement/AchievementButton";
 import { restAPI } from "../api";
 import { APIResponse, Manifest, Session } from "../data";
 import Canvas from "../components/canvas/Canvas";
@@ -17,6 +20,8 @@ import { ControllerRole } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import { ASPECT_RATIO } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
+import ChipRow from "../components/ChipRow";
+import { EmptyAchievement } from "../components/achievement/achievement";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
@@ -51,6 +56,24 @@ export default function StoryDetailPage() {
     containerRef: canvasContainerRef,
     ratio: 1 / ASPECT_RATIO,
   });
+  const listContainerRef = useRef<HTMLUListElement>(
+    document.createElement("ul")
+  );
+  const [, listOffsetHeight] = useContainRatio({
+    containerRef: listContainerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
+  const playAudio = useCallback(() => {
+    if (audioPaths.length === 0) {
+      return;
+    }
+
+    const player = document.createElement("audio");
+    player.src =
+      restAPI.gallery.getAssetByPath(audioPaths[audioPaths.length - 1]).url ||
+      "";
+    player.play();
+  }, [audioPaths]);
   useEffect(() => {
     executeGetClassroomDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,36 +92,30 @@ export default function StoryDetailPage() {
 
   return (
     <Grid container className="relative">
-      {/* TODO ga perlu taro apa2 disini hrsnya, kecuali lu ada 2 different layout kek contoh di HubPage,
-       pertama muncul form terus muncul canvas, nah form nya taro disini */}
-
-      {/* TODO div dibawah otomatis fill height dari border bawah navbar sampe border bawah viewport, 
-      contoh di HubPage ini utk layout buat ngegambar */}
       <div
         className="flex flex-col absolute w-full"
         style={{
-          // navbar is 64px and there is a 20px padding
           height: "calc(100vh - 84px)",
         }}
       >
         <Grid container className="mb-4">
-          {/* TODO disini buat taro info2 diatas canvas, kek title, dll, tinggi nya bakal secukupnya utk nampung content */}
-          <Grid item xs={12}>
-            ehe
-          </Grid>
-          <Grid item xs={9}>
-            <Paper>hihi</Paper>
-          </Grid>
-          <Grid
-            item
-            xs={3}
-            style={{ backgroundColor: "salmon", justifyContent: "center" }}
-          >
-            {/* <Paper>hoho</Paper> */}
+          <Grid item xs={2} />
+
+          <Grid item xs={10}>
+            <ChipRow
+              primary
+              chips={[
+                <Chip label={story?.data?.title} color="primary" />,
+                <div className="flex gap-4">
+                  {(story?.data?.description.split(",") || []).map((tag) => (
+                    <Chip label={tag} color="secondary" />
+                  ))}
+                </div>,
+              ]}
+            />
           </Grid>
         </Grid>
         <Grid container className="flex-1 mb-4">
-          {/* TODO disini area yg utk canvas, dimana tinggi bakal nge expand sampe nyentuh bawah layar */}
           <Grid
             item
             xs={2}
@@ -108,6 +125,7 @@ export default function StoryDetailPage() {
               display: "flex",
               flexDirection: "column",
               borderRadius: "30px",
+              height: canvasOffsetHeight || "100%",
             }}
           >
             <IconButton
@@ -118,15 +136,22 @@ export default function StoryDetailPage() {
               <ArrowUpwardOutlined fontSize="medium" />
             </IconButton>
             <ImageList
+              ref={listContainerRef}
+              className="overflow-y-auto"
+              style={{ alignSelf: "center" }}
               cols={1}
               gap={0}
-              rowHeight={canvasOffsetHeight / (story?.data?.pages || 1)}
+              classes={{ root: "flex-grow" }}
+              rowHeight={listOffsetHeight}
             >
               {Array.from(
                 { length: story?.data?.pages || 0 },
                 (_, i) => i + 1
               ).map((pageIndex) => (
-                <ImageListItem key={pageIndex}>
+                <ImageListItem
+                  key={pageIndex}
+                  classes={{ item: "flex flex-col justify-center" }}
+                >
                   <Button onClick={() => setPage(pageIndex)}>
                     <img
                       src={
@@ -192,7 +217,7 @@ export default function StoryDetailPage() {
                   offsetWidth={canvasOffsetWidth}
                 />
               </div>
-              {/* TODO ini gw tambahin classname supaya image nya ke center, ref supaya bisa itung desired width <img /> */}
+
               <div
                 className="grid place-items-center"
                 style={{
@@ -221,6 +246,26 @@ export default function StoryDetailPage() {
                 />
               </div>
             </div>
+          </Grid>
+        </Grid>
+        <Grid container className="mb-4">
+          <Grid item xs={2} />
+          <Grid item xs={10}>
+            <ChipRow
+              chips={[
+                `Page ${page} of ${story?.data?.pages || ""}`,
+                <AchievementButton
+                  achievements={manifest?.achievements || EmptyAchievement}
+                  notify={false}
+                />,
+                {
+                  icon: <Icon fontSize="medium">music_note</Icon>,
+                  label: "Play Audio",
+                  onClick: playAudio,
+                  disabled: audioPaths.length === 0,
+                } as ChipProps,
+              ]}
+            />
           </Grid>
         </Grid>
       </div>
