@@ -37,19 +37,20 @@ export default function Navbar() {
             <Button
               variant="outlined"
               className="text-white"
+              startIcon={<Icon fontSize="small">person</Icon>}
               component={Link}
               to="/profile"
             >
-              <Icon fontSize="small">person</Icon>
-              &nbsp; Profile
+              Profile
             </Button>
 
             <Button
               variant="outlined"
               className="ml-4 text-white"
+              startIcon={<Icon fontSize="small">logout</Icon>}
               onClick={onLogout}
             >
-              <Icon fontSize="small">logout</Icon>&nbsp; Logout
+              Logout
             </Button>
           </>
         ) : (
@@ -57,18 +58,20 @@ export default function Navbar() {
             <Button
               variant="outlined"
               className="text-white"
+              startIcon={<Icon fontSize="small">login</Icon>}
               component={Link}
               to="/login"
             >
-              <Icon fontSize="small">login</Icon>&nbsp; Login
+              Login
             </Button>
             <Button
               variant="outlined"
               className="ml-4 text-white"
+              startIcon={<Icon fontSize="small">person</Icon>}
               component={Link}
               to="/register"
             >
-              <Icon fontSize="small">person</Icon>&nbsp; Register
+              Register
             </Button>
           </>
         )}
