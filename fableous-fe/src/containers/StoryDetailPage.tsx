@@ -115,7 +115,7 @@ export default function StoryDetailPage() {
             />
           </Grid>
         </Grid>
-        <Grid container className="flex-1 mb-4">
+        <Grid container spacing={2} className="flex-1 mb-4">
           <Grid
             item
             xs={2}
