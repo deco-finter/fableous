@@ -1,19 +1,16 @@
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
 import {
+  Button,
   Card,
   CardContent,
   Chip,
   ChipProps,
   CircularProgress,
-  IconButton,
+  Grid,
+  Icon,
+  Typography,
 } from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
 import useAxios from "axios-hooks";
 import { Formik, FormikHelpers } from "formik";
-import Icon from "@material-ui/core/Icon";
-import MusicNoteIcon from "@material-ui/icons/MusicNote";
-import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
@@ -31,12 +28,25 @@ import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
-import { WSMessageType, ControllerRole } from "../constant";
+import {
+  WSMessageType,
+  ControllerRole,
+  ROLE_ICON,
+  StudentRole,
+} from "../constant";
 import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
 import { ASPECT_RATIO } from "../components/canvas/constants";
 import ChipRow from "../components/ChipRow";
+import FormikTagField from "../components/FormikTagField";
+import LayerToolbar from "../components/canvas/LayerToolbar";
+
+const INIT_FLAG = {
+  [ControllerRole.Story]: false,
+  [ControllerRole.Character]: false,
+  [ControllerRole.Background]: false,
+};
 
 enum HubState {
   SessionForm = "SESSION_FORM",
@@ -52,7 +62,7 @@ export default function HubCanvasPage() {
   const [classroomToken, setClassroomToken] = useState("");
   const [joinedControllers, setJoinedControllers] = useState<
     {
-      [key in ControllerRole]?: string | null;
+      [key in StudentRole]?: string;
     }
   >({});
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
@@ -108,6 +118,19 @@ export default function HubCanvasPage() {
   ] = useAchievement({
     debug: true,
   });
+  const [focusLayer, setFocusLayer] = useState<StudentRole | undefined>(
+    undefined
+  );
+  const [helpControllers, setHelpControllers] = useState<
+    {
+      [key in StudentRole]: boolean;
+    }
+  >(INIT_FLAG);
+  const [doneControllers, setDoneControllers] = useState<
+    {
+      [key in StudentRole]: boolean;
+    }
+  >(INIT_FLAG);
 
   const broadcastAchievement = useCallback(() => {
     if (hubState === HubState.DrawingSession) {
@@ -123,15 +146,33 @@ export default function HubCanvasPage() {
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
       try {
-        const msg = JSON.parse(ev.data);
+        const msg = JSON.parse(ev.data) as WSMessage;
         switch (msg.type) {
           case WSMessageType.Control:
             {
-              const { classroomToken: classroomTokenFromWs } =
-                msg.data as WSControlMessageData;
+              const {
+                classroomToken: classroomTokenFromWs,
+                help,
+                done,
+              } = msg.data as WSControlMessageData;
               if (classroomTokenFromWs) {
                 setClassroomToken(classroomTokenFromWs);
               }
+              if (help) {
+                enqueueSnackbar(`${ROLE_ICON[msg.role].text} needs a hand!`, {
+                  variant: "info",
+                });
+              }
+              if (!done && help)
+                setHelpControllers((prev) => ({
+                  ...prev,
+                  [msg.role as StudentRole]: help,
+                }));
+              if (!help)
+                setDoneControllers((prev) => ({
+                  ...prev,
+                  [msg.role as StudentRole]: done,
+                }));
             }
             break;
           case WSMessageType.Join:
@@ -152,9 +193,28 @@ export default function HubCanvasPage() {
                 setJoinedControllers((prev) => {
                   const prevCopy = { ...prev };
                   delete prevCopy[role];
-
                   return prevCopy;
                 });
+                switch (role) {
+                  case ControllerRole.Story:
+                    setStoryCursor(undefined);
+                    break;
+                  case ControllerRole.Character:
+                    setCharacterCursor(undefined);
+                    break;
+                  case ControllerRole.Background:
+                    setBackgroundCursor(undefined);
+                    break;
+                  default:
+                }
+                setHelpControllers((prev) => ({
+                  ...prev,
+                  [role as StudentRole]: false,
+                }));
+                setDoneControllers((prev) => ({
+                  ...prev,
+                  [role as StudentRole]: false,
+                }));
               }
 
               // show error if controller disconnects during drawing session
@@ -234,7 +294,6 @@ export default function HubCanvasPage() {
   };
 
   const onNextPage = () => {
-    console.log("posting this canvas page");
     if (hubState === HubState.DrawingSession) {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -294,6 +353,8 @@ export default function HubCanvasPage() {
       if (prev > 0) achievementNextPage();
       return prev + 1;
     });
+    setHelpControllers(INIT_FLAG);
+    setDoneControllers(INIT_FLAG);
   };
   const onBeginDrawing = () => {
     onNextPage();
@@ -346,6 +407,9 @@ export default function HubCanvasPage() {
       setStory(undefined);
       setClassroomToken("");
       setJoinedControllers({});
+      setFocusLayer(undefined);
+      setHelpControllers(INIT_FLAG);
+      setDoneControllers(INIT_FLAG);
     }
   }, [hubState]);
 
@@ -394,8 +458,22 @@ export default function HubCanvasPage() {
                 } as Story
               }
               validationSchema={yup.object({
-                title: yup.string().required("Title required"),
-                description: yup.string().required("Description required"),
+                title: yup
+                  .string()
+                  .required("Title required")
+                  .test(
+                    "len",
+                    "Title too long",
+                    (val) => (val || "").length <= 32
+                  ),
+                description: yup
+                  .string()
+                  .required("Description required")
+                  .test(
+                    "len",
+                    "Description too long",
+                    (val) => (val || "").length <= 32
+                  ),
                 pages: yup
                   .number()
                   .required("Number of pages required")
@@ -409,7 +487,12 @@ export default function HubCanvasPage() {
                 <form onSubmit={formik.handleSubmit} autoComplete="off">
                   <CardContent>
                     <Grid container spacing={2}>
-                      <Grid item xs={12} className="flex-grow flex flex-col">
+                      <Grid
+                        item
+                        xs={12}
+                        sm={8}
+                        className="flex-grow flex flex-col"
+                      >
                         <FormikTextField
                           formik={formik}
                           name="title"
@@ -424,23 +507,7 @@ export default function HubCanvasPage() {
                       <Grid
                         item
                         xs={12}
-                        sm={6}
-                        className="flex-grow flex flex-col"
-                      >
-                        <FormikTextField
-                          formik={formik}
-                          name="description"
-                          label="Description"
-                          overrides={{
-                            variant: "outlined",
-                            disabled: postLoading,
-                          }}
-                        />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
+                        sm={4}
                         className="flex-grow flex flex-col"
                       >
                         <FormikTextField
@@ -454,16 +521,33 @@ export default function HubCanvasPage() {
                           }}
                         />
                       </Grid>
+                      <Grid item xs={12} className="flex-grow flex flex-col">
+                        <FormikTagField
+                          formik={formik}
+                          name="description"
+                          label="Description"
+                          maxTags={3}
+                          maxTagLength={10}
+                          tagProps={{
+                            color: "secondary",
+                          }}
+                          overrides={{
+                            inputMode: "text",
+                            variant: "outlined",
+                            disabled: postLoading,
+                          }}
+                        />
+                      </Grid>
                       <Grid item xs={12} className="flex justify-end">
                         <Button
-                          variant="contained"
                           color="secondary"
+                          variant="contained"
+                          endIcon={<Icon fontSize="small">play_arrow</Icon>}
                           disabled={postLoading}
                           type="submit"
                           style={{ height: "100%" }}
                         >
-                          start
-                          <Icon>play_arrow</Icon>
+                          Start
                         </Button>
                       </Grid>
                     </Grid>
@@ -501,7 +585,7 @@ export default function HubCanvasPage() {
                       Story
                     </Grid>
                     <Grid item xs={8}>
-                      <div className="ml-4">
+                      <div className="ml-4 overflow-ellipsis overflow-hidden">
                         {joinedControllers[ControllerRole.Story] ? (
                           <>{joinedControllers[ControllerRole.Story]}</>
                         ) : (
@@ -535,7 +619,7 @@ export default function HubCanvasPage() {
                       Character
                     </Grid>
                     <Grid item xs={8}>
-                      <div className="ml-4">
+                      <div className="ml-4 overflow-ellipsis overflow-hidden">
                         {joinedControllers[ControllerRole.Character] ? (
                           <>{joinedControllers[ControllerRole.Character]}</>
                         ) : (
@@ -569,7 +653,7 @@ export default function HubCanvasPage() {
                       Background
                     </Grid>
                     <Grid item xs={8}>
-                      <div className="ml-4">
+                      <div className="ml-4 overflow-ellipsis overflow-hidden">
                         {joinedControllers[ControllerRole.Background] ? (
                           <>{joinedControllers[ControllerRole.Background]}</>
                         ) : (
@@ -590,12 +674,13 @@ export default function HubCanvasPage() {
                   <Chip color="primary" label={classroomToken} />
                   <div className="flex flex-grow" />
                   <Button
-                    variant="contained"
                     color="secondary"
+                    variant="contained"
+                    endIcon={<Icon fontSize="small">brush</Icon>}
                     onClick={onBeginDrawing}
                     disabled={!isAllControllersJoined()}
                   >
-                    Begin Drawing <Icon>brush</Icon>
+                    Begin Drawing
                   </Button>
                 </Grid>
               </Grid>
@@ -608,28 +693,47 @@ export default function HubCanvasPage() {
           hubState !== HubState.DrawingSession && "invisible"
         }`}
       >
-        <Grid container>
+        <Grid container className="mt-4">
           <Grid item xs={12}>
             <ChipRow
               primary
               chips={[
                 <Chip label={story?.title} color="primary" />,
-                ...(story?.description.split(",") || []),
+                <div className="flex gap-4">
+                  {(story?.description.split(",") || []).map((tag) => (
+                    <Chip label={tag} color="secondary" />
+                  ))}
+                </div>,
               ]}
             />
           </Grid>
         </Grid>
-        <Grid container className="flex-1 my-4">
-          <Grid item xs={12}>
+        <Grid container spacing={2} className="flex-1 my-4">
+          <Grid item xs={2} md={1}>
+            <LayerToolbar
+              offsetHeight={`${canvasOffsetHeight}px`}
+              focusLayer={focusLayer}
+              setFocusLayer={setFocusLayer}
+              joinedControllers={joinedControllers}
+              helpControllers={helpControllers}
+              setHelpControllers={setHelpControllers}
+              doneControllers={doneControllers}
+            />
+          </Grid>
+          <Grid item xs={10} md={11}>
             <div
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
               style={{
-                border: "3px solid black",
+                border: "1px solid #0004",
               }}
             >
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Story &&
+                  "invisible"
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -639,13 +743,17 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={storyCursor}
-                  name="Story"
+                  name={ROLE_ICON[ControllerRole.Story].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Character &&
+                  "invisible"
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -655,13 +763,17 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={characterCursor}
-                  name="Character"
+                  name={ROLE_ICON[ControllerRole.Character].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Background &&
+                  "invisible"
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -671,13 +783,17 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={backgroundCursor}
-                  name="Background"
+                  name={ROLE_ICON[ControllerRole.Background].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Story &&
+                  "invisible"
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}
               >
                 <Canvas
@@ -695,7 +811,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Character &&
+                  "invisible"
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}
               >
                 <Canvas
@@ -713,7 +833,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className="grid"
+                className={`grid ${
+                  focusLayer &&
+                  focusLayer !== ControllerRole.Background &&
+                  "invisible"
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}
               >
                 <Canvas
@@ -744,7 +868,7 @@ export default function HubCanvasPage() {
                     width: `${canvasOffsetWidth}px`,
                     // if not decrement by 1, canvas will be larger than screen height
                     height: `${canvasOffsetHeight - 1}px`,
-                    borderRadius: "30px",
+                    borderRadius: "24px",
                   }}
                 />
               </div>
@@ -762,31 +886,22 @@ export default function HubCanvasPage() {
                   notify
                 />,
                 {
-                  label: (
-                    <>
-                      <IconButton
-                        className="p-0 mr-1"
-                        color="primary"
-                        disableRipple
-                      >
-                        <MusicNoteIcon fontSize="medium" />
-                        <PlayArrowIcon
-                          fontSize="small"
-                          color="primary"
-                          className="absolute -bottom-1 -right-1.5"
-                        />
-                      </IconButton>
-                      Play Audio
-                    </>
-                  ),
+                  icon: <Icon fontSize="medium">music_note</Icon>,
+                  label: "Play Audio",
                   onClick: playAudio,
-                  // disabled: audioPaths.length === 0,
+                  disabled: audioPaths.length === 0,
                 } as ChipProps,
                 {
+                  icon:
+                    currentPageIdx >= (story?.pages || -1) ? (
+                      <Icon fontSize="medium">check_circle</Icon>
+                    ) : (
+                      <Icon fontSize="medium">skip_next</Icon>
+                    ),
                   label:
                     currentPageIdx >= (story?.pages || -1)
-                      ? "Finish"
-                      : "Next page",
+                      ? "Finish Story"
+                      : "Next Page",
                   onClick: onNextPage,
                 } as ChipProps,
               ]}

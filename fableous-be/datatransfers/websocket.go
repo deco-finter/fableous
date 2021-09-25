@@ -31,15 +31,17 @@ type WSControlMessageData struct {
 	SessionID      string `json:"sessionId,omitempty"`
 	CurrentPage    *int   `json:"currentPage,omitempty"`
 	NextPage       *bool  `json:"nextPage,omitempty"`
+	Help           *bool  `json:"help,omitempty"`
+	Done           *bool  `json:"done,omitempty"`
 }
 
 type WSAchievementMessageData struct {
-	AllColor  float32 `json:"all_color"`
-	FiveText  float32 `json:"five_text"`
-	TenText   float32 `json:"ten_text"`
-	OnePage   float32 `json:"one_page"`
-	ThreePage float32 `json:"three_page"`
-	FivePage  float32 `json:"five_page"`
+	AllColor  *float32 `json:"all_color,omitempty"`
+	FiveText  *float32 `json:"five_text,omitempty"`
+	TenText   *float32 `json:"ten_text,omitempty"`
+	OnePage   *float32 `json:"one_page,omitempty"`
+	ThreePage *float32 `json:"three_page,omitempty"`
+	FivePage  *float32 `json:"five_page,omitempty"`
 }
 
 type WSJoinMessageData struct {
