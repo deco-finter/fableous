@@ -215,6 +215,7 @@ export default function StoryDetailPage() {
                   audioPaths={audioPaths}
                   setAudioPaths={setAudioPaths}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
 
