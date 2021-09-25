@@ -134,6 +134,9 @@ export default function useAchievement(config?: {
         case WSMessageType.Paint:
           checkAchievement(AchievementType.AllColor, msg);
           break;
+        case WSMessageType.Fill:
+          checkAchievement(AchievementType.AllColor, msg);
+          break;
         case WSMessageType.Text:
           checkAchievement(AchievementType.FiveText, msg);
           checkAchievement(AchievementType.TenText, msg);

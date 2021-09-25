@@ -744,6 +744,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         case ToolMode.Paint:
           if (dragging) {
             placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+            const [normX, normY] = scaleDownXY(canvasRef, x, y);
+            const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
+            placeCursor(normX, normY, normWidth, toolMode);
             placeCheckpoint(toolMode);
           }
           break;
