@@ -22,7 +22,7 @@ import {
   scaleUpXY,
   translateXY,
 } from "./helpers";
-import { ASPECT_RATIO, SCALE, SELECT_PADDING } from "./constants";
+import { SCALE, SELECT_PADDING } from "./constants";
 import { Cursor } from "./CursorScreen";
 import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
 import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
@@ -41,8 +41,9 @@ interface CanvasProps {
   pageNum: number;
   isGallery?: boolean;
   isShown?: boolean;
+  offsetWidth: number;
+  offsetHeight: number;
   onDraw?: () => void;
-  offsetWidth?: number;
   setCursor?: React.Dispatch<Cursor | undefined>;
   textShapes: TextShapeMap;
   setTextShapes: React.Dispatch<React.SetStateAction<TextShapeMap>>;
@@ -60,7 +61,6 @@ const defaultProps = {
   isGallery: false,
   isShown: true,
   onDraw: () => {},
-  offsetWidth: 0,
   setCursor: undefined,
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
@@ -86,8 +86,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       pageNum,
       isGallery,
       isShown,
+      offsetWidth,
+      offsetHeight,
       onDraw = defaultProps.onDraw,
-      offsetWidth = defaultProps.offsetWidth,
       setCursor,
       setTextShapes,
       textShapes,
@@ -796,9 +797,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     const adjustCanvasSize = useCallback(() => {
       const canvas = canvasRef.current;
-      const canvasOffsetWidth = canvas.offsetWidth;
-      canvas.width = canvasOffsetWidth * SCALE;
-      canvas.height = canvas.width * ASPECT_RATIO;
+      canvas.width = canvas.offsetWidth * SCALE;
+      canvas.height = canvas.offsetHeight * SCALE;
     }, [canvasRef]);
 
     // exposes callbacks to parent, to be used by toolbar
@@ -911,10 +911,12 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     return (
       <div
-        className="place-self-center"
+        className="relative place-self-center"
         style={{
           width: offsetWidth,
-          height: offsetWidth * ASPECT_RATIO,
+          // -1 so height can shrink
+          height: offsetHeight - 1,
+          maxHeight: "100%",
         }}
       >
         <canvas
@@ -936,7 +938,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           }}
           style={{
             position: "absolute",
-            width: offsetWidth,
+            width: "100%",
+            height: "100%",
             borderRadius: "24px",
             // allows onPointerMove to be fired continuously on touch,
             // else will be treated as pan gesture leading to short strokes

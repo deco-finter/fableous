@@ -431,267 +431,281 @@ export default function HubCanvasPage() {
   }, [achievements, broadcastAchievement]);
 
   return (
-    <Grid container className="flex-col flex-1 relative">
-      {hubState !== HubState.DrawingSession && (
-        <Grid item xs={12} className="mb-8">
-          <BackButton className="mb-2" />
-          <Typography variant="h2">
-            {
-              {
-                [HubState.SessionForm]: "New Story",
-                [HubState.WaitingRoom]: "Lobby",
-                [HubState.DrawingSession]: "",
-              }[hubState]
-            }
-          </Typography>
-        </Grid>
-      )}
-      {hubState === HubState.SessionForm && (
-        <Grid item xs={12} sm={8} md={6} lg={4}>
-          <Card>
-            <Formik
-              initialValues={
-                {
-                  title: "",
-                  description: "",
-                  pages: 1,
-                } as Story
-              }
-              validationSchema={yup.object({
-                title: yup
-                  .string()
-                  .required("Title required")
-                  .test(
-                    "len",
-                    "Title too long",
-                    (val) => (val || "").length <= 32
-                  ),
-                description: yup
-                  .string()
-                  .required("Description required")
-                  .test(
-                    "len",
-                    "Description too long",
-                    (val) => (val || "").length <= 32
-                  ),
-                pages: yup
-                  .number()
-                  .required("Number of pages required")
-                  .integer("Invalid numbergit")
-                  .positive("Must have at least one page")
-                  .lessThan(21, "Maximum is 20 pages"),
-              })}
-              onSubmit={handleCreateSession}
-            >
-              {(formik) => (
-                <form onSubmit={formik.handleSubmit} autoComplete="off">
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={8}
-                        className="flex-grow flex flex-col"
-                      >
-                        <FormikTextField
-                          formik={formik}
-                          name="title"
-                          label="Title"
-                          overrides={{
-                            autoFocus: true,
-                            variant: "outlined",
-                            disabled: postLoading,
-                          }}
-                        />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={4}
-                        className="flex-grow flex flex-col"
-                      >
-                        <FormikTextField
-                          formik={formik}
-                          name="pages"
-                          label="Pages"
-                          overrides={{
-                            type: "number",
-                            variant: "outlined",
-                            disabled: postLoading,
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} className="flex-grow flex flex-col">
-                        <FormikTagField
-                          formik={formik}
-                          name="description"
-                          label="Description"
-                          maxTags={3}
-                          maxTagLength={10}
-                          tagProps={{
-                            color: "secondary",
-                          }}
-                          overrides={{
-                            inputMode: "text",
-                            variant: "outlined",
-                            disabled: postLoading,
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} className="flex justify-end">
-                        <Button
-                          color="secondary"
-                          variant="contained"
-                          endIcon={<Icon fontSize="small">play_arrow</Icon>}
-                          disabled={postLoading}
-                          type="submit"
-                          style={{ height: "100%" }}
-                        >
-                          Start
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </form>
-              )}
-            </Formik>
-          </Card>
-        </Grid>
-      )}
-      {hubState === HubState.WaitingRoom && (
-        <Grid item xs={12} sm={8} md={6} lg={4}>
-          <Card>
-            <CardContent>
-              <Grid container spacing={1}>
-                <Grid item xs={12}>
-                  <Typography variant="h6">
-                    Joined Students ({Object.keys(joinedControllers).length}/3)
-                  </Typography>
-                </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  style={{
-                    color: joinedControllers[ControllerRole.Story]
-                      ? "inherit"
-                      : "gray",
-                  }}
-                >
-                  <Grid container>
-                    <Grid item xs={4}>
-                      <Icon fontSize="small" className="align-middle">
-                        text_fields
-                      </Icon>
-                      Story
-                    </Grid>
-                    <Grid item xs={8}>
-                      <div className="ml-4 overflow-ellipsis overflow-hidden">
-                        {joinedControllers[ControllerRole.Story] ? (
-                          <>{joinedControllers[ControllerRole.Story]}</>
-                        ) : (
-                          <>
-                            waiting to join{" "}
-                            <CircularProgress
-                              size={12}
-                              thickness={8}
-                              className="ml-1"
-                            />
-                          </>
-                        )}
-                      </div>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  style={{
-                    color: joinedControllers[ControllerRole.Character]
-                      ? "inherit"
-                      : "gray",
-                  }}
-                >
-                  <Grid container>
-                    <Grid item xs={4}>
-                      <Icon fontSize="small" className="align-middle">
-                        directions_run
-                      </Icon>
-                      Character
-                    </Grid>
-                    <Grid item xs={8}>
-                      <div className="ml-4 overflow-ellipsis overflow-hidden">
-                        {joinedControllers[ControllerRole.Character] ? (
-                          <>{joinedControllers[ControllerRole.Character]}</>
-                        ) : (
-                          <>
-                            waiting to join{" "}
-                            <CircularProgress
-                              size={12}
-                              thickness={8}
-                              className="ml-1"
-                            />
-                          </>
-                        )}
-                      </div>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  style={{
-                    color: joinedControllers[ControllerRole.Background]
-                      ? "inherit"
-                      : "gray",
-                  }}
-                >
-                  <Grid container>
-                    <Grid item xs={4}>
-                      <Icon fontSize="small" className="align-middle">
-                        image
-                      </Icon>
-                      Background
-                    </Grid>
-                    <Grid item xs={8}>
-                      <div className="ml-4 overflow-ellipsis overflow-hidden">
-                        {joinedControllers[ControllerRole.Background] ? (
-                          <>{joinedControllers[ControllerRole.Background]}</>
-                        ) : (
-                          <>
-                            waiting to join{" "}
-                            <CircularProgress
-                              size={12}
-                              thickness={8}
-                              className="ml-1"
-                            />
-                          </>
-                        )}
-                      </div>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item xs={12} className="flex mt-2">
-                  <Chip color="primary" label={classroomToken} />
-                  <div className="flex flex-grow" />
-                  <Button
-                    color="secondary"
-                    variant="contained"
-                    endIcon={<Icon fontSize="small">brush</Icon>}
-                    onClick={onBeginDrawing}
-                    disabled={!isAllControllersJoined()}
-                  >
-                    Begin Drawing
-                  </Button>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      )}
+    <Grid container className="grid flex-col flex-1 relative">
       <div
-        className={`flex flex-col absolute w-full h-full ${
-          hubState !== HubState.DrawingSession && "invisible"
+        style={{
+          gridRowStart: 1,
+          gridColumnStart: 1,
+        }}
+      >
+        {hubState !== HubState.DrawingSession && (
+          <Grid item xs={12} className="mb-8">
+            <BackButton className="mb-2" />
+            <Typography variant="h2">
+              {
+                {
+                  [HubState.SessionForm]: "New Story",
+                  [HubState.WaitingRoom]: "Lobby",
+                  [HubState.DrawingSession]: "",
+                }[hubState]
+              }
+            </Typography>
+          </Grid>
+        )}
+        {hubState === HubState.SessionForm && (
+          <Grid item xs={12} sm={8} md={6} lg={4}>
+            <Card>
+              <Formik
+                initialValues={
+                  {
+                    title: "",
+                    description: "",
+                    pages: 1,
+                  } as Story
+                }
+                validationSchema={yup.object({
+                  title: yup
+                    .string()
+                    .required("Title required")
+                    .test(
+                      "len",
+                      "Title too long",
+                      (val) => (val || "").length <= 32
+                    ),
+                  description: yup
+                    .string()
+                    .required("Description required")
+                    .test(
+                      "len",
+                      "Description too long",
+                      (val) => (val || "").length <= 32
+                    ),
+                  pages: yup
+                    .number()
+                    .required("Number of pages required")
+                    .integer("Invalid numbergit")
+                    .positive("Must have at least one page")
+                    .lessThan(21, "Maximum is 20 pages"),
+                })}
+                onSubmit={handleCreateSession}
+              >
+                {(formik) => (
+                  <form onSubmit={formik.handleSubmit} autoComplete="off">
+                    <CardContent>
+                      <Grid container spacing={2}>
+                        <Grid
+                          item
+                          xs={12}
+                          sm={8}
+                          className="flex-grow flex flex-col"
+                        >
+                          <FormikTextField
+                            formik={formik}
+                            name="title"
+                            label="Title"
+                            overrides={{
+                              autoFocus: true,
+                              variant: "outlined",
+                              disabled: postLoading,
+                            }}
+                          />
+                        </Grid>
+                        <Grid
+                          item
+                          xs={12}
+                          sm={4}
+                          className="flex-grow flex flex-col"
+                        >
+                          <FormikTextField
+                            formik={formik}
+                            name="pages"
+                            label="Pages"
+                            overrides={{
+                              type: "number",
+                              variant: "outlined",
+                              disabled: postLoading,
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} className="flex-grow flex flex-col">
+                          <FormikTagField
+                            formik={formik}
+                            name="description"
+                            label="Description"
+                            maxTags={3}
+                            maxTagLength={10}
+                            tagProps={{
+                              color: "secondary",
+                            }}
+                            overrides={{
+                              inputMode: "text",
+                              variant: "outlined",
+                              disabled: postLoading,
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} className="flex justify-end">
+                          <Button
+                            color="secondary"
+                            variant="contained"
+                            endIcon={<Icon fontSize="small">play_arrow</Icon>}
+                            disabled={postLoading}
+                            type="submit"
+                            style={{ height: "100%" }}
+                          >
+                            Start
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </form>
+                )}
+              </Formik>
+            </Card>
+          </Grid>
+        )}
+        {hubState === HubState.WaitingRoom && (
+          <Grid item xs={12} sm={8} md={6} lg={4}>
+            <Card>
+              <CardContent>
+                <Grid container spacing={1}>
+                  <Grid item xs={12}>
+                    <Typography variant="h6">
+                      Joined Students ({Object.keys(joinedControllers).length}
+                      /3)
+                    </Typography>
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    style={{
+                      color: joinedControllers[ControllerRole.Story]
+                        ? "inherit"
+                        : "gray",
+                    }}
+                  >
+                    <Grid container>
+                      <Grid item xs={4}>
+                        <Icon fontSize="small" className="align-middle">
+                          text_fields
+                        </Icon>
+                        Story
+                      </Grid>
+                      <Grid item xs={8}>
+                        <div className="ml-4 overflow-ellipsis overflow-hidden">
+                          {joinedControllers[ControllerRole.Story] ? (
+                            <>{joinedControllers[ControllerRole.Story]}</>
+                          ) : (
+                            <>
+                              waiting to join{" "}
+                              <CircularProgress
+                                size={12}
+                                thickness={8}
+                                className="ml-1"
+                              />
+                            </>
+                          )}
+                        </div>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    style={{
+                      color: joinedControllers[ControllerRole.Character]
+                        ? "inherit"
+                        : "gray",
+                    }}
+                  >
+                    <Grid container>
+                      <Grid item xs={4}>
+                        <Icon fontSize="small" className="align-middle">
+                          directions_run
+                        </Icon>
+                        Character
+                      </Grid>
+                      <Grid item xs={8}>
+                        <div className="ml-4 overflow-ellipsis overflow-hidden">
+                          {joinedControllers[ControllerRole.Character] ? (
+                            <>{joinedControllers[ControllerRole.Character]}</>
+                          ) : (
+                            <>
+                              waiting to join{" "}
+                              <CircularProgress
+                                size={12}
+                                thickness={8}
+                                className="ml-1"
+                              />
+                            </>
+                          )}
+                        </div>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    style={{
+                      color: joinedControllers[ControllerRole.Background]
+                        ? "inherit"
+                        : "gray",
+                    }}
+                  >
+                    <Grid container>
+                      <Grid item xs={4}>
+                        <Icon fontSize="small" className="align-middle">
+                          image
+                        </Icon>
+                        Background
+                      </Grid>
+                      <Grid item xs={8}>
+                        <div className="ml-4 overflow-ellipsis overflow-hidden">
+                          {joinedControllers[ControllerRole.Background] ? (
+                            <>{joinedControllers[ControllerRole.Background]}</>
+                          ) : (
+                            <>
+                              waiting to join{" "}
+                              <CircularProgress
+                                size={12}
+                                thickness={8}
+                                className="ml-1"
+                              />
+                            </>
+                          )}
+                        </div>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} className="flex mt-2">
+                    <Chip color="primary" label={classroomToken} />
+                    <div className="flex flex-grow" />
+                    <Button
+                      color="secondary"
+                      variant="contained"
+                      endIcon={<Icon fontSize="small">brush</Icon>}
+                      onClick={onBeginDrawing}
+                      disabled={!isAllControllersJoined()}
+                    >
+                      Begin Drawing
+                    </Button>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </div>
+      <div
+        className={`flex flex-col w-full ${
+          hubState !== HubState.DrawingSession && "invisible overflow-y-hidden"
         }`}
+        style={{
+          // 64px navbar height, 20px content top padding, 48px content bot padding
+          height: "calc(100vh - 132px)",
+          gridRowStart: 1,
+          gridColumnStart: 1,
+        }}
       >
         <Grid container className="mt-4">
           <Grid item xs={12}>
@@ -746,6 +760,7 @@ export default function HubCanvasPage() {
                   name={ROLE_ICON[ControllerRole.Story].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -766,6 +781,7 @@ export default function HubCanvasPage() {
                   name={ROLE_ICON[ControllerRole.Character].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -786,6 +802,7 @@ export default function HubCanvasPage() {
                   name={ROLE_ICON[ControllerRole.Background].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -802,7 +819,9 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Story}
                   pageNum={currentPageIdx}
+                  isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                   setCursor={setStoryCursor}
                   setTextShapes={setStoryTextShapes}
                   textShapes={storyTextShapes}
@@ -824,7 +843,9 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Character}
                   pageNum={currentPageIdx}
+                  isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                   setCursor={setCharacterCursor}
                   setTextShapes={setCharacterTextShapes}
                   textShapes={CharacterTextShapes}
@@ -846,7 +867,9 @@ export default function HubCanvasPage() {
                   role={ControllerRole.Hub}
                   layer={ControllerRole.Background}
                   pageNum={currentPageIdx}
+                  isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                   setCursor={setBackgroundCursor}
                   setTextShapes={setBackgroundTextShapes}
                   textShapes={BackgroundTextShapes}
@@ -863,11 +886,12 @@ export default function HubCanvasPage() {
                 }}
               >
                 <div
-                  className="bg-white place-self-center"
+                  className="place-self-center bg-white"
                   style={{
-                    width: `${canvasOffsetWidth}px`,
-                    // if not decrement by 1, canvas will be larger than screen height
-                    height: `${canvasOffsetHeight - 1}px`,
+                    width: canvasOffsetWidth,
+                    // -1 so height can shrink
+                    height: canvasOffsetHeight - 1,
+                    maxHeight: "100%",
                     borderRadius: "24px",
                   }}
                 />

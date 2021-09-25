@@ -47,11 +47,9 @@ export default function LayerToolbar(props: {
   const classes = useStyles();
 
   return (
-    <div
-      className={`h-full flex flex-col justify-center items-center ${classes.hideScrollbar}`}
-    >
+    <div className="h-full flex flex-col justify-center items-center">
       <div
-        className="overflow-y-scroll overflow-x-hidden"
+        className={`overflow-y-scroll overflow-x-hidden  ${classes.hideScrollbar}`}
         style={{
           height: offsetHeight || "100%",
           maxHeight: "100%",

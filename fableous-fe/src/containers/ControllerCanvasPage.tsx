@@ -290,199 +290,216 @@ export default function ControllerCanvasPage() {
   return (
     <Grid
       container
-      className={`flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
+      className={`grid flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
     >
-      <Grid item xs={12} className="mb-8">
-        <Typography variant="h2">
-          {
+      <div
+        style={{
+          gridRowStart: 1,
+          gridColumnStart: 1,
+        }}
+      >
+        <Grid item xs={12} className="mb-8">
+          <Typography variant="h2">
             {
-              [ControllerState.JoinForm]: "Join Room",
-              [ControllerState.WaitingRoom]: "Lobby",
-              [ControllerState.DrawingSession]: "",
-              [ControllerState.StoryFinished]: "Finished!",
-            }[controllerState]
-          }
-        </Typography>
-      </Grid>
-      {controllerState === ControllerState.JoinForm && (
-        <Grid item xs={12} sm={8} md={6} lg={4}>
-          <Card>
-            <Formik
-              initialValues={
-                {
-                  name: "",
-                  token: "",
-                  role: ControllerRole.Story,
-                } as ControllerJoin
-              }
-              validationSchema={yup.object().shape({
-                name: yup
-                  .string()
-                  .required("Name required")
-                  .test(
-                    "len",
-                    "Name too long",
-                    (val) => (val || "").length <= 24
-                  ),
-                token: yup
-                  .string()
-                  .required("Token required")
-                  .length(4, "Invalid token")
-                  .uppercase("Invalid token"),
-              })}
-              onSubmit={handleJoinSession}
-            >
-              {(formik) => (
-                <form onSubmit={formik.handleSubmit} autoComplete="off">
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} className="flex-grow flex flex-col">
-                        <FormikTextField
-                          formik={formik}
-                          name="name"
-                          label="Name"
-                          overrides={{
-                            autoFocus: true,
-                            variant: "outlined",
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Grid container spacing={2}>
-                          <Grid
-                            item
-                            xs={12}
-                            sm={6}
-                            className="flex-grow flex flex-col"
-                          >
-                            <FormikTextField
-                              formik={formik}
-                              name="token"
-                              label="Token"
-                              overrides={{
-                                variant: "outlined",
-                                onChange: (
-                                  ev: React.ChangeEvent<HTMLInputElement>
-                                ) => {
-                                  const evUpperCase = { ...ev };
-                                  if (ev.target.value.length > 4) {
-                                    return;
-                                  }
-                                  evUpperCase.target.value =
-                                    ev.target.value?.toUpperCase();
-                                  formik.handleChange(evUpperCase);
-                                },
-                              }}
-                            />
-                          </Grid>
-                          <Grid
-                            item
-                            xs={12}
-                            sm={6}
-                            className="flex-grow flex flex-col"
-                          >
-                            <FormControl variant="outlined">
-                              <InputLabel>Role</InputLabel>
-                              <Select
-                                name="role"
-                                label="Role"
-                                value={formik.values.role}
-                                onChange={formik.handleChange}
-                                onBlur={formik.handleBlur}
-                              >
-                                <MenuItem value={ControllerRole.Story}>
-                                  <Icon
-                                    fontSize="small"
-                                    className="align-middle mr-1"
-                                  >
-                                    {ROLE_ICON[ControllerRole.Story].icon}
-                                  </Icon>
-                                  {ROLE_ICON[ControllerRole.Story].text}
-                                </MenuItem>
-                                <MenuItem value={ControllerRole.Character}>
-                                  <Icon
-                                    fontSize="small"
-                                    className="align-middle mr-1"
-                                  >
-                                    {ROLE_ICON[ControllerRole.Character].icon}
-                                  </Icon>
-                                  {ROLE_ICON[ControllerRole.Character].text}
-                                </MenuItem>
-                                <MenuItem value={ControllerRole.Background}>
-                                  <Icon
-                                    fontSize="small"
-                                    className="align-middle mr-1"
-                                  >
-                                    {ROLE_ICON[ControllerRole.Background].icon}
-                                  </Icon>
-                                  {ROLE_ICON[ControllerRole.Background].text}
-                                </MenuItem>
-                              </Select>
-                            </FormControl>
+              {
+                [ControllerState.JoinForm]: "Join Room",
+                [ControllerState.WaitingRoom]: "Lobby",
+                [ControllerState.DrawingSession]: "",
+                [ControllerState.StoryFinished]: "Finished!",
+              }[controllerState]
+            }
+          </Typography>
+        </Grid>
+        {controllerState === ControllerState.JoinForm && (
+          <Grid item xs={12} sm={8} md={6} lg={4}>
+            <Card>
+              <Formik
+                initialValues={
+                  {
+                    name: "",
+                    token: "",
+                    role: ControllerRole.Story,
+                  } as ControllerJoin
+                }
+                validationSchema={yup.object().shape({
+                  name: yup
+                    .string()
+                    .required("Name required")
+                    .test(
+                      "len",
+                      "Name too long",
+                      (val) => (val || "").length <= 24
+                    ),
+                  token: yup
+                    .string()
+                    .required("Token required")
+                    .length(4, "Invalid token")
+                    .uppercase("Invalid token"),
+                })}
+                onSubmit={handleJoinSession}
+              >
+                {(formik) => (
+                  <form onSubmit={formik.handleSubmit} autoComplete="off">
+                    <CardContent>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} className="flex-grow flex flex-col">
+                          <FormikTextField
+                            formik={formik}
+                            name="name"
+                            label="Name"
+                            overrides={{
+                              autoFocus: true,
+                              variant: "outlined",
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Grid container spacing={2}>
+                            <Grid
+                              item
+                              xs={12}
+                              sm={6}
+                              className="flex-grow flex flex-col"
+                            >
+                              <FormikTextField
+                                formik={formik}
+                                name="token"
+                                label="Token"
+                                overrides={{
+                                  variant: "outlined",
+                                  onChange: (
+                                    ev: React.ChangeEvent<HTMLInputElement>
+                                  ) => {
+                                    const evUpperCase = { ...ev };
+                                    if (ev.target.value.length > 4) {
+                                      return;
+                                    }
+                                    evUpperCase.target.value =
+                                      ev.target.value?.toUpperCase();
+                                    formik.handleChange(evUpperCase);
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid
+                              item
+                              xs={12}
+                              sm={6}
+                              className="flex-grow flex flex-col"
+                            >
+                              <FormControl variant="outlined">
+                                <InputLabel>Role</InputLabel>
+                                <Select
+                                  name="role"
+                                  label="Role"
+                                  value={formik.values.role}
+                                  onChange={formik.handleChange}
+                                  onBlur={formik.handleBlur}
+                                >
+                                  <MenuItem value={ControllerRole.Story}>
+                                    <Icon
+                                      fontSize="small"
+                                      className="align-middle mr-1"
+                                    >
+                                      {ROLE_ICON[ControllerRole.Story].icon}
+                                    </Icon>
+                                    {ROLE_ICON[ControllerRole.Story].text}
+                                  </MenuItem>
+                                  <MenuItem value={ControllerRole.Character}>
+                                    <Icon
+                                      fontSize="small"
+                                      className="align-middle mr-1"
+                                    >
+                                      {ROLE_ICON[ControllerRole.Character].icon}
+                                    </Icon>
+                                    {ROLE_ICON[ControllerRole.Character].text}
+                                  </MenuItem>
+                                  <MenuItem value={ControllerRole.Background}>
+                                    <Icon
+                                      fontSize="small"
+                                      className="align-middle mr-1"
+                                    >
+                                      {
+                                        ROLE_ICON[ControllerRole.Background]
+                                          .icon
+                                      }
+                                    </Icon>
+                                    {ROLE_ICON[ControllerRole.Background].text}
+                                  </MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Grid>
                           </Grid>
                         </Grid>
+                        <Grid item xs={12} className="flex justify-end">
+                          <Button
+                            color="secondary"
+                            variant="contained"
+                            endIcon={<Icon fontSize="small">brush</Icon>}
+                            type="submit"
+                          >
+                            Join
+                          </Button>
+                        </Grid>
                       </Grid>
-                      <Grid item xs={12} className="flex justify-end">
-                        <Button
-                          color="secondary"
-                          variant="contained"
-                          endIcon={<Icon fontSize="small">brush</Icon>}
-                          type="submit"
-                        >
-                          Join
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </form>
-              )}
-            </Formik>
-          </Card>
-        </Grid>
-      )}
-      {controllerState === ControllerState.WaitingRoom && (
-        <div className="flex">
-          <Card className="flex-shrink">
-            <CardContent>
-              <Typography variant="h6" component="p">
-                Waiting for session to begin
-                <CircularProgress size={12} thickness={8} className="ml-2" />
-              </Typography>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      {controllerState === ControllerState.StoryFinished && (
-        <>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              color="primary"
-              endIcon={<Icon fontSize="small">brush</Icon>}
-              className="mb-2"
-              onClick={() => {
-                setControllerState(ControllerState.JoinForm);
-              }}
-            >
-              Join another session
-            </Button>
+                    </CardContent>
+                  </form>
+                )}
+              </Formik>
+            </Card>
           </Grid>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              color="secondary"
-              component={Link}
-              to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
-            >
-              View story in gallery
-            </Button>
-          </Grid>
-        </>
-      )}
+        )}
+        {controllerState === ControllerState.WaitingRoom && (
+          <div className="flex">
+            <Card className="flex-shrink">
+              <CardContent>
+                <Typography variant="h6" component="p">
+                  Waiting for session to begin
+                  <CircularProgress size={12} thickness={8} className="ml-2" />
+                </Typography>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {controllerState === ControllerState.StoryFinished && (
+          <>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="primary"
+                endIcon={<Icon fontSize="small">brush</Icon>}
+                className="mb-2"
+                onClick={() => {
+                  setControllerState(ControllerState.JoinForm);
+                }}
+              >
+                Join another session
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="secondary"
+                component={Link}
+                to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
+              >
+                View story in gallery
+              </Button>
+            </Grid>
+          </>
+        )}
+      </div>
       <div
-        className={`flex flex-col absolute w-full h-full ${
-          controllerState !== ControllerState.DrawingSession && "invisible"
+        className={`flex flex-col w-full ${
+          controllerState !== ControllerState.DrawingSession &&
+          "invisible overflow-y-hidden"
         }`}
+        style={{
+          // 64px navbar height, 20px content top padding, 48px content bot padding
+          height: "calc(100vh - 132px)",
+          gridRowStart: 1,
+          gridColumnStart: 1,
+        }}
       >
         <Grid container className="mt-4">
           <Grid item xs={12}>
@@ -512,7 +529,7 @@ export default function ControllerCanvasPage() {
             />
           </Grid>
         </Grid>
-        <Grid container spacing={2} className="flex-1 my-4">
+        <Grid container spacing={2} className="relative flex-1 my-4">
           <Grid item xs={2} md={1}>
             <CanvasToolbar
               ref={canvasRef}
@@ -547,6 +564,7 @@ export default function ControllerCanvasPage() {
                   cursor={cursor}
                   isShown={controllerState === ControllerState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -575,6 +593,7 @@ export default function ControllerCanvasPage() {
                   setToolMode={setToolMode}
                   toolWidth={toolWidth}
                   offsetWidth={canvasOffsetWidth}
+                  offsetHeight={canvasOffsetHeight}
                 />
               </div>
               <div
@@ -586,10 +605,12 @@ export default function ControllerCanvasPage() {
                 }}
               >
                 <div
-                  className="bg-white place-self-center"
+                  className="place-self-center bg-white"
                   style={{
                     width: canvasOffsetWidth,
-                    height: canvasOffsetHeight,
+                    // -1 so height can shrink
+                    height: canvasOffsetHeight - 1,
+                    maxHeight: "100%",
                     borderRadius: "24px",
                   }}
                 />

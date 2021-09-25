@@ -98,6 +98,8 @@ export default function StoryDetailPage() {
                     textShapes={textShapes}
                     audioPaths={audioPaths}
                     setAudioPaths={setAudioPaths}
+                    offsetWidth={0}
+                    offsetHeight={0}
                   />
                 </div>
                 <div

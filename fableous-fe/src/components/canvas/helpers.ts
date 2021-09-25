@@ -1,13 +1,20 @@
 import { MutableRefObject } from "react";
 import { SCALE } from "./constants";
 
+export const getCurrentScaling = (
+  canvasRef: MutableRefObject<HTMLCanvasElement>
+): number => {
+  return canvasRef.current.width / canvasRef.current.offsetWidth;
+};
+
 export const translateXY = (
   canvasRef: MutableRefObject<HTMLCanvasElement>,
   x: number,
   y: number
 ) => {
   const bound = canvasRef.current.getBoundingClientRect();
-  return [(x - bound.x) * SCALE, (y - bound.y) * SCALE];
+  const currentScale = getCurrentScaling(canvasRef);
+  return [(x - bound.x) * currentScale, (y - bound.y) * currentScale];
 };
 
 // wrap with useCallback() because dependency chain leads to being used at useEffect()

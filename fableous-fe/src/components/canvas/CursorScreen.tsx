@@ -4,7 +4,7 @@
 /* eslint-disable no-case-declarations */
 import { useEffect, useRef } from "react";
 import { scaleUpXY } from "./helpers";
-import { ASPECT_RATIO, SCALE } from "./constants";
+import { SCALE } from "./constants";
 import { ToolMode } from "../../constant";
 
 export interface Cursor {
@@ -18,11 +18,12 @@ interface CursorScreenProps {
   cursor: Cursor | undefined;
   name?: string;
   isShown?: boolean;
-  offsetWidth?: number;
+  offsetWidth: number;
+  offsetHeight: number;
 }
 
 const CursorScreen = (props: CursorScreenProps) => {
-  const { cursor, name, isShown, offsetWidth = 0 } = props;
+  const { cursor, name, isShown, offsetWidth, offsetHeight } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   const cursorRef = useRef<Cursor>(cursor as Cursor);
   cursorRef.current = cursor as Cursor;
@@ -93,9 +94,8 @@ const CursorScreen = (props: CursorScreenProps) => {
   // set canvas size onmount and when canvas appears or becomes hidden
   useEffect(() => {
     const canvas = canvasRef.current;
-    const canvasOffsetWidth = canvas.offsetWidth;
-    canvas.width = canvasOffsetWidth * SCALE;
-    canvas.height = canvas.width * ASPECT_RATIO;
+    canvas.width = canvas.offsetWidth * SCALE;
+    canvas.height = canvas.offsetHeight * SCALE;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.textBaseline = "middle";
@@ -110,10 +110,12 @@ const CursorScreen = (props: CursorScreenProps) => {
 
   return (
     <div
-      className="place-self-center"
+      className="relative place-self-center"
       style={{
         width: offsetWidth,
-        height: offsetWidth * ASPECT_RATIO,
+        // -1 so height can shrink
+        height: offsetHeight - 1,
+        maxHeight: "100%",
       }}
     >
       <canvas
@@ -121,7 +123,8 @@ const CursorScreen = (props: CursorScreenProps) => {
         style={{
           position: "absolute",
           borderRadius: "24px",
-          width: offsetWidth,
+          width: "100%",
+          height: "100%",
           touchAction: "none",
           msTouchAction: "none",
           msTouchSelect: "none",
@@ -139,7 +142,6 @@ const CursorScreen = (props: CursorScreenProps) => {
 CursorScreen.defaultProps = {
   name: "",
   isShown: true,
-  offsetWidth: 0,
 };
 
 export default CursorScreen;
