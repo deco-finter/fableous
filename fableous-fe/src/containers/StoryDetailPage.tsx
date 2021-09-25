@@ -2,13 +2,12 @@ import {
   Grid,
   ImageList,
   ImageListItem,
-  IconButton,
-  Button,
   Chip,
   Icon,
   ChipProps,
+  Button,
 } from "@material-ui/core";
-import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@material-ui/icons";
+
 import useAxios from "axios-hooks";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
@@ -22,6 +21,7 @@ import { ASPECT_RATIO } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { EmptyAchievement } from "../components/achievement/achievement";
+import BackButton from "../components/BackButton";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
@@ -49,6 +49,21 @@ export default function StoryDetailPage() {
       }
     );
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
+  const [{ data: achievements }, executeGetAchievements] = useAxios<
+    Manifest,
+    undefined
+  >(
+    restAPI.gallery.getAsset(
+      classroomId,
+      sessionId,
+      story?.data?.pages,
+      "manifest.json"
+    ),
+    {
+      manual: true,
+    }
+  );
+
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
@@ -67,17 +82,22 @@ export default function StoryDetailPage() {
     if (audioPaths.length === 0) {
       return;
     }
-
     const player = document.createElement("audio");
     player.src =
       restAPI.gallery.getAssetByPath(audioPaths[audioPaths.length - 1]).url ||
       "";
     player.play();
   }, [audioPaths]);
+
   useEffect(() => {
     executeGetClassroomDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    executeGetAchievements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [story]);
 
   useEffect(() => {
     executeGetManifest();
@@ -99,9 +119,10 @@ export default function StoryDetailPage() {
         }}
       >
         <Grid container className="mb-4">
-          <Grid item xs={2} />
-
-          <Grid item xs={10}>
+          <Grid item xs="auto">
+            <BackButton />
+          </Grid>
+          <Grid item xs>
             <ChipRow
               primary
               chips={[
@@ -124,20 +145,13 @@ export default function StoryDetailPage() {
               alignSelf: "center",
               display: "flex",
               flexDirection: "column",
-              borderRadius: "30px",
+              borderRadius: "24px",
               height: canvasOffsetHeight || "100%",
             }}
           >
-            <IconButton
-              onClick={() => page > 1 && setPage(page - 1)}
-              disabled={page === 1}
-              style={{ alignSelf: "center" }}
-            >
-              <ArrowUpwardOutlined fontSize="medium" />
-            </IconButton>
             <ImageList
               ref={listContainerRef}
-              className="overflow-y-auto"
+              className="overflow-y-auto gap-y-2  "
               style={{ alignSelf: "center" }}
               cols={1}
               gap={0}
@@ -152,7 +166,11 @@ export default function StoryDetailPage() {
                   key={pageIndex}
                   classes={{ item: "flex flex-col justify-center" }}
                 >
-                  <Button onClick={() => setPage(pageIndex)}>
+                  <Button
+                    onClick={() => setPage(pageIndex)}
+                    style={{}}
+                    className="p-0 m-0"
+                  >
                     <img
                       src={
                         restAPI.gallery.getAsset(
@@ -163,28 +181,21 @@ export default function StoryDetailPage() {
                         ).url
                       }
                       alt={story?.data?.title}
+                      style={{
+                        borderRadius: 16,
+                      }}
                       loading="lazy"
                     />
                   </Button>
                 </ImageListItem>
               ))}
             </ImageList>
-            <div className="place-self-center">
-              <IconButton
-                onClick={() =>
-                  page < (story?.data?.pages || 1) && setPage(page + 1)
-                }
-                disabled={page === story?.data?.pages}
-              >
-                <ArrowDownwardOutlined fontSize="medium" />
-              </IconButton>
-            </div>
           </Grid>
           <Grid item xs={10}>
             <div
               className="grid place-items-stretch h-full"
               style={{
-                border: "3px solid black",
+                border: "1px solid #0004",
               }}
               ref={canvasContainerRef}
             >
@@ -241,8 +252,7 @@ export default function StoryDetailPage() {
                   }
                   alt={story?.data?.title}
                   style={{
-                    // borderWidth: 4,
-                    borderRadius: "30px",
+                    borderRadius: "24px",
                   }}
                 />
               </div>
@@ -250,13 +260,12 @@ export default function StoryDetailPage() {
           </Grid>
         </Grid>
         <Grid container className="mb-4">
-          <Grid item xs={2} />
-          <Grid item xs={10}>
+          <Grid item xs={12}>
             <ChipRow
               chips={[
                 `Page ${page} of ${story?.data?.pages || ""}`,
                 <AchievementButton
-                  achievements={manifest?.achievements || EmptyAchievement}
+                  achievements={achievements?.achievements || EmptyAchievement}
                   notify={false}
                 />,
                 {
@@ -264,6 +273,19 @@ export default function StoryDetailPage() {
                   label: "Play Audio",
                   onClick: playAudio,
                   disabled: audioPaths.length === 0,
+                } as ChipProps,
+                {
+                  icon: <Icon fontSize="medium">skip_previous</Icon>,
+                  label: "Previous Page",
+                  onClick: () => page > 1 && setPage(page - 1),
+                  disabled: page === 1,
+                } as ChipProps,
+                {
+                  icon: <Icon fontSize="medium">skip_next</Icon>,
+                  label: "Next Page",
+                  onClick: () =>
+                    page < (story?.data?.pages || 1) && setPage(page + 1),
+                  disabled: page === story?.data?.pages,
                 } as ChipProps,
               ]}
             />
