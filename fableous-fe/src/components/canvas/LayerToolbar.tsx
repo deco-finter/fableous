@@ -56,7 +56,7 @@ export default function LayerToolbar(props: {
           maxWidth: "100px",
         }}
       >
-        <Paper className="p-1 flex flex-col justify-around items-center min-h-full px-2 items-stretch">
+        <Paper className="p-1 flex flex-col justify-evenly items-center min-h-full px-2 items-stretch">
           {[
             ControllerRole.Story,
             ControllerRole.Character,

@@ -169,7 +169,7 @@ export default function StoryDetailPage() {
           >
             <ImageList
               ref={listContainerRef}
-              className="overflow-y-auto gap-y-2"
+              className="overflow-y-auto gap-y-2 flex content-evenly"
               style={{ alignSelf: "center", borderRadius: 16 }}
               cols={1}
               gap={0}
@@ -181,10 +181,7 @@ export default function StoryDetailPage() {
                 (_, i) => i + 1
               ).map((pageIndex) => {
                 return (
-                  <ImageListItem
-                    key={pageIndex}
-                    classes={{ item: "flex flex-col justify-center" }}
-                  >
+                  <ImageListItem key={pageIndex}>
                     <Button
                       onClick={() => setPage(pageIndex)}
                       className="p-0 m-0"

@@ -109,7 +109,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
             maxWidth: "80px",
           }}
         >
-          <Paper className="p-1 flex flex-col justify-around items-center min-h-full">
+          <Paper className="p-1 flex flex-col justify-evenly items-center min-h-full">
             {[ControllerRole.Character, ControllerRole.Background].includes(
               role
             ) && (
