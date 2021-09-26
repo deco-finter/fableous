@@ -22,6 +22,7 @@ import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { EmptyAchievement } from "../components/achievement/achievement";
 import BackButton from "../components/BackButton";
+import { colors } from "../colors";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
@@ -168,9 +169,23 @@ export default function StoryDetailPage() {
                 >
                   <Button
                     onClick={() => setPage(pageIndex)}
-                    style={{}}
                     className="p-0 m-0"
                   >
+                    <div
+                      style={{
+                        position: "absolute",
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 16,
+                        boxShadow: `inset 0 0 0 ${
+                          page === pageIndex ? 4 : 2
+                        }px ${
+                          page === pageIndex
+                            ? colors.orange.main
+                            : colors.gray.light
+                        }`,
+                      }}
+                    />
                     <img
                       src={
                         restAPI.gallery.getAsset(
