@@ -152,8 +152,8 @@ export default function StoryDetailPage() {
           >
             <ImageList
               ref={listContainerRef}
-              className="overflow-y-auto gap-y-2  "
-              style={{ alignSelf: "center" }}
+              className="overflow-y-auto gap-y-2"
+              style={{ alignSelf: "center", borderRadius: 16 }}
               cols={1}
               gap={0}
               classes={{ root: "flex-grow" }}
