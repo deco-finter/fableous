@@ -169,7 +169,7 @@ export default function StoryDetailPage() {
           >
             <ImageList
               ref={listContainerRef}
-              className="overflow-y-auto gap-y-2 flex content-evenly"
+              className="overflow-y-auto gap-y-2 flex content-between"
               style={{ alignSelf: "center", borderRadius: 16 }}
               cols={1}
               gap={0}
