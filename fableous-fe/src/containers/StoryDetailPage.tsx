@@ -9,7 +9,14 @@ import {
 } from "@material-ui/core";
 
 import useAxios from "axios-hooks";
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  createRef,
+  RefObject,
+} from "react";
 import { useParams } from "react-router-dom";
 import AchievementButton from "../components/achievement/AchievementButton";
 import { restAPI } from "../api";
@@ -22,25 +29,40 @@ import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { EmptyAchievement } from "../components/achievement/achievement";
 import BackButton from "../components/BackButton";
+import { colors } from "../colors";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const { sessionId } = useParams<{ sessionId: string }>();
 
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
+  const [audioPaths, setAudioPaths] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const canvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
     runUndo: () => {},
     runAudio: () => {},
   });
-
+  const canvasContainerRef = useRef<HTMLDivElement>(
+    document.createElement("div")
+  );
+  const [canvasOffsetWidth, canvasOffsetHeight] = useContainRatio({
+    containerRef: canvasContainerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
+  const listContainerRef = useRef<HTMLUListElement>(
+    document.createElement("ul")
+  );
+  const [, listOffsetHeight] = useContainRatio({
+    containerRef: listContainerRef,
+    ratio: 1 / ASPECT_RATIO,
+  });
+  const imageItemRefs = useRef<RefObject<HTMLImageElement>[]>([]);
   const [{ data: story, loading: getStoryLoading }, executeGetClassroomDetail] =
     useAxios<APIResponse<Session>, APIResponse<undefined>>(
       restAPI.session.getOne(classroomId, sessionId),
       { manual: true }
     );
-
-  const [page, setPage] = useState(1);
   const [{ data: manifest, loading: getManifestLoading }, executeGetManifest] =
     useAxios<Manifest, undefined>(
       restAPI.gallery.getAsset(classroomId, sessionId, page, "manifest.json"),
@@ -48,7 +70,6 @@ export default function StoryDetailPage() {
         manual: true,
       }
     );
-  const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const [{ data: achievements }, executeGetAchievements] = useAxios<
     Manifest,
     undefined
@@ -64,20 +85,6 @@ export default function StoryDetailPage() {
     }
   );
 
-  const canvasContainerRef = useRef<HTMLDivElement>(
-    document.createElement("div")
-  );
-  const [canvasOffsetWidth, canvasOffsetHeight] = useContainRatio({
-    containerRef: canvasContainerRef,
-    ratio: 1 / ASPECT_RATIO,
-  });
-  const listContainerRef = useRef<HTMLUListElement>(
-    document.createElement("ul")
-  );
-  const [, listOffsetHeight] = useContainRatio({
-    containerRef: listContainerRef,
-    ratio: 1 / ASPECT_RATIO,
-  });
   const playAudio = useCallback(() => {
     if (audioPaths.length === 0) {
       return;
@@ -95,14 +102,25 @@ export default function StoryDetailPage() {
   }, []);
 
   useEffect(() => {
+    if (!story) return;
     executeGetAchievements();
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < (story?.data?.pages || 0); i++) {
+      imageItemRefs.current.push(createRef<HTMLImageElement>());
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [story]);
 
   useEffect(() => {
     executeGetManifest();
+    if (page - 1 < imageItemRefs.current.length) {
+      imageItemRefs.current[page - 1].current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, story]);
+  }, [page]);
 
   useEffect(() => {
     if (manifest) setTextShapes(manifest.texts);
@@ -151,8 +169,8 @@ export default function StoryDetailPage() {
           >
             <ImageList
               ref={listContainerRef}
-              className="overflow-y-auto gap-y-2  "
-              style={{ alignSelf: "center" }}
+              className="overflow-y-auto gap-y-2 flex content-between"
+              style={{ alignSelf: "center", borderRadius: 16 }}
               cols={1}
               gap={0}
               classes={{ root: "flex-grow" }}
@@ -161,34 +179,48 @@ export default function StoryDetailPage() {
               {Array.from(
                 { length: story?.data?.pages || 0 },
                 (_, i) => i + 1
-              ).map((pageIndex) => (
-                <ImageListItem
-                  key={pageIndex}
-                  classes={{ item: "flex flex-col justify-center" }}
-                >
-                  <Button
-                    onClick={() => setPage(pageIndex)}
-                    style={{}}
-                    className="p-0 m-0"
-                  >
-                    <img
-                      src={
-                        restAPI.gallery.getAsset(
-                          classroomId,
-                          sessionId,
-                          pageIndex,
-                          "image.png"
-                        ).url
-                      }
-                      alt={story?.data?.title}
-                      style={{
-                        borderRadius: 16,
-                      }}
-                      loading="lazy"
-                    />
-                  </Button>
-                </ImageListItem>
-              ))}
+              ).map((pageIndex) => {
+                return (
+                  <ImageListItem key={pageIndex}>
+                    <Button
+                      onClick={() => setPage(pageIndex)}
+                      className="p-0 m-0"
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 16,
+                          boxShadow: `inset 0 0 0 ${
+                            page === pageIndex ? 4 : 2
+                          }px ${
+                            page === pageIndex
+                              ? colors.orange.main
+                              : colors.gray.light
+                          }`,
+                        }}
+                      />
+                      <img
+                        ref={imageItemRefs.current[pageIndex - 1]}
+                        src={
+                          restAPI.gallery.getAsset(
+                            classroomId,
+                            sessionId,
+                            pageIndex,
+                            "image.png"
+                          ).url
+                        }
+                        alt={story?.data?.title}
+                        style={{
+                          borderRadius: 16,
+                        }}
+                        loading="lazy"
+                      />
+                    </Button>
+                  </ImageListItem>
+                );
+              })}
             </ImageList>
           </Grid>
           <Grid item xs={10}>
