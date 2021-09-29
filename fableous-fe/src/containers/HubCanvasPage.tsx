@@ -54,6 +54,7 @@ enum HubState {
   DrawingSession = "DRAWING_SESSION",
 }
 
+
 export default function HubCanvasPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const { enqueueSnackbar } = useSnackbar();
@@ -84,18 +85,18 @@ export default function HubCanvasPage() {
 
   const storyCanvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
-    runUndo: () => {},
-    runAudio: () => {},
+    runUndo: () => { },
+    runAudio: () => { },
   });
   const characterCanvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
-    runUndo: () => {},
-    runAudio: () => {},
+    runUndo: () => { },
+    runAudio: () => { },
   });
   const backgroundCanvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
-    runUndo: () => {},
-    runAudio: () => {},
+    runUndo: () => { },
+    runAudio: () => { },
   });
   const [storyTextShapes, setStoryTextShapes] = useState<TextShapeMap>({});
   const [CharacterTextShapes, setCharacterTextShapes] = useState<TextShapeMap>(
@@ -132,7 +133,8 @@ export default function HubCanvasPage() {
     }
   >(INIT_FLAG);
 
-  const broadcastAchievement = useCallback(() => {
+
+  const broadcastAchievement = useCallbac1k(() => {
     if (hubState === HubState.DrawingSession) {
       wsConn?.send(
         JSON.stringify({
@@ -220,8 +222,7 @@ export default function HubCanvasPage() {
               // show error if controller disconnects during drawing session
               if (!joining && hubState === HubState.DrawingSession) {
                 enqueueSnackbar(
-                  `${
-                    role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
+                  `${role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
                   } leaves the room!`,
                   {
                     variant: "error",
@@ -345,6 +346,7 @@ export default function HubCanvasPage() {
         } as WSMessage)
       );
     }
+    setTimer();
     setHubState(HubState.DrawingSession);
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
@@ -356,6 +358,17 @@ export default function HubCanvasPage() {
     setHelpControllers(INIT_FLAG);
     setDoneControllers(INIT_FLAG);
   };
+
+  const nextPageOnTimer = () => {
+    // tutup
+
+  }
+  const setTimer = () => {
+    // TODO create timer 
+    // set timer funcion()
+    
+  }
+
   const onBeginDrawing = () => {
     onNextPage();
     setHubState(HubState.DrawingSession);
@@ -376,7 +389,7 @@ export default function HubCanvasPage() {
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
-      return () => {};
+      return () => { };
     }
 
     wsConn.addEventListener("message", wsAchievementHandler);
@@ -697,9 +710,8 @@ export default function HubCanvasPage() {
         )}
       </div>
       <div
-        className={`flex flex-col w-full ${
-          hubState !== HubState.DrawingSession && "invisible overflow-y-hidden"
-        }`}
+        className={`flex flex-col w-full ${hubState !== HubState.DrawingSession && "invisible overflow-y-hidden"
+          }`}
         style={{
           // 64px navbar height, 20px content top padding, 48px content bot padding
           height: "calc(100vh - 132px)",
@@ -743,11 +755,10 @@ export default function HubCanvasPage() {
               }}
             >
               <div
-                className={`grid ${
-                  focusLayer &&
+                className={`grid ${focusLayer &&
                   focusLayer !== ControllerRole.Story &&
                   "invisible"
-                }`}
+                  }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -764,11 +775,10 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${
-                  focusLayer &&
+                className={`grid ${focusLayer &&
                   focusLayer !== ControllerRole.Character &&
                   "invisible"
-                }`}
+                  }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -785,11 +795,10 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${
-                  focusLayer &&
+                className={`grid ${focusLayer &&
                   focusLayer !== ControllerRole.Background &&
                   "invisible"
-                }`}
+                  }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -806,11 +815,10 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${
-                  focusLayer &&
+                className={`grid ${focusLayer &&
                   focusLayer !== ControllerRole.Story &&
                   "invisible"
-                }`}
+                  }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}
               >
                 <Canvas
@@ -830,11 +838,10 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${
-                  focusLayer &&
+                className={`grid ${focusLayer &&
                   focusLayer !== ControllerRole.Character &&
                   "invisible"
-                }`}
+                  }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}
               >
                 <Canvas
@@ -854,11 +861,10 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${
-                  focusLayer &&
+                className={`grid ${focusLayer &&
                   focusLayer !== ControllerRole.Background &&
                   "invisible"
-                }`}
+                  }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}
               >
                 <Canvas
