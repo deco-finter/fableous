@@ -34,12 +34,13 @@ export default function Navbar() {
           </Typography>
         </Link>
         <div className="flex-grow" /> {/* spacer */}
-        {navs.map(({ icon, label, onClickHandler }) => (
+        {navs.map(({ icon, label, buttonProps }) => (
           <Button
             variant="outlined"
             className="text-white"
             startIcon={<Icon fontSize="small">{icon}</Icon>}
-            onClick={onClickHandler}
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...buttonProps}
           >
             {label}
           </Button>

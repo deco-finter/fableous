@@ -1,3 +1,4 @@
+import { ButtonProps } from "@material-ui/core";
 import {
   createContext,
   ReactNode,
@@ -9,8 +10,7 @@ import {
 export interface NavType {
   icon: string;
   label: string;
-  onClickHandler: () => void;
-  disabled: boolean;
+  buttonProps: ButtonProps;
 }
 
 export type AdditionalNavContextType = [

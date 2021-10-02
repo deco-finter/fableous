@@ -20,7 +20,7 @@ import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
-import Joyride, { CallBackProps, STATUS } from "react-joyride";
+import Joyride, { CallBackProps, STATUS, Step } from "react-joyride";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import {
@@ -51,8 +51,13 @@ import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
-import CanvasToolbarIconId from "../components/canvas/canvasToolbarIconId";
 import { useAdditionalNav } from "../components/AdditionalNavProvider";
+import {
+  CanvasToolbarIconId,
+  controllerCanvasId,
+  controllerTopChipRowId,
+  navbarTutorialButtonId,
+} from "../tutorialTargetIds";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -231,31 +236,66 @@ export default function ControllerCanvasPage() {
     setIsDone(true);
   };
 
-  const drawingTutorialSteps = [
+  const drawingTutorialSteps: Step[] = [
+    {
+      target: `#${navbarTutorialButtonId}`,
+      content:
+        "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
+      placement: "bottom",
+      disableBeacon: true,
+      // wierdly, close behavior is like next page, unsure on how to fix it
+      hideCloseButton: true,
+    },
+    {
+      target: `#${controllerTopChipRowId}`,
+      content:
+        "You will be assigned a role and collaboratively draw a story based on a theme.",
+      placement: "bottom",
+      disableBeacon: true,
+      hideCloseButton: true,
+    },
+    {
+      target: `#${controllerCanvasId}`,
+      content:
+        "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
+      placement: "auto",
+      disableBeacon: true,
+      hideCloseButton: true,
+    },
     {
       target: `#${CanvasToolbarIconId.Brush}`,
       content: "Use brush to draw",
+      placement: "right",
       disableBeacon: true,
+      hideCloseButton: true,
     },
     {
       target: `#${CanvasToolbarIconId.Erase}`,
       content: "Use eraser to erase",
+      placement: "right",
       disableBeacon: true,
+      hideCloseButton: true,
     },
     {
       target: `#${CanvasToolbarIconId.Fill}`,
       content: "Use bucket to fill with selected colour",
+      placement: "right",
       disableBeacon: true,
+      hideCloseButton: true,
     },
     {
       target: `#${CanvasToolbarIconId.Palette}`,
       content: "Use palette to choose a colour",
+      placement: "right",
       disableBeacon: true,
+      hideCloseButton: true,
     },
     {
       target: `#${CanvasToolbarIconId.Undo}`,
       content: "Use undo to undo a recent action",
+      placement: "right",
       disableBeacon: true,
+      hideCloseButton: true,
     },
   ];
   const handleJoyrideCallback = (data: CallBackProps) => {
@@ -335,8 +375,11 @@ export default function ControllerCanvasPage() {
         {
           icon: "help",
           label: "Tutorial",
-          onClickHandler: () => setIsTutorialRunning(true),
-          disabled: isTutorialRunning,
+          buttonProps: {
+            id: navbarTutorialButtonId,
+            onClick: () => setIsTutorialRunning(true),
+            disabled: isTutorialRunning,
+          },
         },
       ]);
     }
@@ -358,6 +401,7 @@ export default function ControllerCanvasPage() {
         scrollToFirstStep
         showProgress
         showSkipButton
+        disableOverlayClose
         steps={drawingTutorialSteps}
         styles={{
           options: {
@@ -382,12 +426,6 @@ export default function ControllerCanvasPage() {
               }[controllerState]
             }
           </Typography>
-          <Button
-            onClick={() => setIsTutorialRunning((prev) => !prev)}
-            variant="contained"
-          >
-            start tutorial
-          </Button>
         </Grid>
         {controllerState === ControllerState.JoinForm && (
           <Grid item xs={12} sm={8} md={6} lg={4}>
@@ -584,6 +622,9 @@ export default function ControllerCanvasPage() {
           <Grid item xs={12}>
             <ChipRow
               primary
+              rootProps={{
+                id: controllerTopChipRowId,
+              }}
               chips={[
                 <Chip label={storyDetails?.title} color="primary" />,
                 <div className="flex gap-4">
@@ -656,6 +697,7 @@ export default function ControllerCanvasPage() {
               >
                 <Canvas
                   ref={canvasRef}
+                  rootId={controllerCanvasId}
                   wsConn={wsConn}
                   role={role}
                   layer={role}

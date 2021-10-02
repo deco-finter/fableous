@@ -13,7 +13,7 @@ import { ControllerRole, ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
 import BrushWidthIcon from "./BrushWidthIcon";
 import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
-import CanvasToolbarIconId from "./canvasToolbarIconId";
+import { CanvasToolbarIconId } from "../../tutorialTargetIds";
 
 interface CanvasToolbarProps {
   role: ControllerRole;

@@ -55,6 +55,7 @@ interface CanvasProps {
   setToolMode?: React.Dispatch<React.SetStateAction<ToolMode>>;
   toolColor?: string;
   toolWidth?: number;
+  rootId?: string | undefined;
 }
 
 const defaultProps = {
@@ -66,6 +67,7 @@ const defaultProps = {
   toolMode: ToolMode.None,
   setToolMode: () => {},
   toolWidth: 8 * SCALE,
+  rootId: undefined,
 };
 
 interface SimplePointerEventData {
@@ -99,6 +101,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       toolColor = defaultProps.toolColor,
       toolWidth = defaultProps.toolWidth,
       wsConn,
+      rootId,
     } = props;
     // useImperativeHandle of type ImperativeCanvasRef defined at bottom
     const canvasRef = useRef<HTMLCanvasElement>(
@@ -911,6 +914,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     return (
       <div
+        id={rootId}
         className="relative place-self-center"
         style={{
           width: offsetWidth,
