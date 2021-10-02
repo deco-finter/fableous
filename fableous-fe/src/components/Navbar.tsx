@@ -7,6 +7,7 @@ import { Link, useHistory } from "react-router-dom";
 import { useContext } from "react";
 
 import { AuthContext } from "./AuthProvider";
+import { useAdditionalNav } from "./AdditionalNavProvider";
 
 const useStyles = makeStyles(() => ({
   home: {
@@ -21,6 +22,7 @@ export default function Navbar() {
     clearToken();
     history.push("/");
   };
+  const [navs] = useAdditionalNav();
   const classes = useStyles();
 
   return (
@@ -32,6 +34,16 @@ export default function Navbar() {
           </Typography>
         </Link>
         <div className="flex-grow" /> {/* spacer */}
+        {navs.map(({ icon, label, onClickHandler }) => (
+          <Button
+            variant="outlined"
+            className="text-white"
+            startIcon={<Icon fontSize="small">{icon}</Icon>}
+            onClick={onClickHandler}
+          >
+            {label}
+          </Button>
+        ))}
         {isAuthenticated ? (
           <>
             <Button
@@ -43,7 +55,6 @@ export default function Navbar() {
             >
               Profile
             </Button>
-
             <Button
               variant="outlined"
               className="ml-4 text-white"

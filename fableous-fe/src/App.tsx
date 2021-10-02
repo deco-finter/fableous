@@ -12,6 +12,7 @@ import Navbar from "./components/Navbar";
 import Routes from "./Routes";
 import InjectAxiosRespInterceptor from "./components/InjectAxiosRespInterceptor";
 import { colors } from "./colors";
+import AdditionalNavProvider from "./components/AdditionalNavProvider";
 
 // generated background from https://www.svgbackgrounds.com/
 const useStyles = makeStyles({
@@ -136,13 +137,15 @@ export default function App() {
           <React.StrictMode>
             <AuthProvider>
               <Router>
-                <InjectAxiosRespInterceptor />
-                <ThemeProvider theme={theme}>
-                  <Navbar />
-                  <Container className="flex flex-col flex-1 pt-5 pb-12">
-                    <Routes />
-                  </Container>
-                </ThemeProvider>
+                <AdditionalNavProvider>
+                  <InjectAxiosRespInterceptor />
+                  <ThemeProvider theme={theme}>
+                    <Navbar />
+                    <Container className="flex flex-col flex-1 pt-5 pb-12">
+                      <Routes />
+                    </Container>
+                  </ThemeProvider>
+                </AdditionalNavProvider>
               </Router>
             </AuthProvider>
           </React.StrictMode>

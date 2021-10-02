@@ -52,6 +52,7 @@ import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
 import CanvasToolbarIconId from "../components/canvas/canvasToolbarIconId";
+import { useAdditionalNav } from "../components/AdditionalNavProvider";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -88,6 +89,7 @@ export default function ControllerCanvasPage() {
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
   const [isTutorialRunning, setIsTutorialRunning] = useState(false);
+  const [, setNavs, clearNavs] = useAdditionalNav();
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
@@ -325,6 +327,24 @@ export default function ControllerCanvasPage() {
         })
       );
   }, [controllerState, isDone, role, wsConn]);
+
+  // show tutorial button in navbar
+  useEffect(() => {
+    if (controllerState === ControllerState.DrawingSession) {
+      setNavs([
+        {
+          icon: "help",
+          label: "Tutorial",
+          onClickHandler: () => setIsTutorialRunning(true),
+          disabled: isTutorialRunning,
+        },
+      ]);
+    }
+
+    return () => {
+      clearNavs();
+    };
+  }, [controllerState, isTutorialRunning, setNavs, clearNavs]);
 
   return (
     <Grid
