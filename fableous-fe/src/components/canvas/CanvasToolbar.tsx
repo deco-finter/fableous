@@ -13,6 +13,7 @@ import { ControllerRole, ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
 import BrushWidthIcon from "./BrushWidthIcon";
 import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
+import CanvasToolbarIconId from "./canvasToolbarIconId";
 
 interface CanvasToolbarProps {
   role: ControllerRole;
@@ -138,6 +139,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   }
                 >
                   <IconButton
+                    id={CanvasToolbarIconId.Brush}
                     className="relative"
                     onClick={() => {
                       if (toolColor === ERASE_COLOR) {
@@ -166,6 +168,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   </IconButton>
                 </CanvasToolbarTooltip>
                 <IconButton
+                  id={CanvasToolbarIconId.Erase}
                   onClick={() => {
                     setToolColorRememberPrev(ERASE_COLOR);
                     setToolMode(ToolMode.Paint);
@@ -179,6 +182,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   <EraserIcon fontSize="medium" />
                 </IconButton>
                 <IconButton
+                  id={CanvasToolbarIconId.Fill}
                   onClick={() => {
                     if (toolColor === ERASE_COLOR) {
                       setToolColor(prevColor);
@@ -222,6 +226,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   }
                 >
                   <IconButton
+                    id={CanvasToolbarIconId.Palette}
                     onClick={() => setIsColorPickerOpen((prev) => !prev)}
                     color="primary"
                     className="relative"
@@ -237,17 +242,12 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                     />
                   </IconButton>
                 </CanvasToolbarTooltip>
-                <IconButton
-                  onClick={imperativeCanvasRef.current.runUndo}
-                  color="primary"
-                >
-                  <UndoIcon fontSize="large" />
-                </IconButton>
               </>
             )}
             {role === ControllerRole.Story && (
               <>
                 <IconButton
+                  id={CanvasToolbarIconId.Text}
                   onClick={() => setToolMode(ToolMode.Text)}
                   color={toolMode === ToolMode.Text ? "secondary" : "primary"}
                 >
@@ -263,6 +263,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   }
                 >
                   <IconButton
+                    id={CanvasToolbarIconId.Audio}
                     onClick={() => {
                       setToolMode(ToolMode.Audio);
                       setIsRecordingAudio((prev) => {
@@ -283,14 +284,15 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                     )}
                   </IconButton>
                 </CanvasToolbarTooltip>
-                <IconButton
-                  onClick={imperativeCanvasRef.current.runUndo}
-                  color="primary"
-                >
-                  <UndoIcon fontSize="large" />
-                </IconButton>
               </>
             )}
+            <IconButton
+              id={CanvasToolbarIconId.Undo}
+              onClick={imperativeCanvasRef.current.runUndo}
+              color="primary"
+            >
+              <UndoIcon fontSize="large" />
+            </IconButton>
           </Paper>
         </div>
       </div>
