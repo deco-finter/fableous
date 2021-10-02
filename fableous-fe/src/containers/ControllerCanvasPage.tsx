@@ -20,6 +20,7 @@ import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
+import Joyride, { CallBackProps, STATUS } from "react-joyride";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import {
@@ -50,6 +51,7 @@ import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
+import CanvasToolbarIconId from "../components/canvas/canvasToolbarIconId";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -85,6 +87,7 @@ export default function ControllerCanvasPage() {
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
+  const [isTutorialRunning, setIsTutorialRunning] = useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
@@ -226,6 +229,42 @@ export default function ControllerCanvasPage() {
     setIsDone(true);
   };
 
+  const drawingTutorialSteps = [
+    {
+      target: `#${CanvasToolbarIconId.Brush}`,
+      content: "Use brush to draw",
+      disableBeacon: true,
+    },
+    {
+      target: `#${CanvasToolbarIconId.Erase}`,
+      content: "Use eraser to erase",
+      disableBeacon: true,
+    },
+    {
+      target: `#${CanvasToolbarIconId.Fill}`,
+      content: "Use bucket to fill with selected colour",
+      disableBeacon: true,
+    },
+    {
+      target: `#${CanvasToolbarIconId.Palette}`,
+      content: "Use palette to choose a colour",
+      disableBeacon: true,
+    },
+    {
+      target: `#${CanvasToolbarIconId.Undo}`,
+      content: "Use undo to undo a recent action",
+      disableBeacon: true,
+    },
+  ];
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(status)) {
+      setIsTutorialRunning(false);
+    }
+  };
+
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
@@ -292,6 +331,20 @@ export default function ControllerCanvasPage() {
       container
       className={`grid flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
     >
+      <Joyride
+        callback={handleJoyrideCallback}
+        continuous
+        run={isTutorialRunning}
+        scrollToFirstStep
+        showProgress
+        showSkipButton
+        steps={drawingTutorialSteps}
+        styles={{
+          options: {
+            zIndex: 10000,
+          },
+        }}
+      />
       <div
         style={{
           gridRowStart: 1,
@@ -309,6 +362,12 @@ export default function ControllerCanvasPage() {
               }[controllerState]
             }
           </Typography>
+          <Button
+            onClick={() => setIsTutorialRunning((prev) => !prev)}
+            variant="contained"
+          >
+            start tutorial
+          </Button>
         </Grid>
         {controllerState === ControllerState.JoinForm && (
           <Grid item xs={12} sm={8} md={6} lg={4}>
