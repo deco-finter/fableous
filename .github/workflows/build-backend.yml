@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "fableous-be/**"
+      - "proto/**"
 
 jobs:
   lint:
