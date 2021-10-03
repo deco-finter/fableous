@@ -77,8 +77,6 @@ interface SimplePointerEventData {
   onLeave: boolean;
 }
 
-// TODO after width of canvas DOM element is dynamic, attempt to make canvas drawing scaling dynamic
-// that is, resizing screen allows drawing without issue (no translation error)
 const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
   (props: CanvasProps, ref) => {
     let FRAME_COUNTER = 0;
