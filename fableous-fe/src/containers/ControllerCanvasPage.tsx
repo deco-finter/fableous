@@ -272,7 +272,7 @@ export default function ControllerCanvasPage() {
         hideCloseButton: true,
       },
       {
-        target: "body",
+        target: `#${controllerCanvasId}`,
         content:
           "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
         placement: "center",
@@ -444,6 +444,8 @@ export default function ControllerCanvasPage() {
         showProgress
         showSkipButton
         disableOverlayClose
+        disableScrollParentFix
+        disableScrolling
         steps={tutorialSteps}
         getHelpers={setTutorialHelper}
         styles={{
