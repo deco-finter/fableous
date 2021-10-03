@@ -6,6 +6,7 @@ fableous-be.exe
 *.env
 !.example.env
 .air.toml
+protos/
 
 static/
 

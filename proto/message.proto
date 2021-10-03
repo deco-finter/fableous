@@ -1,8 +1,6 @@
 syntax = "proto3";
 package proto;
 
-option go_package = "github.com/deco-finter/fableous/proto";
-
 enum WSMessageType {
     UNKNOWN = 0;
     ERROR = 1;

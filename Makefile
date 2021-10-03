@@ -12,10 +12,12 @@ be_install_dependencies:
 
 be_build_proto:
 	@echo "Building protos for fableous-be..."
-	@protoc \
-		--go_out=. \
+	@mkdir -p fableous-be/protos
+	@cd proto && protoc \
+		--go_out=../fableous-be/protos \
 		--go_opt=paths=source_relative \
-		proto/*.proto
+		--go_opt=Mmessage.proto=github.com/deco-finter/fableous/fableous-be/protos/message \
+		message.proto
 
 fe_install_dependencies:
 	@echo "Installing dependencies for fableous-fe proto building..."
@@ -24,12 +26,11 @@ fe_install_dependencies:
 fe_build_proto:
 	@echo "Building protos for fableous-fe..."
 	@mkdir -p fableous-fe/src/proto
-	@cd proto && npx pbjs -t static-module -w commonjs -o ../fableous-fe/src/proto/message_pb.js *.proto
+	@cd proto && npx pbjs -t static-module -w commonjs -o ../fableous-fe/src/proto/message_pb.js message.proto
 	@cd proto && npx pbts -o ../fableous-fe/src/proto/message_pb.d.ts ../fableous-fe/src/proto/message_pb.js
 
 be_clean:
-	rm -f proto/*.go
+	rm -rf fableous-be/protos
 
 fe_clean:
-	rm -f fableous-fe/src/proto/proto/*_pb.d.ts
-	rm -f fableous-fe/src/proto/proto/*_pb.js
+	rm -rf fableous-fe/src/proto
