@@ -1,4 +1,5 @@
 FROM node:lts-buster as builder
+RUN apt-get -y install make
 WORKDIR /build
 COPY fableous-fe fableous-fe
 COPY proto proto
