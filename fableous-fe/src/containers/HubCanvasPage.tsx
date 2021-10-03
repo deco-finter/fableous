@@ -16,24 +16,13 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
-import {
-  Manifest,
-  Story,
-  WSControlMessageData,
-  WSJoinMessageData,
-  WSMessage,
-} from "../data";
+import { Manifest, Story } from "../data";
 import AchievementButton from "../components/achievement/AchievementButton";
 import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import { useAchievement, useWsConn } from "../hooks";
-import {
-  WSMessageType,
-  ControllerRole,
-  ROLE_ICON,
-  StudentRole,
-} from "../constant";
+import { ROLE_ICON, StudentRole } from "../constant";
 import BackButton from "../components/BackButton";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import useContainRatio from "../hooks/useContainRatio";
@@ -41,11 +30,13 @@ import { ASPECT_RATIO } from "../components/canvas/constants";
 import ChipRow from "../components/ChipRow";
 import FormikTagField from "../components/FormikTagField";
 import LayerToolbar from "../components/canvas/LayerToolbar";
+import { achievementToProto } from "../components/achievement/achievement";
+import { proto as pb } from "../proto/message_pb";
 
 const INIT_FLAG = {
-  [ControllerRole.Story]: false,
-  [ControllerRole.Character]: false,
-  [ControllerRole.Background]: false,
+  [pb.ControllerRole.STORY]: false,
+  [pb.ControllerRole.CHARACTER]: false,
+  [pb.ControllerRole.BACKGROUND]: false,
 };
 
 enum HubState {
@@ -135,105 +126,96 @@ export default function HubCanvasPage() {
   const broadcastAchievement = useCallback(() => {
     if (hubState === HubState.DrawingSession) {
       wsConn?.send(
-        JSON.stringify({
-          type: WSMessageType.Achievement,
-          data: achievements,
-        })
+        pb.WSMessage.encode({
+          type: pb.WSMessageType.ACHIEVEMENT,
+          achievement: achievementToProto(achievements),
+        }).finish()
       );
     }
   }, [achievements, hubState, wsConn]);
 
   const wsMessageHandler = useCallback(
     (ev: MessageEvent) => {
-      try {
-        const msg = JSON.parse(ev.data) as WSMessage;
-        switch (msg.type) {
-          case WSMessageType.Control:
-            {
-              const {
-                classroomToken: classroomTokenFromWs,
-                help,
-                done,
-              } = msg.data as WSControlMessageData;
-              if (classroomTokenFromWs) {
-                setClassroomToken(classroomTokenFromWs);
-              }
-              if (help) {
-                enqueueSnackbar(`${ROLE_ICON[msg.role].text} needs a hand!`, {
-                  variant: "info",
-                });
-              }
-              if (!done && help)
-                setHelpControllers((prev) => ({
-                  ...prev,
-                  [msg.role as StudentRole]: help,
-                }));
-              if (!help)
-                setDoneControllers((prev) => ({
-                  ...prev,
-                  [msg.role as StudentRole]: done,
-                }));
+      const msg = pb.WSMessage.decode(ev.data);
+      switch (msg.type) {
+        case pb.WSMessageType.CONTROL:
+          {
+            const {
+              classroomToken: classroomTokenFromWs,
+              help,
+              done,
+            } = msg.control as pb.WSControlMessageData;
+            if (classroomTokenFromWs) {
+              setClassroomToken(classroomTokenFromWs);
             }
-            break;
-          case WSMessageType.Join:
-            {
-              const { role, name, joining } = msg.data as WSJoinMessageData;
-              if (role === ControllerRole.Hub) {
-                break;
-              }
-
-              // update joined controllers to show in waiting room
-              if (joining && name) {
-                setJoinedControllers((prev) => ({
-                  ...prev,
-                  [role]: name,
-                }));
-                broadcastAchievement();
-              } else if (!joining) {
-                setJoinedControllers((prev) => {
-                  const prevCopy = { ...prev };
-                  delete prevCopy[role];
-                  return prevCopy;
-                });
-                switch (role) {
-                  case ControllerRole.Story:
-                    setStoryCursor(undefined);
-                    break;
-                  case ControllerRole.Character:
-                    setCharacterCursor(undefined);
-                    break;
-                  case ControllerRole.Background:
-                    setBackgroundCursor(undefined);
-                    break;
-                  default:
-                }
-                setHelpControllers((prev) => ({
-                  ...prev,
-                  [role as StudentRole]: false,
-                }));
-                setDoneControllers((prev) => ({
-                  ...prev,
-                  [role as StudentRole]: false,
-                }));
-              }
-
-              // show error if controller disconnects during drawing session
-              if (!joining && hubState === HubState.DrawingSession) {
-                enqueueSnackbar(
-                  `${
-                    role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
-                  } leaves the room!`,
-                  {
-                    variant: "error",
-                  }
-                );
-              }
+            if (help) {
+              enqueueSnackbar(`${ROLE_ICON[msg.role].text} needs a hand!`, {
+                variant: "info",
+              });
             }
-            break;
-          default:
-        }
-      } catch (e) {
-        console.error(e);
+            if (!done && help)
+              setHelpControllers((prev) => ({
+                ...prev,
+                [msg.role as StudentRole]: help,
+              }));
+            if (!help)
+              setDoneControllers((prev) => ({
+                ...prev,
+                [msg.role as StudentRole]: done,
+              }));
+          }
+          break;
+        case pb.WSMessageType.JOIN:
+          {
+            const { role, name, joining } = msg.join as pb.WSJoinMessageData;
+            if (role === pb.ControllerRole.HUB) {
+              break;
+            }
+
+            // update joined controllers to show in waiting room
+            if (joining && name) {
+              setJoinedControllers((prev) => ({
+                ...prev,
+                [role]: name,
+              }));
+              broadcastAchievement();
+            } else if (!joining) {
+              setJoinedControllers((prev) => {
+                const prevCopy = { ...prev };
+                delete prevCopy[role];
+                return prevCopy;
+              });
+              switch (role) {
+                case pb.ControllerRole.STORY:
+                  setStoryCursor(undefined);
+                  break;
+                case pb.ControllerRole.CHARACTER:
+                  setCharacterCursor(undefined);
+                  break;
+                case pb.ControllerRole.BACKGROUND:
+                  setBackgroundCursor(undefined);
+                  break;
+                default:
+              }
+              setHelpControllers((prev) => ({
+                ...prev,
+                [role as StudentRole]: false,
+              }));
+              setDoneControllers((prev) => ({
+                ...prev,
+                [role as StudentRole]: false,
+              }));
+            }
+
+            // show error if controller disconnects during drawing session
+            if (!joining && hubState === HubState.DrawingSession) {
+              enqueueSnackbar(`${ROLE_ICON[role].text} leaves the room!`, {
+                variant: "error",
+              });
+            }
+          }
+          break;
+        default:
       }
     },
     [hubState, broadcastAchievement, enqueueSnackbar]
@@ -285,9 +267,9 @@ export default function HubCanvasPage() {
   const isAllControllersJoined = (): boolean => {
     return (
       [
-        ControllerRole.Story,
-        ControllerRole.Character,
-        ControllerRole.Background,
+        pb.ControllerRole.STORY,
+        pb.ControllerRole.CHARACTER,
+        pb.ControllerRole.BACKGROUND,
       ].every((role) => role in joinedControllers) ||
       process.env.NODE_ENV === "development"
     );
@@ -323,18 +305,18 @@ export default function HubCanvasPage() {
       link.download = "output.png";
       const dataUrl = canvas.toDataURL();
       wsConn?.send(
-        JSON.stringify({
-          type: WSMessageType.Image,
-          data: {
+        pb.WSMessage.encode({
+          type: pb.WSMessageType.IMAGE,
+          paint: {
             id: currentPageIdx,
             text: dataUrl,
           },
-        } as WSMessage)
+        }).finish()
       );
       wsConn?.send(
-        JSON.stringify({
-          type: WSMessageType.Manifest,
-          data: {
+        pb.WSMessage.encode({
+          type: pb.WSMessageType.MANIFEST,
+          paint: {
             id: currentPageIdx,
             text: JSON.stringify({
               texts: storyTextShapes,
@@ -342,12 +324,15 @@ export default function HubCanvasPage() {
               achievements,
             } as Manifest),
           },
-        } as WSMessage)
+        }).finish()
       );
     }
     setHubState(HubState.DrawingSession);
     wsConn?.send(
-      JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
+      pb.WSMessage.encode({
+        type: pb.WSMessageType.CONTROL,
+        control: { nextPage: true },
+      }).finish()
     );
     setCurrentPageIdx((prev) => {
       if (prev > 0) achievementNextPage();
@@ -579,7 +564,7 @@ export default function HubCanvasPage() {
                     item
                     xs={12}
                     style={{
-                      color: joinedControllers[ControllerRole.Story]
+                      color: joinedControllers[pb.ControllerRole.STORY]
                         ? "inherit"
                         : "gray",
                     }}
@@ -593,8 +578,8 @@ export default function HubCanvasPage() {
                       </Grid>
                       <Grid item xs={8}>
                         <div className="ml-4 overflow-ellipsis overflow-hidden">
-                          {joinedControllers[ControllerRole.Story] ? (
-                            <>{joinedControllers[ControllerRole.Story]}</>
+                          {joinedControllers[pb.ControllerRole.STORY] ? (
+                            <>{joinedControllers[pb.ControllerRole.STORY]}</>
                           ) : (
                             <>
                               waiting to join{" "}
@@ -613,7 +598,7 @@ export default function HubCanvasPage() {
                     item
                     xs={12}
                     style={{
-                      color: joinedControllers[ControllerRole.Character]
+                      color: joinedControllers[pb.ControllerRole.CHARACTER]
                         ? "inherit"
                         : "gray",
                     }}
@@ -627,8 +612,10 @@ export default function HubCanvasPage() {
                       </Grid>
                       <Grid item xs={8}>
                         <div className="ml-4 overflow-ellipsis overflow-hidden">
-                          {joinedControllers[ControllerRole.Character] ? (
-                            <>{joinedControllers[ControllerRole.Character]}</>
+                          {joinedControllers[pb.ControllerRole.CHARACTER] ? (
+                            <>
+                              {joinedControllers[pb.ControllerRole.CHARACTER]}
+                            </>
                           ) : (
                             <>
                               waiting to join{" "}
@@ -647,7 +634,7 @@ export default function HubCanvasPage() {
                     item
                     xs={12}
                     style={{
-                      color: joinedControllers[ControllerRole.Background]
+                      color: joinedControllers[pb.ControllerRole.BACKGROUND]
                         ? "inherit"
                         : "gray",
                     }}
@@ -661,8 +648,10 @@ export default function HubCanvasPage() {
                       </Grid>
                       <Grid item xs={8}>
                         <div className="ml-4 overflow-ellipsis overflow-hidden">
-                          {joinedControllers[ControllerRole.Background] ? (
-                            <>{joinedControllers[ControllerRole.Background]}</>
+                          {joinedControllers[pb.ControllerRole.BACKGROUND] ? (
+                            <>
+                              {joinedControllers[pb.ControllerRole.BACKGROUND]}
+                            </>
                           ) : (
                             <>
                               waiting to join{" "}
@@ -745,7 +734,7 @@ export default function HubCanvasPage() {
               <div
                 className={`grid ${
                   focusLayer &&
-                  focusLayer !== ControllerRole.Story &&
+                  focusLayer !== pb.ControllerRole.STORY &&
                   "invisible"
                 }`}
                 style={{
@@ -757,7 +746,7 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={storyCursor}
-                  name={ROLE_ICON[ControllerRole.Story].text}
+                  name={ROLE_ICON[pb.ControllerRole.STORY].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                   offsetHeight={canvasOffsetHeight}
@@ -766,7 +755,7 @@ export default function HubCanvasPage() {
               <div
                 className={`grid ${
                   focusLayer &&
-                  focusLayer !== ControllerRole.Character &&
+                  focusLayer !== pb.ControllerRole.CHARACTER &&
                   "invisible"
                 }`}
                 style={{
@@ -778,7 +767,7 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={characterCursor}
-                  name={ROLE_ICON[ControllerRole.Character].text}
+                  name={ROLE_ICON[pb.ControllerRole.CHARACTER].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                   offsetHeight={canvasOffsetHeight}
@@ -787,7 +776,7 @@ export default function HubCanvasPage() {
               <div
                 className={`grid ${
                   focusLayer &&
-                  focusLayer !== ControllerRole.Background &&
+                  focusLayer !== pb.ControllerRole.BACKGROUND &&
                   "invisible"
                 }`}
                 style={{
@@ -799,7 +788,7 @@ export default function HubCanvasPage() {
               >
                 <CursorScreen
                   cursor={backgroundCursor}
-                  name={ROLE_ICON[ControllerRole.Background].text}
+                  name={ROLE_ICON[pb.ControllerRole.BACKGROUND].text}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
                   offsetHeight={canvasOffsetHeight}
@@ -808,7 +797,7 @@ export default function HubCanvasPage() {
               <div
                 className={`grid ${
                   focusLayer &&
-                  focusLayer !== ControllerRole.Story &&
+                  focusLayer !== pb.ControllerRole.STORY &&
                   "invisible"
                 }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}
@@ -816,8 +805,8 @@ export default function HubCanvasPage() {
                 <Canvas
                   ref={storyCanvasRef}
                   wsConn={wsConn}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Story}
+                  role={pb.ControllerRole.HUB}
+                  layer={pb.ControllerRole.STORY}
                   pageNum={currentPageIdx}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
@@ -832,7 +821,7 @@ export default function HubCanvasPage() {
               <div
                 className={`grid ${
                   focusLayer &&
-                  focusLayer !== ControllerRole.Character &&
+                  focusLayer !== pb.ControllerRole.CHARACTER &&
                   "invisible"
                 }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}
@@ -840,8 +829,8 @@ export default function HubCanvasPage() {
                 <Canvas
                   ref={characterCanvasRef}
                   wsConn={wsConn}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Character}
+                  role={pb.ControllerRole.HUB}
+                  layer={pb.ControllerRole.CHARACTER}
                   pageNum={currentPageIdx}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}
@@ -856,7 +845,7 @@ export default function HubCanvasPage() {
               <div
                 className={`grid ${
                   focusLayer &&
-                  focusLayer !== ControllerRole.Background &&
+                  focusLayer !== pb.ControllerRole.BACKGROUND &&
                   "invisible"
                 }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}
@@ -864,8 +853,8 @@ export default function HubCanvasPage() {
                 <Canvas
                   ref={backgroundCanvasRef}
                   wsConn={wsConn}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Background}
+                  role={pb.ControllerRole.HUB}
+                  layer={pb.ControllerRole.BACKGROUND}
                   pageNum={currentPageIdx}
                   isShown={hubState === HubState.DrawingSession}
                   offsetWidth={canvasOffsetWidth}

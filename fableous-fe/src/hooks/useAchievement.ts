@@ -6,7 +6,7 @@ import {
   EmptyAchievement,
 } from "../components/achievement/achievement";
 import { WSMessage } from "../data";
-import { ControllerRole, WSMessageType } from "../constant";
+import { proto as pb } from "../proto/message_pb";
 
 export default function useAchievement(config?: {
   debug?: boolean;
@@ -82,19 +82,19 @@ export default function useAchievement(config?: {
           case AchievementType.AllColor:
             if (
               msg &&
-              (msg.role === ControllerRole.Character ||
-                msg.role === ControllerRole.Background)
+              (msg.role === pb.ControllerRole.CHARACTER ||
+                msg.role === pb.ControllerRole.BACKGROUND)
             ) {
               newProgress = doAllColor(msg);
             }
             break;
           case AchievementType.FiveText:
-            if (msg && msg.role === ControllerRole.Story) {
+            if (msg && msg.role === pb.ControllerRole.STORY) {
               newProgress = doFiveText(msg);
             }
             break;
           case AchievementType.TenText:
-            if (msg && msg.role === ControllerRole.Story) {
+            if (msg && msg.role === pb.ControllerRole.STORY) {
               newProgress = doTenText(msg);
             }
             break;
@@ -131,13 +131,13 @@ export default function useAchievement(config?: {
     try {
       const msg = JSON.parse(ev.data) as WSMessage;
       switch (msg.type) {
-        case WSMessageType.Paint:
+        case pb.WSMessageType.PAINT:
           checkAchievement(AchievementType.AllColor, msg);
           break;
-        case WSMessageType.Fill:
+        case pb.WSMessageType.FILL:
           checkAchievement(AchievementType.AllColor, msg);
           break;
-        case WSMessageType.Text:
+        case pb.WSMessageType.TEXT:
           checkAchievement(AchievementType.FiveText, msg);
           checkAchievement(AchievementType.TenText, msg);
           break;

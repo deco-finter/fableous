@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { WSMessageType } from "../constant";
+import { proto as pb } from "../proto/message_pb";
 
 export default function useWsConn(): [
   WebSocket | undefined,
@@ -14,7 +14,9 @@ export default function useWsConn(): [
     let interval: NodeJS.Timeout;
     const setupPing = () => {
       interval = setInterval(() => {
-        wsConn.send(JSON.stringify({ type: WSMessageType.Ping }));
+        wsConn.send(
+          pb.WSMessage.encode({ type: pb.WSMessageType.PING }).finish()
+        );
       }, 5000);
     };
     const teardownPing = () => {

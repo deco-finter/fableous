@@ -1,5 +1,6 @@
 import { makeStyles, Paper } from "@material-ui/core";
-import { ControllerRole, StudentRole } from "../../constant";
+import { StudentRole } from "../../constant";
+import { proto as pb } from "../../proto/message_pb";
 import LayerIcon from "./LayerIcon";
 
 const useStyles = makeStyles(() => ({
@@ -58,9 +59,9 @@ export default function LayerToolbar(props: {
       >
         <Paper className="p-1 flex flex-col justify-evenly items-center min-h-full px-2 items-stretch">
           {[
-            ControllerRole.Story,
-            ControllerRole.Character,
-            ControllerRole.Background,
+            pb.ControllerRole.STORY,
+            pb.ControllerRole.CHARACTER,
+            pb.ControllerRole.BACKGROUND,
           ].map((role) => (
             <LayerIcon
               role={role as StudentRole}

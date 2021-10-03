@@ -70,6 +70,7 @@
     "eslint-plugin-react-hooks": "^1.7.0",
     "postcss": "^7",
     "prettier": "^2.3.2",
+    "protobufjs": "^6.11.2",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat"
   }
 }

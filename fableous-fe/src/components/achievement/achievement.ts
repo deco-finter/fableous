@@ -1,3 +1,5 @@
+import { proto as pb } from "../../proto/message_pb";
+
 export interface AchievementItem {
   name: string;
   description: string;
@@ -57,3 +59,29 @@ export const EmptyAchievement: Achievement = {
   [AchievementType.ThreePage]: 0,
   [AchievementType.FivePage]: 0,
 };
+
+export function achievementToProto(
+  achievement: Achievement
+): pb.WSAchievementMessageData {
+  return {
+    allColor: achievement.all_color,
+    fiveText: achievement.five_text,
+    tenText: achievement.ten_text,
+    onePage: achievement.one_page,
+    threePage: achievement.three_page,
+    fivePage: achievement.five_page,
+  } as pb.WSAchievementMessageData;
+}
+
+export function protoToAchievement(
+  proto: pb.WSAchievementMessageData
+): Achievement {
+  return {
+    all_color: proto.allColor,
+    five_text: proto.fiveText,
+    ten_text: proto.tenText,
+    one_page: proto.onePage,
+    three_page: proto.threePage,
+    five_page: proto.fivePage,
+  };
+}
