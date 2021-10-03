@@ -1,4 +1,4 @@
-FROM node:lts-alpine as builder
+FROM node:lts-buster as builder
 WORKDIR /build
 COPY fableous-fe fableous-fe
 COPY proto proto
