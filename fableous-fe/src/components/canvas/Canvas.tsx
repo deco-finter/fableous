@@ -180,6 +180,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 color: targetColor,
                 width: normWidth,
               },
+              timestamp: Date.now(),
             } as WSMessage)
           );
         }
@@ -625,6 +626,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                   y2,
                   msg.data.color || "#000000ff",
                   width || 8
+                );
+                console.log(
+                  `latency: ${Date.now() - (msg.timestamp as number)}`
                 );
                 break;
               case WSMessageType.Fill:

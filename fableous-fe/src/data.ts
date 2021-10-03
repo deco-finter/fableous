@@ -16,6 +16,7 @@ export interface WSMessage {
     color?: string;
     width?: number;
   };
+  timestamp: number;
 }
 
 // for WSMessageType.Control

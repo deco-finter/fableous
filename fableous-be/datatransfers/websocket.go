@@ -1,9 +1,10 @@
 package datatransfers
 
 type WSMessage struct {
-	Type string        `json:"type"`
-	Role string        `json:"role,omitempty"`
-	Data WSMessageData `json:"data"`
+	Type      string        `json:"type"`
+	Role      string        `json:"role,omitempty"`
+	Data      WSMessageData `json:"data"`
+	Timestamp int64         `json:"timestamp,omitempty"`
 }
 
 type WSMessageData struct {
