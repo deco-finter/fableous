@@ -16,7 +16,7 @@ be_build_proto:
 	@cd proto && protoc \
 		--go_out=../fableous-be/protos \
 		--go_opt=paths=source_relative \
-		--go_opt=Mmessage.proto=github.com/deco-finter/fableous/fableous-be/protos/message \
+		--go_opt=Mmessage.proto=github.com/deco-finter/fableous/fableous-be/protos \
 		message.proto
 
 fe_install_dependencies:
