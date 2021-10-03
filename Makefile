@@ -7,7 +7,7 @@ clean: be_clean fe_clean
 
 be_install_dependencies:
 	@echo "Installing dependencies for fableous-be proto building..."
-	@sudo apt install -y protobuf-compiler
+	@apt install -y protobuf-compiler
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
 
 be_build_proto:

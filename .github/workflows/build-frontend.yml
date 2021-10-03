@@ -22,8 +22,7 @@ jobs:
         with:
           node-version: 12.x
       - name: Generate Files
-        run: |
-          make -C .. fe
+        run: sudo make -C .. fe
       - name: Install Dependencies
         run: yarn
       - name: eslint
@@ -42,8 +41,7 @@ jobs:
         with:
           node-version: 12.x
       - name: Generate Files
-        run: |
-          make -C .. fe
+        run: sudo make -C .. fe
       - name: Install Dependencies
         run: yarn
       - name: Build
