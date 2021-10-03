@@ -30,12 +30,12 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+          working-directory: fableous-be
           skip-go-installation: true
           skip-pkg-cache: true
   build:
     name: Build
     runs-on: Ubuntu-20.04
-    container: daystram/go-builder:1.16
     defaults:
       run:
         working-directory: fableous-be
