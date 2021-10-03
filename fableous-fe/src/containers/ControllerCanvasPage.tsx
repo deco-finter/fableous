@@ -58,6 +58,7 @@ import {
   controllerTopChipRowId,
   navbarTutorialButtonId,
 } from "../tutorialTargetIds";
+import { getLocalStorage, ONE_DAY, setLocalStorage } from "../localStorage";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -73,6 +74,8 @@ const useStyles = makeStyles({
     userSelect: "none",
   },
 });
+
+const CONTROLLER_TUTORIAL_KEY = "controllerTutorial";
 
 export default function ControllerCanvasPage() {
   const { enqueueSnackbar } = useSnackbar();
@@ -367,6 +370,17 @@ export default function ControllerCanvasPage() {
         })
       );
   }, [controllerState, isDone, role, wsConn]);
+
+  // start tutorial at start of drawing session
+  useEffect(() => {
+    if (
+      controllerState === ControllerState.DrawingSession &&
+      getLocalStorage(CONTROLLER_TUTORIAL_KEY) === null
+    ) {
+      setIsTutorialRunning(true);
+      setLocalStorage(CONTROLLER_TUTORIAL_KEY, "", ONE_DAY);
+    }
+  }, [controllerState]);
 
   // show tutorial button in navbar
   useEffect(() => {

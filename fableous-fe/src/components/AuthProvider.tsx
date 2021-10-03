@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useState } from "react";
+import { getLocalStorage, setLocalStorage } from "../localStorage";
 
 export const TOKEN_KEY = "token";
 
@@ -17,7 +18,7 @@ export const AuthContext = createContext<AuthContextType>([
 ]);
 
 export default function AuthProvider(props: { children: ReactNode }) {
-  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY) || "");
+  const [token, setToken] = useState(getLocalStorage(TOKEN_KEY) || "");
   const { children } = props;
 
   return (
@@ -26,11 +27,11 @@ export default function AuthProvider(props: { children: ReactNode }) {
         token,
         token !== "",
         (t: string) => {
-          localStorage.setItem(TOKEN_KEY, t);
+          setLocalStorage(TOKEN_KEY, t);
           setToken(t);
         },
         () => {
-          localStorage.setItem(TOKEN_KEY, "");
+          setLocalStorage(TOKEN_KEY, "");
           setToken("");
         },
       ]}
