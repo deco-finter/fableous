@@ -36,6 +36,7 @@ message WSMessage {
         WSAchievementMessageData achievement = 6;
         WSErrorMessageData error = 7;
     }
+	int64 timestamp = 8;
 }
 
 message WSPaintMessageData {

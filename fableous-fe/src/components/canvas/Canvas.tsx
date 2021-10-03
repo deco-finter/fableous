@@ -179,6 +179,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 color: targetColor,
                 width: normWidth,
               },
+              timestamp: Date.now(),
             }).finish()
           );
         }
@@ -623,6 +624,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 msg.paint?.color || "#000000ff",
                 width || 8
               );
+              console.log(`latency: ${Date.now() - (msg.timestamp as number)}`);
               break;
             case pb.WSMessageType.FILL:
               placeFill(x1, y1, msg.paint?.color || "#000000ff");
