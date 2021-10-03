@@ -58,6 +58,7 @@ import {
   navbarTutorialButtonId,
 } from "../tutorialTargetIds";
 import useTutorial from "../hooks/useTutorial";
+import { useAdditionalNav } from "../components/AdditionalNavProvider";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -102,6 +103,7 @@ export default function ControllerCanvasPage() {
     ),
     localStorageKey: CONTROLLER_TUTORIAL_KEY,
   });
+  const [, , , setIsNavbarLogoClickable] = useAdditionalNav();
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
@@ -410,6 +412,17 @@ export default function ControllerCanvasPage() {
         })
       );
   }, [controllerState, isDone, role, wsConn]);
+
+  // prevent student accidentally going to homepage when drawing
+  useEffect(() => {
+    if (controllerState === ControllerState.DrawingSession) {
+      setIsNavbarLogoClickable(false);
+
+      return () => setIsNavbarLogoClickable(true);
+    }
+
+    return () => {};
+  }, [controllerState, setIsNavbarLogoClickable]);
 
   return (
     <Grid

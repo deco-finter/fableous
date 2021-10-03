@@ -1,11 +1,5 @@
 import { ButtonProps } from "@material-ui/core";
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useState,
-} from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 export interface NavType {
   icon: string;
@@ -15,28 +9,29 @@ export interface NavType {
 
 export type AdditionalNavContextType = [
   navs: NavType[],
-  setNavs: (navs: NavType[]) => void,
-  clearNavs: () => void
+  setNavs: React.Dispatch<React.SetStateAction<NavType[]>>,
+  isLogoClickable: boolean,
+  setIsLogoClickable: React.Dispatch<React.SetStateAction<boolean>>
 ];
 
 export const AdditionalNavContext = createContext<AdditionalNavContextType>([
   [],
   (_) => {},
-  () => {},
+  true,
+  (_) => {},
 ]);
 
 export const useAdditionalNav = () => useContext(AdditionalNavContext);
 
 export default function AdditionalNavProvider(props: { children: ReactNode }) {
   const [navs, setNavs] = useState<NavType[]>([]);
+  const [isLogoClickable, setIsLogoClickable] = useState(true);
   const { children } = props;
 
-  const clearNavs = useCallback(() => {
-    setNavs([]);
-  }, [setNavs]);
-
   return (
-    <AdditionalNavContext.Provider value={[navs, setNavs, clearNavs]}>
+    <AdditionalNavContext.Provider
+      value={[navs, setNavs, isLogoClickable, setIsLogoClickable]}
+    >
       {children}
     </AdditionalNavContext.Provider>
   );

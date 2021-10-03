@@ -26,7 +26,7 @@ export default function useTutorial(config: {
 
   const [isRunning, setIsRunning] = useState(false);
   const [isNavButtonShown, setIsNavButtonShown] = useState(false);
-  const [, setNavs, clearNavs] = useAdditionalNav();
+  const [, setNavs] = useAdditionalNav();
 
   useEffect(() => {
     setIsNavButtonShown(shouldStartCallback());
@@ -55,12 +55,12 @@ export default function useTutorial(config: {
       ]);
 
       return () => {
-        clearNavs();
+        setNavs([]);
       };
     }
 
     return () => {};
-  }, [isNavButtonShown, isRunning, setNavs, clearNavs]);
+  }, [isNavButtonShown, isRunning, setNavs]);
 
   // remember tutorial use and do not auto start it for specified duration
   useEffect(() => {

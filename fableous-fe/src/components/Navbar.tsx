@@ -1,10 +1,10 @@
+import { ReactNode, useContext } from "react";
 import { Icon, makeStyles } from "@material-ui/core";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import { Link, useHistory, useLocation } from "react-router-dom";
-import { useContext } from "react";
 
 import { AuthContext } from "./AuthProvider";
 import { useAdditionalNav } from "./AdditionalNavProvider";
@@ -23,20 +23,25 @@ export default function Navbar() {
     clearToken();
     history.push("/");
   };
-  const [navs] = useAdditionalNav();
+  const [navs, , isLogoClickable] = useAdditionalNav();
   const classes = useStyles();
 
   // navbar will be simplified for students
   const isOnStudentPages = location.pathname === "/join";
 
+  const logoLinkWrapper = (children: ReactNode) => (
+    <Link to="/">{children}</Link>
+  );
+  const logoElement = (
+    <Typography variant="h1" className={classes.home}>
+      Fableous
+    </Typography>
+  );
+
   return (
     <AppBar position="static">
       <Toolbar>
-        <Link to="/">
-          <Typography variant="h1" className={classes.home}>
-            Fableous
-          </Typography>
-        </Link>
+        {isLogoClickable ? logoLinkWrapper(logoElement) : logoElement}
         <div className="flex-grow" /> {/* spacer */}
         {navs.map(({ icon, label, buttonProps }) => (
           <Button
