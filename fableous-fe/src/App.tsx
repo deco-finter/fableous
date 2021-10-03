@@ -12,7 +12,7 @@ import Navbar from "./components/Navbar";
 import Routes from "./Routes";
 import InjectAxiosRespInterceptor from "./components/InjectAxiosRespInterceptor";
 import { colors } from "./colors";
-import AdditionalNavProvider from "./components/AdditionalNavProvider";
+import CustomNavProvider from "./components/CustomNavProvider";
 
 // generated background from https://www.svgbackgrounds.com/
 const useStyles = makeStyles({
@@ -137,7 +137,7 @@ export default function App() {
           <React.StrictMode>
             <AuthProvider>
               <Router>
-                <AdditionalNavProvider>
+                <CustomNavProvider>
                   <InjectAxiosRespInterceptor />
                   <ThemeProvider theme={theme}>
                     <Navbar />
@@ -145,7 +145,7 @@ export default function App() {
                       <Routes />
                     </Container>
                   </ThemeProvider>
-                </AdditionalNavProvider>
+                </CustomNavProvider>
               </Router>
             </AuthProvider>
           </React.StrictMode>

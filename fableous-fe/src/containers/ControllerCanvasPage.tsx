@@ -58,7 +58,7 @@ import {
   navbarTutorialButtonId,
 } from "../tutorialTargetIds";
 import useTutorial from "../hooks/useTutorial";
-import { useAdditionalNav } from "../components/AdditionalNavProvider";
+import { useCustomNav } from "../components/CustomNavProvider";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -103,7 +103,7 @@ export default function ControllerCanvasPage() {
     ),
     localStorageKey: CONTROLLER_TUTORIAL_KEY,
   });
-  const [, , , setIsNavbarLogoClickable] = useAdditionalNav();
+  const [, , , setIsNavbarLogoClickable] = useCustomNav();
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );

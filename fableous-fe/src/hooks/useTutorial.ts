@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CallBackProps, STATUS } from "react-joyride";
-import { useAdditionalNav } from "../components/AdditionalNavProvider";
+import { useCustomNav } from "../components/CustomNavProvider";
 import { getLocalStorage, ONE_DAY, setLocalStorage } from "../localStorage";
 import { navbarTutorialButtonId } from "../tutorialTargetIds";
 
@@ -26,7 +26,7 @@ export default function useTutorial(config: {
 
   const [isRunning, setIsRunning] = useState(false);
   const [isNavButtonShown, setIsNavButtonShown] = useState(false);
-  const [, setNavs] = useAdditionalNav();
+  const [, setAdditionalNavs] = useCustomNav();
 
   useEffect(() => {
     setIsNavButtonShown(shouldStartCallback());
@@ -42,7 +42,7 @@ export default function useTutorial(config: {
   // show tutorial button in navbar
   useEffect(() => {
     if (isNavButtonShown) {
-      setNavs([
+      setAdditionalNavs([
         {
           icon: "help",
           label: "Tutorial",
@@ -55,12 +55,12 @@ export default function useTutorial(config: {
       ]);
 
       return () => {
-        setNavs([]);
+        setAdditionalNavs([]);
       };
     }
 
     return () => {};
-  }, [isNavButtonShown, isRunning, setNavs]);
+  }, [isNavButtonShown, isRunning, setAdditionalNavs]);
 
   // remember tutorial use and do not auto start it for specified duration
   useEffect(() => {

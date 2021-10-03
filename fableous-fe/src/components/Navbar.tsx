@@ -7,7 +7,7 @@ import Button from "@material-ui/core/Button";
 import { Link, useHistory, useLocation } from "react-router-dom";
 
 import { AuthContext } from "./AuthProvider";
-import { useAdditionalNav } from "./AdditionalNavProvider";
+import { useCustomNav } from "./CustomNavProvider";
 
 const useStyles = makeStyles(() => ({
   home: {
@@ -23,7 +23,7 @@ export default function Navbar() {
     clearToken();
     history.push("/");
   };
-  const [navs, , isLogoClickable] = useAdditionalNav();
+  const [additionalNavs, , isLogoClickable] = useCustomNav();
   const classes = useStyles();
 
   // navbar will be simplified for students
@@ -43,7 +43,7 @@ export default function Navbar() {
       <Toolbar>
         {isLogoClickable ? logoLinkWrapper(logoElement) : logoElement}
         <div className="flex-grow" /> {/* spacer */}
-        {navs.map(({ icon, label, buttonProps }) => (
+        {additionalNavs.map(({ icon, label, buttonProps }) => (
           <Button
             variant="outlined"
             className="text-white"
