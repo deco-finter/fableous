@@ -1,54 +1,69 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CallBackProps, STATUS } from "react-joyride";
 import { useCustomNav } from "../components/CustomNavProvider";
 import { getLocalStorage, ONE_DAY, setLocalStorage } from "../localStorage";
 import { navbarTutorialButtonId } from "../tutorialTargetIds";
 
+enum TutorialState {
+  Off = 0,
+  AutomaticallyStarted,
+  ManuallyStarted,
+}
+
 /**
- * Auto start tutorial upon callback returning true,
+ * Auto start tutorial upon showTutorialButton changing to true,
  * records usage timestamp and do not auto start it again for specified duration.
- * Navbar will have tutorial button whenever callback returns true.
+ * Navbar will have tutorial button whenever showTutorialButton is true.
  *
- * @param {() => boolean} shouldStartCallback React callback that returns true when tutorial should start
+ * @param {boolean} showTutorialButton true when tutorial is accessible
  * @param {string} localStorageKey un-namespaced localstorage key to store usage timestamp
- * @param {number} duration
+ * @param {() => {}} onManualStartCallback custom logic to run on navbar tutorial button click
+ * @param {number} duration duration in milliseconds to not automatically start tutorial from most recent use
+ *
+ * @return {[boolean, (data: CallBackProps) => void]} tutorial running state and callback function to pass to Joyride component
  */
 export default function useTutorial(config: {
-  shouldStartCallback: () => boolean;
+  showTutorialButton: boolean;
   localStorageKey: string;
+  onManualStartCallback?: () => void;
   duration?: number;
-}): [
-  boolean,
-  React.Dispatch<React.SetStateAction<boolean>>,
-  (data: CallBackProps) => void
-] {
-  const { shouldStartCallback, localStorageKey, duration = ONE_DAY } = config;
+}): [boolean, (data: CallBackProps) => void] {
+  const {
+    showTutorialButton,
+    localStorageKey,
+    onManualStartCallback = () => {},
+    duration = ONE_DAY,
+  } = config;
 
-  const [isRunning, setIsRunning] = useState(false);
-  const [isNavButtonShown, setIsNavButtonShown] = useState(false);
+  const [tutorialState, setTutorialState] = useState<TutorialState>(
+    TutorialState.Off
+  );
   const [, setAdditionalNavs] = useCustomNav();
 
-  useEffect(() => {
-    setIsNavButtonShown(shouldStartCallback());
-  }, [shouldStartCallback]);
+  // state to expose is only boolean
+  const isRunning = useMemo(() => {
+    return tutorialState !== TutorialState.Off;
+  }, [tutorialState]);
 
   // auto start tutorial when shouldStartCallback becomes true
   useEffect(() => {
-    if (shouldStartCallback() && getLocalStorage(localStorageKey) === null) {
-      setIsRunning(true);
+    if (showTutorialButton && getLocalStorage(localStorageKey) === null) {
+      setTutorialState(TutorialState.AutomaticallyStarted);
     }
-  }, [shouldStartCallback, localStorageKey]);
+  }, [showTutorialButton, localStorageKey]);
 
   // show tutorial button in navbar
   useEffect(() => {
-    if (isNavButtonShown) {
+    if (showTutorialButton) {
       setAdditionalNavs([
         {
           icon: "help",
           label: "Tutorial",
           buttonProps: {
             id: navbarTutorialButtonId,
-            onClick: () => setIsRunning(true),
+            onClick: () => {
+              setTutorialState(TutorialState.ManuallyStarted);
+            },
             disabled: isRunning,
           },
         },
@@ -60,7 +75,7 @@ export default function useTutorial(config: {
     }
 
     return () => {};
-  }, [isNavButtonShown, isRunning, setAdditionalNavs]);
+  }, [showTutorialButton, isRunning, setAdditionalNavs, onManualStartCallback]);
 
   // remember tutorial use and do not auto start it for specified duration
   useEffect(() => {
@@ -70,6 +85,13 @@ export default function useTutorial(config: {
     }
   }, [isRunning, localStorageKey, duration]);
 
+  // exec passed custom logic on manually starting tutorial
+  useEffect(() => {
+    if (tutorialState === TutorialState.ManuallyStarted) {
+      onManualStartCallback();
+    }
+  }, [tutorialState, onManualStartCallback]);
+
   // handler to be passed to Joyride.callback to close it on skip or finish
   const handleJoyrideCallback = useCallback(
     (data: CallBackProps) => {
@@ -77,11 +99,11 @@ export default function useTutorial(config: {
       const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
       if (finishedStatuses.includes(status)) {
-        setIsRunning(false);
+        setTutorialState(TutorialState.Off);
       }
     },
-    [setIsRunning]
+    [setTutorialState]
   );
 
-  return [isRunning, setIsRunning, handleJoyrideCallback];
+  return [isRunning, handleJoyrideCallback];
 }

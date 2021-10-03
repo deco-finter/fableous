@@ -20,7 +20,7 @@ import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
-import Joyride, { Step } from "react-joyride";
+import Joyride, { Step, StoreHelpers } from "react-joyride";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import {
@@ -96,12 +96,19 @@ export default function ControllerCanvasPage() {
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
-  const [isTutorialRunning, , handleJoyrideCallback] = useTutorial({
-    shouldStartCallback: useCallback(
+  const [tutorialHelper, setTutorialHelper] = useState<StoreHelpers>();
+  const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
+    showTutorialButton: useMemo(
       () => controllerState === ControllerState.DrawingSession,
       [controllerState]
     ),
     localStorageKey: CONTROLLER_TUTORIAL_KEY,
+    onManualStartCallback: useCallback(() => {
+      if (tutorialHelper) {
+        // skip first step
+        tutorialHelper.next();
+      }
+    }, [tutorialHelper]),
   });
   const [, , , setIsNavbarLogoClickable] = useCustomNav();
   const canvasContainerRef = useRef<HTMLDivElement>(
@@ -438,6 +445,7 @@ export default function ControllerCanvasPage() {
         showSkipButton
         disableOverlayClose
         steps={tutorialSteps}
+        getHelpers={setTutorialHelper}
         styles={{
           options: {
             zIndex: 10000,
