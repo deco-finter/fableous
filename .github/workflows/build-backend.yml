@@ -23,8 +23,6 @@ jobs:
           go-version: "^1.16"
       - name: Generate Files
         run: |
-          sudo apt install -y protobuf-compiler
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
           make -C ..
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
@@ -48,8 +46,6 @@ jobs:
           go-version: "^1.16"
       - name: Generate Files
         run: |
-          sudo apt install -y protobuf-compiler
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
           make -C ..
       - name: Install Dependencies
         run: go mod tidy
