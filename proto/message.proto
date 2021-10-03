@@ -29,7 +29,7 @@ enum ControllerRole {
 }
 
 message WSMessage {
-    WSMessageType code = 1;
+    WSMessageType type = 1;
     ControllerRole role = 2;
     oneof data {
         WSPaintMessageData paint = 3;

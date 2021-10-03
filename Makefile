@@ -13,10 +13,9 @@ build_proto:
 	@protoc \
 		--go_out=. \
 		--go_opt=paths=source_relative \
-		--plugin=protoc-gen-ts=proto/node_modules/.bin/protoc-gen-ts \
-		--js_out=import_style=commonjs,binary:. \
-		--ts_out=. \
 		proto/*.proto
+	@cd proto && npx pbjs -t static-module -w commonjs -o message_pb.js *.proto
+	@cd proto && npx pbts -o message_pb.d.ts message_pb.js
 
 clean:
 	rm -f proto/*.go
