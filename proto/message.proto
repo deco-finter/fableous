@@ -71,7 +71,7 @@ message WSAchievementMessageData {
 }
 
 message WSJoinMessageData {
-	string role = 1;
+	ControllerRole role = 1;
 	string name = 2;
 	bool joining = 3;
 }

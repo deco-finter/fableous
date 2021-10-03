@@ -14,10 +14,11 @@ build_proto:
 		--go_out=. \
 		--go_opt=paths=source_relative \
 		proto/*.proto
-	@cd proto && npx pbjs -t static-module -w commonjs -o message_pb.js *.proto
-	@cd proto && npx pbts -o message_pb.d.ts message_pb.js
+	@mkdir -p fableous-fe/src/proto
+	@cd proto && npx pbjs -t static-module -w commonjs -o ../fableous-fe/src/proto/message_pb.js *.proto
+	@cd proto && npx pbts -o ../fableous-fe/src/proto/message_pb.d.ts ../fableous-fe/src/proto/message_pb.js
 
 clean:
 	rm -f proto/*.go
-	rm -f proto/*_pb.d.ts
-	rm -f proto/*_pb.js
+	rm -f fableous-fe/src/proto/proto/*_pb.d.ts
+	rm -f fableous-fe/src/proto/proto/*_pb.js
