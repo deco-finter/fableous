@@ -10,6 +10,11 @@ be_install_dependencies:
 	@apt install -y protobuf-compiler
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
 
+be_install_dependencies_elevated:
+	@echo "Installing dependencies for fableous-be proto building..."
+	@sudo apt install -y protobuf-compiler
+	@go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
+
 be_build_proto:
 	@echo "Building protos for fableous-be..."
 	@mkdir -p fableous-be/protos

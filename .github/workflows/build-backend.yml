@@ -23,7 +23,7 @@ jobs:
           go-version: "^1.16"
       - name: Generate Files
         run: |
-          sudo make -C .. be_install_dependencies
+          make -C .. be_install_dependencies_elevated
           make -C .. be_build_proto
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
@@ -47,7 +47,7 @@ jobs:
           go-version: "^1.16"
       - name: Generate Files
         run: |
-          sudo make -C .. be_install_dependencies
+          make -C .. be_install_dependencies_elevated
           make -C .. be_build_proto
       - name: Install Dependencies
         run: go mod tidy
