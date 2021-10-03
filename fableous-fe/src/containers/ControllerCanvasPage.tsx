@@ -265,10 +265,10 @@ export default function ControllerCanvasPage() {
         hideCloseButton: true,
       },
       {
-        target: `#${controllerCanvasId}`,
+        target: "body",
         content:
           "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
-        placement: "auto",
+        placement: "center",
         disableBeacon: true,
         hideCloseButton: true,
       },
