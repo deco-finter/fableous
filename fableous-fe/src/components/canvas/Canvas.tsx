@@ -600,7 +600,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     );
 
     const readMessage = useCallback(
-      (ev: MessageEvent<ArrayBuffer>) => {
+      async (ev: MessageEvent<ArrayBuffer>) => {
         const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
         if (msg.role === layer || msg.type === pb.WSMessageType.CONTROL) {
           const [x1, y1] = scaleUpXY(

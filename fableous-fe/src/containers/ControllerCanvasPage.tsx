@@ -98,7 +98,7 @@ export default function ControllerCanvasPage() {
   const [helpCooldown, setHelpCooldown] = useState(false);
 
   const wsMessageHandler = useCallback(
-    (ev: MessageEvent<ArrayBuffer>) => {
+    async (ev: MessageEvent<ArrayBuffer>) => {
       const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
       switch (msg.type) {
         case pb.WSMessageType.CONTROL:
