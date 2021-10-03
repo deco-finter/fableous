@@ -22,6 +22,7 @@ export default function useWsConn(): [
     const teardownPing = () => {
       clearInterval(interval);
     };
+    wsConn.binaryType = "arraybuffer";
     wsConn.addEventListener("open", setupPing);
     wsConn.addEventListener("error", teardownPing);
     wsConn.addEventListener("close", teardownPing);

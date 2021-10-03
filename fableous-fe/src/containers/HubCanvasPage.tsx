@@ -135,8 +135,8 @@ export default function HubCanvasPage() {
   }, [achievements, hubState, wsConn]);
 
   const wsMessageHandler = useCallback(
-    (ev: MessageEvent) => {
-      const msg = pb.WSMessage.decode(ev.data);
+    (ev: MessageEvent<ArrayBuffer>) => {
+      const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
       switch (msg.type) {
         case pb.WSMessageType.CONTROL:
           {

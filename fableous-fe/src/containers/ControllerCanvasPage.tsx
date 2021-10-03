@@ -103,60 +103,56 @@ export default function ControllerCanvasPage() {
   const [helpCooldown, setHelpCooldown] = useState(false);
 
   const wsMessageHandler = useCallback(
-    (ev: MessageEvent) => {
-      try {
-        const msg = pb.WSMessage.decode(ev.data);
-        switch (msg.type) {
-          case pb.WSMessageType.CONTROL:
-            {
-              const msgData = msg.data as WSControlMessageData;
-              if (msgData.nextPage) {
-                setCurrentPageIdx((prev) => prev + 1);
-                setIsDone(false);
-              } else if (msgData.classroomId) {
-                setSessionInfo(msgData);
-                setCurrentPageIdx(msgData.currentPage || 0);
-                execGetOnGoingSession(
-                  restAPI.session.getOngoing(msgData.classroomId)
-                )
-                  .then(({ data: response }) => {
-                    setStoryDetails(response.data);
-                  })
-                  .catch((error) => {
-                    if (error.response.status === 404) {
-                      enqueueSnackbar("No on going session!", {
-                        variant: "error",
-                      });
-                    } else {
-                      enqueueSnackbar("Unknown error!", { variant: "error" });
-                    }
-                    console.error("get ongoing session", error);
-                  });
-              }
-            }
-            break;
-          case pb.WSMessageType.JOIN:
-            {
-              const { joining: isJoining, role: joiningRole } =
-                msg.join as pb.WSJoinMessageData;
-              if (!isJoining && joiningRole === pb.ControllerRole.HUB) {
-                enqueueSnackbar("Room closed!", {
-                  variant: "error",
+    (ev: MessageEvent<ArrayBuffer>) => {
+      const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
+      switch (msg.type) {
+        case pb.WSMessageType.CONTROL:
+          {
+            const msgData = msg.data as WSControlMessageData;
+            if (msgData.nextPage) {
+              setCurrentPageIdx((prev) => prev + 1);
+              setIsDone(false);
+            } else if (msgData.classroomId) {
+              setSessionInfo(msgData);
+              setCurrentPageIdx(msgData.currentPage || 0);
+              execGetOnGoingSession(
+                restAPI.session.getOngoing(msgData.classroomId)
+              )
+                .then(({ data: response }) => {
+                  setStoryDetails(response.data);
+                })
+                .catch((error) => {
+                  if (error.response.status === 404) {
+                    enqueueSnackbar("No on going session!", {
+                      variant: "error",
+                    });
+                  } else {
+                    enqueueSnackbar("Unknown error!", { variant: "error" });
+                  }
+                  console.error("get ongoing session", error);
                 });
-                // assume backend will close ws conn
-                setControllerState(ControllerState.JoinForm);
-              }
             }
-            break;
-          case pb.WSMessageType.ACHIEVEMENT:
-            setAchievements(
-              protoToAchievement(msg.achievement as pb.WSAchievementMessageData)
-            );
-            break;
-          default:
-        }
-      } catch (e) {
-        console.error(e);
+          }
+          break;
+        case pb.WSMessageType.JOIN:
+          {
+            const { joining: isJoining, role: joiningRole } =
+              msg.join as pb.WSJoinMessageData;
+            if (!isJoining && joiningRole === pb.ControllerRole.HUB) {
+              enqueueSnackbar("Room closed!", {
+                variant: "error",
+              });
+              // assume backend will close ws conn
+              setControllerState(ControllerState.JoinForm);
+            }
+          }
+          break;
+        case pb.WSMessageType.ACHIEVEMENT:
+          setAchievements(
+            protoToAchievement(msg.achievement as pb.WSAchievementMessageData)
+          );
+          break;
+        default:
       }
     },
     [execGetOnGoingSession, enqueueSnackbar]

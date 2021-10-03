@@ -5,7 +5,6 @@ import {
   AchievementType,
   EmptyAchievement,
 } from "../components/achievement/achievement";
-import { WSMessage } from "../data";
 import { proto as pb } from "../proto/message_pb";
 
 export default function useAchievement(config?: {
@@ -20,8 +19,8 @@ export default function useAchievement(config?: {
     new Set<string>()
   );
   const doAllColor = useCallback(
-    (msg: WSMessage): number => {
-      const newColors = new Set(allColorColors).add(msg.data.color || "");
+    (msg: pb.WSMessage): number => {
+      const newColors = new Set(allColorColors).add(msg.paint?.color as string);
       setAllColorColors(newColors);
       return newColors.size / 6;
     },
@@ -32,9 +31,9 @@ export default function useAchievement(config?: {
     new Set<string>()
   );
   const doFiveText = useCallback(
-    (msg: WSMessage): number => {
-      if (!msg.data.text) return 0;
-      const newIds = new Set(fiveTextIds).add(`${page}:${msg.data.id || 0}`);
+    (msg: pb.WSMessage): number => {
+      if (!msg.paint?.text) return 0;
+      const newIds = new Set(fiveTextIds).add(`${page}:${msg.paint?.id}`);
       setFiveTextIds(newIds);
       return newIds.size / 5;
     },
@@ -43,9 +42,9 @@ export default function useAchievement(config?: {
 
   const [tenTextIds, setTenTextIds] = useState<Set<string>>(new Set<string>());
   const doTenText = useCallback(
-    (msg: WSMessage): number => {
-      if (!msg.data.text) return 0;
-      const newIds = new Set(tenTextIds).add(`${page}:${msg.data.id || 0}`);
+    (msg: pb.WSMessage): number => {
+      if (!msg.paint?.text) return 0;
+      const newIds = new Set(tenTextIds).add(`${page}:${msg.paint?.id}`);
       setTenTextIds(newIds);
       return newIds.size / 10;
     },
@@ -74,7 +73,7 @@ export default function useAchievement(config?: {
   }, [fivePageCount]);
 
   const checkAchievement = useCallback(
-    (type: AchievementType, msg?: WSMessage) => {
+    (type: AchievementType, msg?: pb.WSMessage) => {
       const progress = achievements[type];
       let newProgress = 0;
       if (progress < 1) {
@@ -127,24 +126,20 @@ export default function useAchievement(config?: {
     ]
   );
 
-  const achievementHandler = (ev: MessageEvent) => {
-    try {
-      const msg = JSON.parse(ev.data) as WSMessage;
-      switch (msg.type) {
-        case pb.WSMessageType.PAINT:
-          checkAchievement(AchievementType.AllColor, msg);
-          break;
-        case pb.WSMessageType.FILL:
-          checkAchievement(AchievementType.AllColor, msg);
-          break;
-        case pb.WSMessageType.TEXT:
-          checkAchievement(AchievementType.FiveText, msg);
-          checkAchievement(AchievementType.TenText, msg);
-          break;
-        default:
-      }
-    } catch (e) {
-      console.error(e);
+  const achievementHandler = (ev: MessageEvent<ArrayBuffer>) => {
+    const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
+    switch (msg.type) {
+      case pb.WSMessageType.PAINT:
+        checkAchievement(AchievementType.AllColor, msg);
+        break;
+      case pb.WSMessageType.FILL:
+        checkAchievement(AchievementType.AllColor, msg);
+        break;
+      case pb.WSMessageType.TEXT:
+        checkAchievement(AchievementType.FiveText, msg);
+        checkAchievement(AchievementType.TenText, msg);
+        break;
+      default:
     }
   };
 

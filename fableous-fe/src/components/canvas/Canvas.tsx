@@ -13,8 +13,6 @@ import React, {
   useImperativeHandle,
 } from "react";
 import cloneDeep from "lodash.clonedeep";
-import { WSMessage } from "../../data";
-
 import {
   convHEXtoRGBA,
   getTextBounds,
@@ -24,9 +22,9 @@ import {
 } from "./helpers";
 import { SCALE, SELECT_PADDING } from "./constants";
 import { Cursor } from "./CursorScreen";
-import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
-import { ToolMode } from "../../constant";
 import { restAPI } from "../../api";
+import { ToolMode } from "../../constant";
+import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
 import { proto as pb } from "../../proto/message_pb";
 
 interface Checkpoint {
@@ -601,65 +599,61 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     );
 
     const readMessage = useCallback(
-      (ev: MessageEvent) => {
-        try {
-          const msg: WSMessage = JSON.parse(ev.data);
-          if (msg.role === layer || msg.type === pb.WSMessageType.CONTROL) {
-            const [x1, y1] = scaleUpXY(
-              canvasRef,
-              msg.data.x1 || 0,
-              msg.data.y1 || 0
-            );
-            const [x2, y2] = scaleUpXY(
-              canvasRef,
-              msg.data.x2 || 0,
-              msg.data.y2 || 0
-            );
-            const [width] = scaleUpXY(canvasRef, msg.data.width || 0, 0);
-            switch (msg.type) {
-              case pb.WSMessageType.PAINT:
-                placePaint(
-                  x1,
-                  y1,
-                  x2,
-                  y2,
-                  msg.data.color || "#000000ff",
-                  width || 8
-                );
-                break;
-              case pb.WSMessageType.FILL:
-                placeFill(x1, y1, msg.data.color || "#000000ff");
-                break;
-              case pb.WSMessageType.TEXT:
-                placeText(msg.data.id || 1, {
-                  normX: msg.data.x1 || 0, // use normalized coords
-                  normY: msg.data.y1 || 0,
-                  normFontSize: msg.data.width || 0,
-                  text: msg.data.text || "",
-                } as TextShape);
-                break;
-              case pb.WSMessageType.AUDIO:
-                placeAudio(msg.data.text || "");
-                break;
-              case pb.WSMessageType.CHECKPOINT:
-                placeCheckpoint(msg.data.text as ToolMode);
-                break;
-              case pb.WSMessageType.UNDO:
-                placeUndo();
-                break;
-              case pb.WSMessageType.CURSOR:
-                placeCursor(
-                  msg.data.x1 || 0, // no need to denormalize
-                  msg.data.y1 || 0,
-                  msg.data.width || 0,
-                  msg.data.text as ToolMode.Paint
-                );
-                break;
-              default:
-            }
+      (ev: MessageEvent<ArrayBuffer>) => {
+        const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
+        if (msg.role === layer || msg.type === pb.WSMessageType.CONTROL) {
+          const [x1, y1] = scaleUpXY(
+            canvasRef,
+            msg.paint?.x1 || 0,
+            msg.paint?.y1 || 0
+          );
+          const [x2, y2] = scaleUpXY(
+            canvasRef,
+            msg.paint?.x2 || 0,
+            msg.paint?.y2 || 0
+          );
+          const [width] = scaleUpXY(canvasRef, msg.paint?.width || 0, 0);
+          switch (msg.type) {
+            case pb.WSMessageType.PAINT:
+              placePaint(
+                x1,
+                y1,
+                x2,
+                y2,
+                msg.paint?.color || "#000000ff",
+                width || 8
+              );
+              break;
+            case pb.WSMessageType.FILL:
+              placeFill(x1, y1, msg.paint?.color || "#000000ff");
+              break;
+            case pb.WSMessageType.TEXT:
+              placeText(msg.paint?.id || 1, {
+                normX: msg.paint?.x1 || 0, // use normalized coords
+                normY: msg.paint?.y1 || 0,
+                normFontSize: msg.paint?.width || 0,
+                text: msg.paint?.text || "",
+              } as TextShape);
+              break;
+            case pb.WSMessageType.AUDIO:
+              placeAudio(msg.paint?.text || "");
+              break;
+            case pb.WSMessageType.CHECKPOINT:
+              placeCheckpoint(msg.paint?.text as ToolMode);
+              break;
+            case pb.WSMessageType.UNDO:
+              placeUndo();
+              break;
+            case pb.WSMessageType.CURSOR:
+              placeCursor(
+                msg.paint?.x1 || 0, // no need to denormalize
+                msg.paint?.y1 || 0,
+                msg.paint?.width || 0,
+                msg.paint?.text as ToolMode.Paint
+              );
+              break;
+            default:
           }
-        } catch (e) {
-          console.error(e);
         }
       },
       [
