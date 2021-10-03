@@ -1,10 +1,9 @@
 FROM node:lts-buster as builder
-RUN apt-get -y install make
 WORKDIR /build
 COPY fableous-fe fableous-fe
 COPY proto proto
 COPY Makefile .
-RUN make
+RUN make fe
 WORKDIR /build/fableous-fe
 RUN yarn install
 RUN yarn build --mode production

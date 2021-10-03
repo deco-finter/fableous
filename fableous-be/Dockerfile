@@ -3,7 +3,7 @@ WORKDIR /build
 COPY fableous-be fableous-be
 COPY proto proto
 COPY Makefile .
-RUN make
+RUN make be
 WORKDIR /build/fableous-be
 RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo -o app .
