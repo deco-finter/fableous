@@ -10,14 +10,27 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fableous-be
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.16"
+      - name: Generate Files
+        run: |
+          sudo apt install -y protobuf-compiler
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
+          make -C ..
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
-          working-directory: fableous-be
+          skip-go-installation: true
+          skip-pkg-cache: true
   build:
     name: Build
     runs-on: Ubuntu-20.04
@@ -28,6 +41,15 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.16"
+      - name: Generate Files
+        run: |
+          sudo apt install -y protobuf-compiler
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
+          make -C ..
       - name: Install Dependencies
         run: go mod tidy
       - name: Build
