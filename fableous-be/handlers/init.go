@@ -14,6 +14,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/config"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/models"
+	pb "github.com/deco-finter/fableous/fableous-be/protos"
 )
 
 var Handler HandlerFunc
@@ -45,9 +46,9 @@ type HandlerFunc interface {
 
 	// WebSocket
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
-	ConnectControllerWS(ctx *gin.Context, classroomToken, role, name string) (err error)
+	ConnectControllerWS(ctx *gin.Context, classroomToken string, role pb.ControllerRole, name string) (err error)
 	HubCommandWorker(conn *websocket.Conn, sess *activeSession) (err error)
-	ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role, name string) (err error)
+	ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role pb.ControllerRole, name string) (err error)
 }
 
 type module struct {
