@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import {
   Button,
   Card,
@@ -239,68 +239,113 @@ export default function ControllerCanvasPage() {
     setIsDone(true);
   };
 
-  const drawingTutorialSteps: Step[] = [
-    {
-      target: `#${navbarTutorialButtonId}`,
-      content:
-        "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
-      placement: "bottom",
-      disableBeacon: true,
-      // wierdly, close behavior is like next page, unsure on how to fix it
-      hideCloseButton: true,
-    },
-    {
-      target: `#${controllerTopChipRowId}`,
-      content:
-        "You will be assigned a role and collaboratively draw a story based on a theme.",
-      placement: "bottom",
-      disableBeacon: true,
-      hideCloseButton: true,
-    },
-    {
-      target: `#${controllerCanvasId}`,
-      content:
-        "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
-      placement: "auto",
-      disableBeacon: true,
-      hideCloseButton: true,
-    },
-    {
-      target: `#${CanvasToolbarIconId.Brush}`,
-      content: "Use brush to draw",
-      placement: "right",
-      disableBeacon: true,
-      hideCloseButton: true,
-    },
-    {
-      target: `#${CanvasToolbarIconId.Erase}`,
-      content: "Use eraser to erase",
-      placement: "right",
-      disableBeacon: true,
-      hideCloseButton: true,
-    },
-    {
-      target: `#${CanvasToolbarIconId.Fill}`,
-      content: "Use bucket to fill with selected colour",
-      placement: "right",
-      disableBeacon: true,
-      hideCloseButton: true,
-    },
-    {
-      target: `#${CanvasToolbarIconId.Palette}`,
-      content: "Use palette to choose a colour",
-      placement: "right",
-      disableBeacon: true,
-      hideCloseButton: true,
-    },
-    {
-      target: `#${CanvasToolbarIconId.Undo}`,
-      content: "Use undo to undo a recent action",
-      placement: "right",
-      disableBeacon: true,
-      hideCloseButton: true,
-    },
-  ];
+  const commonTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${navbarTutorialButtonId}`,
+        content:
+          "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
+        placement: "bottom",
+        disableBeacon: true,
+        // wierdly, close behavior is like next step, unsure on how to fix it
+        hideCloseButton: true,
+      },
+      {
+        target: `#${controllerTopChipRowId}`,
+        content:
+          "You will be assigned a role and collaboratively draw a story based on a theme.",
+        placement: "bottom",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${controllerCanvasId}`,
+        content:
+          "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
+        placement: "auto",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+
+  const drawingTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${CanvasToolbarIconId.Brush}`,
+        content: "Use brush to draw",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${CanvasToolbarIconId.Erase}`,
+        content: "Use eraser to erase",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${CanvasToolbarIconId.Fill}`,
+        content: "Use bucket to fill with selected colour",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${CanvasToolbarIconId.Palette}`,
+        content: "Use palette to choose a colour",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${CanvasToolbarIconId.Undo}`,
+        content: "Use undo to undo a recent action",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+
+  const storyTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${CanvasToolbarIconId.Text}`,
+        content: "Use text to write a story using keyboard",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${CanvasToolbarIconId.Audio}`,
+        content: "Use microphone to record a story",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${CanvasToolbarIconId.Undo}`,
+        content: "Use undo to undo a recent action",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+
+  const tutorialSteps = useMemo(
+    () =>
+      role === ControllerRole.Story
+        ? commonTutorialSteps.concat(storyTutorialSteps)
+        : commonTutorialSteps.concat(drawingTutorialSteps),
+    [role, commonTutorialSteps, storyTutorialSteps, drawingTutorialSteps]
+  );
+
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status } = data;
     const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
@@ -422,7 +467,7 @@ export default function ControllerCanvasPage() {
         showProgress
         showSkipButton
         disableOverlayClose
-        steps={drawingTutorialSteps}
+        steps={tutorialSteps}
         styles={{
           options: {
             zIndex: 10000,
