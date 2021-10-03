@@ -22,12 +22,7 @@ import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
-import {
-  APIResponse,
-  ControllerJoin,
-  Session,
-  WSControlMessageData,
-} from "../data";
+import { APIResponse, ControllerJoin, Session } from "../data";
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
@@ -69,7 +64,7 @@ export default function ControllerCanvasPage() {
   const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
   const [role, setRole] = useState<pb.ControllerRole>(pb.ControllerRole.STORY);
   const [sessionInfo, setSessionInfo] = useState<
-    WSControlMessageData | undefined
+    pb.WSControlMessageData | undefined
   >();
   const [storyDetails, setStoryDetails] = useState<Session | undefined>();
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
@@ -108,7 +103,7 @@ export default function ControllerCanvasPage() {
       switch (msg.type) {
         case pb.WSMessageType.CONTROL:
           {
-            const msgData = msg.data as WSControlMessageData;
+            const msgData = msg.control as pb.WSControlMessageData;
             if (msgData.nextPage) {
               setCurrentPageIdx((prev) => prev + 1);
               setIsDone(false);
