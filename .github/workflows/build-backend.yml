@@ -22,7 +22,7 @@ jobs:
         with:
           go-version: "^1.16"
       - name: Generate Files
-        run: sudo make -C .. be
+        run: make -C .. be
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
@@ -44,7 +44,7 @@ jobs:
         with:
           go-version: "^1.16"
       - name: Generate Files
-        run: sudo make -C .. be
+        run: make -C .. be
       - name: Install Dependencies
         run: go mod tidy
       - name: Build
