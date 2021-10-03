@@ -25,7 +25,12 @@ export default function useTutorial(config: {
   const { shouldStartCallback, localStorageKey, duration = ONE_DAY } = config;
 
   const [isRunning, setIsRunning] = useState(false);
+  const [isNavButtonShown, setIsNavButtonShown] = useState(false);
   const [, setNavs, clearNavs] = useAdditionalNav();
+
+  useEffect(() => {
+    setIsNavButtonShown(shouldStartCallback());
+  }, [shouldStartCallback]);
 
   // auto start tutorial when shouldStartCallback becomes true
   useEffect(() => {
@@ -36,8 +41,7 @@ export default function useTutorial(config: {
 
   // show tutorial button in navbar
   useEffect(() => {
-    // TODO move to state
-    if (shouldStartCallback()) {
+    if (isNavButtonShown) {
       setNavs([
         {
           icon: "help",
@@ -49,13 +53,14 @@ export default function useTutorial(config: {
           },
         },
       ]);
+
+      return () => {
+        clearNavs();
+      };
     }
 
-    // TODO move to if condition
-    return () => {
-      clearNavs();
-    };
-  }, [shouldStartCallback, isRunning, setNavs, clearNavs]);
+    return () => {};
+  }, [isNavButtonShown, isRunning, setNavs, clearNavs]);
 
   // remember tutorial use and do not auto start it for specified duration
   useEffect(() => {
