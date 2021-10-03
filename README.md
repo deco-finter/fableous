@@ -4,16 +4,32 @@
 [![GitHub Actions Status](https://github.com/deco-finter/fableous/actions/workflows/build-frontend.yml/badge.svg)](https://github.com/deco-finter/fableous/actions/workflows/build-frontend.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/daystram/fableous)](https://hub.docker.com/r/daystram/fableous)
 
+**Fableous** is a collaborative drawing platform to support the learning environment of children with ASD (Autism Spectrum Disorder). Fableous is is powered by Go backend and React frontend, using WebSocket protocol and Protocol Buffer-encoded messages.
+
+## Features
+
+- Collaborative drawing with multiple roles
+- Public gallery
+- Achievements
+- Guided walkthrough
+- Audio annotations and TTS (Text-to-Speech)
+
 ## Service
 
 The application is divided into two parts:
 
-|   Name    |  Code Name  | Stack                      |
-| :-------: | :---------: | -------------------------- |
-| Back-end  | fableous-be | Go, Gin + Gorm, PostgreSQL |
-| Front-end | fableous-fe | TypeScript, React          |
+|   Name   |  Code Name  | Stack                      |
+| :------: | :---------: | -------------------------- |
+| Backend  | fableous-be | Go, Gin + Gorm, PostgreSQL |
+| Frontend | fableous-fe | TypeScript, React          |
 
 ## Develop
+
+The protobuf implementations for both `fableous-be` and `fableous-fe` must be generated prior to starting development. Ensure that Go and Node.js are properly installed.
+
+```shell
+$ make
+```
 
 ### fableous-be
 
