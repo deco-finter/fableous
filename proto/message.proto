@@ -2,3 +2,80 @@ syntax = "proto3";
 package proto;
 
 option go_package = "github.com/deco-finter/fableous/proto";
+
+enum WSMessageType {
+    UNKNOWN = 0;
+    ERROR = 1;
+    PING = 2;
+    PAINT = 3;
+	FILL = 4;
+	TEXT = 5;
+	AUDIO = 6;
+	CHECKPOINT = 7;
+	UNDO = 8;
+	CURSOR = 9;
+	ACHIEVEMENT = 10;
+	JOIN = 11;
+	CONTROL = 12;
+	IMAGE = 13;
+	MANIFEST = 14;
+}
+
+enum ControllerRole {
+    HUB = 0;
+    STORY = 1;
+    CHARACTER = 2;
+    BACKGROUND = 3;
+}
+
+message WSMessage {
+    WSMessageType code = 1;
+    ControllerRole role = 2;
+    oneof data {
+        WSPaintMessageData paint = 3;
+        WSControlMessageData control = 4;
+        WSJoinMessageData join = 5;
+        WSAchievementMessageData achievement = 6;
+        WSErrorMessageData error = 7;
+    }
+}
+
+message WSPaintMessageData {
+	float x1 = 1;
+	float y1 = 2;
+	float x2 = 3;
+	float y2 = 4;
+	int32 id = 5;
+	string text = 6;
+	string color = 7;
+	float width = 8;
+}
+
+message WSControlMessageData {
+	string classroom_token = 1;
+    string classroom_id = 2;
+	string session_id = 3;
+	int32 current_page = 4;
+	bool next_page = 5;
+	bool help = 6;
+	bool done = 7;
+}
+
+message WSAchievementMessageData {
+	float all_color = 1;
+	float five_text = 2;
+	float ten_text = 3;
+	float one_page = 4;
+	float three_page = 5;
+	float five_page = 6;
+}
+
+message WSJoinMessageData {
+	string role = 1;
+	string name = 2;
+	bool joining = 3;
+}
+
+message WSErrorMessageData {
+	string error = 1;
+}
