@@ -26,6 +26,9 @@ export default function Navbar() {
   const [navs] = useAdditionalNav();
   const classes = useStyles();
 
+  // navbar will be simplified for students
+  const isOnStudentPages = location.pathname === "/join";
+
   return (
     <AppBar position="static">
       <Toolbar>
@@ -46,7 +49,7 @@ export default function Navbar() {
             {label}
           </Button>
         ))}
-        {isAuthenticated && (
+        {isAuthenticated && !isOnStudentPages && (
           <>
             <Button
               variant="outlined"
@@ -67,7 +70,7 @@ export default function Navbar() {
             </Button>
           </>
         )}
-        {!isAuthenticated && location.pathname !== "/join" && (
+        {!isAuthenticated && !isOnStudentPages && (
           <>
             <Button
               variant="outlined"
