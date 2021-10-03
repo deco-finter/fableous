@@ -20,7 +20,7 @@ import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
-import Joyride, { CallBackProps, STATUS, Step } from "react-joyride";
+import Joyride, { Step } from "react-joyride";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import {
@@ -51,14 +51,13 @@ import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
-import { useAdditionalNav } from "../components/AdditionalNavProvider";
 import {
   CanvasToolbarIconId,
   controllerCanvasId,
   controllerTopChipRowId,
   navbarTutorialButtonId,
 } from "../tutorialTargetIds";
-import { getLocalStorage, ONE_DAY, setLocalStorage } from "../localStorage";
+import useTutorial from "../hooks/useTutorial";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -96,8 +95,13 @@ export default function ControllerCanvasPage() {
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
-  const [isTutorialRunning, setIsTutorialRunning] = useState(false);
-  const [, setNavs, clearNavs] = useAdditionalNav();
+  const [isTutorialRunning, , handleJoyrideCallback] = useTutorial({
+    shouldStartCallback: useCallback(
+      () => controllerState === ControllerState.DrawingSession,
+      [controllerState]
+    ),
+    localStorageKey: CONTROLLER_TUTORIAL_KEY,
+  });
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
@@ -346,15 +350,6 @@ export default function ControllerCanvasPage() {
     [role, commonTutorialSteps, storyTutorialSteps, drawingTutorialSteps]
   );
 
-  const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status } = data;
-    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
-
-    if (finishedStatuses.includes(status)) {
-      setIsTutorialRunning(false);
-    }
-  };
-
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
@@ -415,44 +410,6 @@ export default function ControllerCanvasPage() {
         })
       );
   }, [controllerState, isDone, role, wsConn]);
-
-  // start tutorial at start of drawing session
-  useEffect(() => {
-    if (
-      controllerState === ControllerState.DrawingSession &&
-      getLocalStorage(CONTROLLER_TUTORIAL_KEY) === null
-    ) {
-      setIsTutorialRunning(true);
-    }
-  }, [controllerState]);
-
-  // show tutorial button in navbar
-  useEffect(() => {
-    if (controllerState === ControllerState.DrawingSession) {
-      setNavs([
-        {
-          icon: "help",
-          label: "Tutorial",
-          buttonProps: {
-            id: navbarTutorialButtonId,
-            onClick: () => setIsTutorialRunning(true),
-            disabled: isTutorialRunning,
-          },
-        },
-      ]);
-    }
-
-    return () => {
-      clearNavs();
-    };
-  }, [controllerState, isTutorialRunning, setNavs, clearNavs]);
-
-  // remember tutorial use and do not auto start it for one day
-  useEffect(() => {
-    if (isTutorialRunning) {
-      setLocalStorage(CONTROLLER_TUTORIAL_KEY, "", ONE_DAY);
-    }
-  }, [isTutorialRunning]);
 
   return (
     <Grid
