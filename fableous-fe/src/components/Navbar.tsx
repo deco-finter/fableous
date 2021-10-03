@@ -3,7 +3,7 @@ import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useHistory, useLocation } from "react-router-dom";
 import { useContext } from "react";
 
 import { AuthContext } from "./AuthProvider";
@@ -17,6 +17,7 @@ const useStyles = makeStyles(() => ({
 
 export default function Navbar() {
   const history = useHistory();
+  const location = useLocation();
   const [, isAuthenticated, , clearToken] = useContext(AuthContext);
   const onLogout = () => {
     clearToken();
@@ -45,7 +46,7 @@ export default function Navbar() {
             {label}
           </Button>
         ))}
-        {isAuthenticated ? (
+        {isAuthenticated && (
           <>
             <Button
               variant="outlined"
@@ -65,7 +66,8 @@ export default function Navbar() {
               Logout
             </Button>
           </>
-        ) : (
+        )}
+        {!isAuthenticated && location.pathname !== "/join" && (
           <>
             <Button
               variant="outlined"
