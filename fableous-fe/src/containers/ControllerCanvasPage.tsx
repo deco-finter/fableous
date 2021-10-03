@@ -378,7 +378,6 @@ export default function ControllerCanvasPage() {
       getLocalStorage(CONTROLLER_TUTORIAL_KEY) === null
     ) {
       setIsTutorialRunning(true);
-      setLocalStorage(CONTROLLER_TUTORIAL_KEY, "", ONE_DAY);
     }
   }, [controllerState]);
 
@@ -402,6 +401,13 @@ export default function ControllerCanvasPage() {
       clearNavs();
     };
   }, [controllerState, isTutorialRunning, setNavs, clearNavs]);
+
+  // remember tutorial use and do not auto start it for one day
+  useEffect(() => {
+    if (isTutorialRunning) {
+      setLocalStorage(CONTROLLER_TUTORIAL_KEY, "", ONE_DAY);
+    }
+  }, [isTutorialRunning]);
 
   return (
     <Grid
