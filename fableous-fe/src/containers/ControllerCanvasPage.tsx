@@ -23,28 +23,17 @@ import { useSnackbar } from "notistack";
 import Joyride, { Step, StoreHelpers } from "react-joyride";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
-import {
-  APIResponse,
-  ControllerJoin,
-  Session,
-  WSControlMessageData,
-  WSJoinMessageData,
-  WSMessage,
-} from "../data";
+import { APIResponse, ControllerJoin, Session } from "../data";
 import useWsConn from "../hooks/useWsConn";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import {
   Achievement,
   EmptyAchievement,
+  protoToAchievement,
 } from "../components/achievement/achievement";
 import AchievementButton from "../components/achievement/AchievementButton";
-import {
-  ControllerRole,
-  ROLE_ICON,
-  ToolMode,
-  WSMessageType,
-} from "../constant";
+import { ROLE_ICON, ToolMode } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
@@ -54,6 +43,7 @@ import { colors } from "../colors";
 import { TutorialTargetId } from "../tutorialTargetIds";
 import useTutorial from "../hooks/useTutorial";
 import { useCustomNav } from "../components/CustomNavProvider";
+import { proto as pb } from "../proto/message_pb";
 
 enum ControllerState {
   JoinForm = "JOIN_FORM",
@@ -78,9 +68,9 @@ export default function ControllerCanvasPage() {
     ControllerState.JoinForm
   );
   const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
-  const [role, setRole] = useState<ControllerRole>(ControllerRole.Story);
+  const [role, setRole] = useState<pb.ControllerRole>(pb.ControllerRole.STORY);
   const [sessionInfo, setSessionInfo] = useState<
-    WSControlMessageData | undefined
+    pb.WSControlMessageData | undefined
   >();
   const [storyDetails, setStoryDetails] = useState<Session | undefined>();
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
@@ -129,57 +119,56 @@ export default function ControllerCanvasPage() {
   const [helpCooldown, setHelpCooldown] = useState(false);
 
   const wsMessageHandler = useCallback(
-    (ev: MessageEvent) => {
-      try {
-        const msg: WSMessage = JSON.parse(ev.data);
-        switch (msg.type) {
-          case WSMessageType.Control:
-            {
-              const msgData = msg.data as WSControlMessageData;
-              if (msgData.nextPage) {
-                setCurrentPageIdx((prev) => prev + 1);
-                setIsDone(false);
-              } else if (msgData.classroomId) {
-                setSessionInfo(msgData);
-                setCurrentPageIdx(msgData.currentPage || 0);
-                execGetOnGoingSession(
-                  restAPI.session.getOngoing(msgData.classroomId)
-                )
-                  .then(({ data: response }) => {
-                    setStoryDetails(response.data);
-                  })
-                  .catch((error) => {
-                    if (error.response.status === 404) {
-                      enqueueSnackbar("No on going session!", {
-                        variant: "error",
-                      });
-                    } else {
-                      enqueueSnackbar("Unknown error!", { variant: "error" });
-                    }
-                    console.error("get ongoing session", error);
-                  });
-              }
-            }
-            break;
-          case WSMessageType.Join:
-            {
-              const msgData = msg.data as WSJoinMessageData;
-              if (!msgData.joining && msgData.role === ControllerRole.Hub) {
-                enqueueSnackbar("Room closed!", {
-                  variant: "error",
+    async (ev: MessageEvent<ArrayBuffer>) => {
+      const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
+      switch (msg.type) {
+        case pb.WSMessageType.CONTROL:
+          {
+            const msgData = msg.control as pb.WSControlMessageData;
+            if (msgData.nextPage) {
+              setCurrentPageIdx((prev) => prev + 1);
+              setIsDone(false);
+            } else if (msgData.classroomId) {
+              setSessionInfo(msgData);
+              setCurrentPageIdx(msgData.currentPage || 0);
+              execGetOnGoingSession(
+                restAPI.session.getOngoing(msgData.classroomId)
+              )
+                .then(({ data: response }) => {
+                  setStoryDetails(response.data);
+                })
+                .catch((error) => {
+                  if (error.response.status === 404) {
+                    enqueueSnackbar("No on going session!", {
+                      variant: "error",
+                    });
+                  } else {
+                    enqueueSnackbar("Unknown error!", { variant: "error" });
+                  }
+                  console.error("get ongoing session", error);
                 });
-                // assume backend will close ws conn
-                setControllerState(ControllerState.JoinForm);
-              }
             }
-            break;
-          case WSMessageType.Achievement:
-            setAchievements(msg.data as Achievement);
-            break;
-          default:
-        }
-      } catch (e) {
-        console.error(e);
+          }
+          break;
+        case pb.WSMessageType.JOIN:
+          {
+            const { joining: isJoining, role: joiningRole } =
+              msg.join as pb.WSJoinMessageData;
+            if (!isJoining && joiningRole === pb.ControllerRole.HUB) {
+              enqueueSnackbar("Room closed!", {
+                variant: "error",
+              });
+              // assume backend will close ws conn
+              setControllerState(ControllerState.JoinForm);
+            }
+          }
+          break;
+        case pb.WSMessageType.ACHIEVEMENT:
+          setAchievements(
+            protoToAchievement(msg.achievement as pb.WSAchievementMessageData)
+          );
+          break;
+        default:
       }
     },
     [execGetOnGoingSession, enqueueSnackbar]
@@ -234,11 +223,11 @@ export default function ControllerCanvasPage() {
     }, 15000);
     enqueueSnackbar("Help requested!", { variant: "info" });
     wsConn?.send(
-      JSON.stringify({
-        type: WSMessageType.Control,
+      pb.WSMessage.encode({
+        type: pb.WSMessageType.CONTROL,
         role,
-        data: { help: true } as WSControlMessageData,
-      })
+        control: { help: true },
+      }).finish()
     );
   };
 
@@ -348,7 +337,7 @@ export default function ControllerCanvasPage() {
 
   const tutorialSteps = useMemo(
     () =>
-      role === ControllerRole.Story
+      role === pb.ControllerRole.STORY
         ? commonTutorialSteps.concat(storyTutorialSteps)
         : commonTutorialSteps.concat(drawingTutorialSteps),
     [role, commonTutorialSteps, storyTutorialSteps, drawingTutorialSteps]
@@ -407,11 +396,11 @@ export default function ControllerCanvasPage() {
   useEffect(() => {
     if (controllerState === ControllerState.DrawingSession)
       wsConn?.send(
-        JSON.stringify({
-          type: WSMessageType.Control,
+        pb.WSMessage.encode({
+          type: pb.WSMessageType.CONTROL,
           role,
-          data: { done: isDone } as WSControlMessageData,
-        })
+          control: { done: isDone },
+        }).finish()
       );
   }, [controllerState, isDone, role, wsConn]);
 
@@ -478,7 +467,7 @@ export default function ControllerCanvasPage() {
                   {
                     name: "",
                     token: "",
-                    role: ControllerRole.Story,
+                    role: pb.ControllerRole.STORY,
                   } as ControllerJoin
                 }
                 validationSchema={yup.object().shape({
@@ -556,35 +545,46 @@ export default function ControllerCanvasPage() {
                                   onChange={formik.handleChange}
                                   onBlur={formik.handleBlur}
                                 >
-                                  <MenuItem value={ControllerRole.Story}>
+                                  <MenuItem value={pb.ControllerRole.STORY}>
                                     <Icon
                                       fontSize="small"
                                       className="align-middle mr-1"
                                     >
-                                      {ROLE_ICON[ControllerRole.Story].icon}
+                                      {ROLE_ICON[pb.ControllerRole.STORY].icon}
                                     </Icon>
-                                    {ROLE_ICON[ControllerRole.Story].text}
+                                    {ROLE_ICON[pb.ControllerRole.STORY].text}
                                   </MenuItem>
-                                  <MenuItem value={ControllerRole.Character}>
-                                    <Icon
-                                      fontSize="small"
-                                      className="align-middle mr-1"
-                                    >
-                                      {ROLE_ICON[ControllerRole.Character].icon}
-                                    </Icon>
-                                    {ROLE_ICON[ControllerRole.Character].text}
-                                  </MenuItem>
-                                  <MenuItem value={ControllerRole.Background}>
+                                  <MenuItem value={pb.ControllerRole.CHARACTER}>
                                     <Icon
                                       fontSize="small"
                                       className="align-middle mr-1"
                                     >
                                       {
-                                        ROLE_ICON[ControllerRole.Background]
+                                        ROLE_ICON[pb.ControllerRole.CHARACTER]
                                           .icon
                                       }
                                     </Icon>
-                                    {ROLE_ICON[ControllerRole.Background].text}
+                                    {
+                                      ROLE_ICON[pb.ControllerRole.CHARACTER]
+                                        .text
+                                    }
+                                  </MenuItem>
+                                  <MenuItem
+                                    value={pb.ControllerRole.BACKGROUND}
+                                  >
+                                    <Icon
+                                      fontSize="small"
+                                      className="align-middle mr-1"
+                                    >
+                                      {
+                                        ROLE_ICON[pb.ControllerRole.BACKGROUND]
+                                          .icon
+                                      }
+                                    </Icon>
+                                    {
+                                      ROLE_ICON[pb.ControllerRole.BACKGROUND]
+                                        .text
+                                    }
                                   </MenuItem>
                                 </Select>
                               </FormControl>

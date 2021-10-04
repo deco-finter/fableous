@@ -18,18 +18,18 @@ import React, {
   RefObject,
 } from "react";
 import { useParams } from "react-router-dom";
-import AchievementButton from "../components/achievement/AchievementButton";
 import { restAPI } from "../api";
-import { APIResponse, Manifest, Session } from "../data";
+import AchievementButton from "../components/achievement/AchievementButton";
+import { EmptyAchievement } from "../components/achievement/achievement";
 import Canvas from "../components/canvas/Canvas";
-import { ControllerRole } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import { ASPECT_RATIO } from "../components/canvas/constants";
-import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
-import { EmptyAchievement } from "../components/achievement/achievement";
 import BackButton from "../components/BackButton";
 import { colors } from "../colors";
+import { APIResponse, Manifest, Session } from "../data";
+import useContainRatio from "../hooks/useContainRatio";
+import { proto as pb } from "../proto/message_pb";
 
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
@@ -242,8 +242,8 @@ export default function StoryDetailPage() {
                 <Canvas
                   ref={canvasRef}
                   wsConn={undefined}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Story}
+                  role={pb.ControllerRole.HUB}
+                  layer={pb.ControllerRole.STORY}
                   pageNum={page}
                   // isShown
                   isShown={

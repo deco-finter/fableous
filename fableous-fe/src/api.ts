@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { configure } from "axios-hooks";
 import { TOKEN_KEY } from "./components/AuthProvider";
 import { getLocalStorage } from "./storage";
+import { proto as pb } from "./proto/message_pb";
 
 const baseAPI =
   process.env.NODE_ENV === "development"
@@ -147,7 +148,7 @@ export const wsAPI = {
     },
   },
   controller: {
-    main: (classroomToken: string, role: string, name: string) => {
+    main: (classroomToken: string, role: pb.ControllerRole, name: string) => {
       return `${baseWS}/ws/controller?classroom_token=${classroomToken}&role=${role}&name=${name}`;
     },
   },

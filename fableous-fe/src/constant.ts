@@ -1,19 +1,4 @@
-export enum WSMessageType {
-  Paint = "PAINT",
-  Fill = "FILL",
-  Text = "TEXT",
-  Audio = "AUDIO",
-  Checkpoint = "CHECKPOINT",
-  Undo = "UNDO",
-  Cursor = "CURSOR",
-  Achievement = "ACHIEVEMENT",
-  Connect = "CONNECT",
-  Join = "JOIN",
-  Control = "CONTROL",
-  Ping = "PING",
-  Image = "IMAGE",
-  Manifest = "MANIFEST",
-}
+import { proto as pb } from "./proto/message_pb";
 
 export enum ToolMode {
   Paint = "PAINT",
@@ -23,29 +8,22 @@ export enum ToolMode {
   None = "NONE",
 }
 
-export enum ControllerRole {
-  Character = "CHARACTER",
-  Background = "BACKGROUND",
-  Story = "STORY",
-  Hub = "HUB",
-}
-
-export type StudentRole = Exclude<ControllerRole, ControllerRole.Hub>;
+export type StudentRole = Exclude<pb.ControllerRole, pb.ControllerRole.HUB>;
 
 export const ROLE_ICON = {
-  [ControllerRole.Story]: {
+  [pb.ControllerRole.STORY]: {
     icon: "textsms",
     text: "Story",
   },
-  [ControllerRole.Character]: {
+  [pb.ControllerRole.CHARACTER]: {
     icon: "directions_run",
     text: "Character",
   },
-  [ControllerRole.Background]: {
+  [pb.ControllerRole.BACKGROUND]: {
     icon: "image",
     text: "Background",
   },
-  [ControllerRole.Hub]: {
+  [pb.ControllerRole.HUB]: {
     icon: "web",
     text: "Background",
   },

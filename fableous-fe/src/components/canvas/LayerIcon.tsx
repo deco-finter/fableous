@@ -1,7 +1,8 @@
 /* eslint-disable no-nested-ternary */
 import { Icon, IconButton, Typography } from "@material-ui/core";
 import { colors } from "../../colors";
-import { ControllerRole, ROLE_ICON, StudentRole } from "../../constant";
+import { ROLE_ICON, StudentRole } from "../../constant";
+import { proto as pb } from "../../proto/message_pb";
 
 export default function LayerIcon(props: {
   role: StudentRole;
@@ -9,7 +10,7 @@ export default function LayerIcon(props: {
   setFocusLayer: React.Dispatch<React.SetStateAction<StudentRole | undefined>>;
   onClick: () => void;
   joinedControllers: {
-    [key in ControllerRole]?: string | null;
+    [key in pb.ControllerRole]?: string | null;
   };
   needsHelp: boolean;
   isDone: boolean;
