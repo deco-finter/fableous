@@ -45,14 +45,18 @@ export default function useTutorial(config: {
     return tutorialState !== TutorialState.Off;
   }, [tutorialState]);
 
-  // auto start tutorial when shouldStartCallback becomes true
+  // auto start tutorial when showTutorialButton becomes true
   useEffect(() => {
     if (showTutorialButton && getLocalStorage(localStorageKey) === null) {
       setTutorialState(TutorialState.AutomaticallyStarted);
     }
+
+    if (!showTutorialButton) {
+      setTutorialState(TutorialState.Off);
+    }
   }, [showTutorialButton, localStorageKey]);
 
-  // show tutorial button in navbar
+  // show tutorial button in navbar anytime showTutorialButton is true
   useEffect(() => {
     if (showTutorialButton) {
       setAdditionalNavs([
@@ -77,7 +81,7 @@ export default function useTutorial(config: {
     return () => {};
   }, [showTutorialButton, isRunning, setAdditionalNavs, onManualStartCallback]);
 
-  // remember tutorial use and do not auto start it for specified duration
+  // remember tutorial use
   useEffect(() => {
     if (isRunning) {
       // set value to be empty string to differentiate from null
