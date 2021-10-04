@@ -18,6 +18,7 @@ func InitializeRouter() (router *gin.Engine) {
 	)
 	api := router.Group("/api")
 	{
+		api.GET("/ping", GETPing)
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", POSTLogin)
