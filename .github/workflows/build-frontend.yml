@@ -6,6 +6,8 @@ on:
     paths:
       - "fableous-fe/**"
       - "proto/**"
+      - ".github/**"
+      - "Makefile"
 
 jobs:
   lint:
