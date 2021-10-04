@@ -443,6 +443,9 @@ export default function ControllerCanvasPage() {
         disableScrolling
         steps={tutorialSteps}
         getHelpers={setTutorialHelper}
+        floaterProps={{
+          disableAnimation: true,
+        }}
         styles={{
           options: {
             zIndex: 10000,
