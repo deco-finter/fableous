@@ -5,6 +5,9 @@ on:
   push:
     paths:
       - "fableous-fe/**"
+      - "proto/**"
+      - ".github/**"
+      - "Makefile"
 
 jobs:
   lint:
@@ -20,6 +23,8 @@ jobs:
         uses: actions/setup-node@v2.1.5
         with:
           node-version: 12.x
+      - name: Generate Files
+        run: make -C .. fe
       - name: Install Dependencies
         run: yarn
       - name: eslint
@@ -37,6 +42,8 @@ jobs:
         uses: actions/setup-node@v2.1.5
         with:
           node-version: 12.x
+      - name: Generate Files
+        run: make -C .. fe
       - name: Install Dependencies
         run: yarn
       - name: Build

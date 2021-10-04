@@ -1,40 +1,6 @@
 import { Achievement } from "./components/achievement/achievement";
 import { TextShapeMap } from "./components/canvas/data";
-import { ControllerRole, WSMessageType } from "./constant";
-
-export interface WSMessage {
-  role: ControllerRole;
-  type: WSMessageType;
-  // TODO change type of data to all possible message data types
-  data: {
-    x1?: number;
-    y1?: number;
-    x2?: number;
-    y2?: number;
-    id?: number;
-    text?: string;
-    color?: string;
-    width?: number;
-  };
-}
-
-// for WSMessageType.Control
-export interface WSControlMessageData {
-  classroomToken?: string;
-  classroomId?: string;
-  sessionId?: string;
-  currentPage?: number;
-  nextPage?: boolean;
-  help?: boolean;
-  done?: boolean;
-}
-
-// for WSMessageType.Join
-export interface WSJoinMessageData {
-  role: ControllerRole;
-  name?: string;
-  joining: boolean;
-}
+import { proto as pb } from "./proto/message_pb";
 
 export interface APIResponse<T> {
   code?: number;
@@ -80,7 +46,7 @@ export interface Session {
 export interface ControllerJoin {
   name: string;
   token: string;
-  role: ControllerRole;
+  role: pb.ControllerRole;
 }
 export interface Manifest {
   texts: TextShapeMap;

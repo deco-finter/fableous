@@ -9,13 +9,14 @@ import StopIcon from "@material-ui/icons/Stop";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
 import { Button, IconButton, makeStyles, Typography } from "@material-ui/core";
 import EraserIcon from "./EraserIcon";
-import { ControllerRole, ToolMode } from "../../constant";
+import { ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
+import { proto as pb } from "../../proto/message_pb";
 import BrushWidthIcon from "./BrushWidthIcon";
 import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
 
 interface CanvasToolbarProps {
-  role: ControllerRole;
+  role: pb.ControllerRole;
   offsetHeight?: string;
   toolMode: ToolMode;
   setToolMode: React.Dispatch<React.SetStateAction<ToolMode>>;
@@ -110,9 +111,10 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
           }}
         >
           <Paper className="p-1 flex flex-col justify-evenly items-center min-h-full">
-            {[ControllerRole.Character, ControllerRole.Background].includes(
-              role
-            ) && (
+            {[
+              pb.ControllerRole.CHARACTER,
+              pb.ControllerRole.BACKGROUND,
+            ].includes(role) && (
               <>
                 <CanvasToolbarTooltip
                   isOpen={isWidthPickerOpen}
@@ -245,7 +247,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 </IconButton>
               </>
             )}
-            {role === ControllerRole.Story && (
+            {role === pb.ControllerRole.STORY && (
               <>
                 <IconButton
                   onClick={() => setToolMode(ToolMode.Text)}
