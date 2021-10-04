@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CallBackProps, STATUS } from "react-joyride";
 import { useCustomNav } from "../components/CustomNavProvider";
 import { getLocalStorage, ONE_DAY, setLocalStorage } from "../storage";
-import { navbarTutorialButtonId } from "../tutorialTargetIds";
+import { TutorialTargetId } from "../tutorialTargetIds";
 
 enum TutorialState {
   Off = 0,
@@ -60,7 +60,7 @@ export default function useTutorial(config: {
           icon: "help",
           label: "Tutorial",
           buttonProps: {
-            id: navbarTutorialButtonId,
+            id: TutorialTargetId.NavbarTutorial,
             onClick: () => {
               setTutorialState(TutorialState.ManuallyStarted);
             },

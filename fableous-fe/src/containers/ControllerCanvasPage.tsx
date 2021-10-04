@@ -51,12 +51,7 @@ import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
-import {
-  CanvasToolbarIconId,
-  controllerCanvasId,
-  controllerTopChipRowId,
-  navbarTutorialButtonId,
-} from "../tutorialTargetIds";
+import { TutorialTargetId } from "../tutorialTargetIds";
 import useTutorial from "../hooks/useTutorial";
 import { useCustomNav } from "../components/CustomNavProvider";
 
@@ -255,7 +250,7 @@ export default function ControllerCanvasPage() {
   const commonTutorialSteps: Step[] = useMemo(
     () => [
       {
-        target: `#${navbarTutorialButtonId}`,
+        target: `#${TutorialTargetId.NavbarTutorial}`,
         content:
           "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
         placement: "bottom",
@@ -264,7 +259,7 @@ export default function ControllerCanvasPage() {
         hideCloseButton: true,
       },
       {
-        target: `#${controllerTopChipRowId}`,
+        target: `#${TutorialTargetId.ControllerTopChipRow}`,
         content:
           "You will be assigned a role and collaboratively draw a story based on a theme.",
         placement: "bottom",
@@ -272,7 +267,7 @@ export default function ControllerCanvasPage() {
         hideCloseButton: true,
       },
       {
-        target: `#${controllerCanvasId}`,
+        target: `#${TutorialTargetId.ControllerCanvas}`,
         content:
           "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
         placement: "center",
@@ -286,35 +281,35 @@ export default function ControllerCanvasPage() {
   const drawingTutorialSteps: Step[] = useMemo(
     () => [
       {
-        target: `#${CanvasToolbarIconId.Brush}`,
+        target: `#${TutorialTargetId.BrushTool}`,
         content: "Use brush to draw",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
-        target: `#${CanvasToolbarIconId.Erase}`,
+        target: `#${TutorialTargetId.EraseTool}`,
         content: "Use eraser to erase",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
-        target: `#${CanvasToolbarIconId.Fill}`,
+        target: `#${TutorialTargetId.FillTool}`,
         content: "Use bucket to fill with selected colour",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
-        target: `#${CanvasToolbarIconId.Palette}`,
+        target: `#${TutorialTargetId.PaletteTool}`,
         content: "Use palette to choose a colour",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
-        target: `#${CanvasToolbarIconId.Undo}`,
+        target: `#${TutorialTargetId.UndoTool}`,
         content: "Use undo to undo a recent action",
         placement: "right",
         disableBeacon: true,
@@ -327,21 +322,21 @@ export default function ControllerCanvasPage() {
   const storyTutorialSteps: Step[] = useMemo(
     () => [
       {
-        target: `#${CanvasToolbarIconId.Text}`,
+        target: `#${TutorialTargetId.TextTool}`,
         content: "Use text to write a story using keyboard",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
-        target: `#${CanvasToolbarIconId.Audio}`,
+        target: `#${TutorialTargetId.AudioTool}`,
         content: "Use microphone to record a story",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
-        target: `#${CanvasToolbarIconId.Undo}`,
+        target: `#${TutorialTargetId.UndoTool}`,
         content: "Use undo to undo a recent action",
         placement: "right",
         disableBeacon: true,
@@ -668,7 +663,7 @@ export default function ControllerCanvasPage() {
             <ChipRow
               primary
               rootProps={{
-                id: controllerTopChipRowId,
+                id: TutorialTargetId.ControllerTopChipRow,
               }}
               chips={[
                 <Chip label={storyDetails?.title} color="primary" />,
@@ -742,7 +737,7 @@ export default function ControllerCanvasPage() {
               >
                 <Canvas
                   ref={canvasRef}
-                  rootId={controllerCanvasId}
+                  rootId={TutorialTargetId.ControllerCanvas}
                   wsConn={wsConn}
                   role={role}
                   layer={role}

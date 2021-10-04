@@ -1,13 +1,13 @@
-export const controllerCanvasId = "controller-canvas";
-export const controllerTopChipRowId = "controller-topChipRow";
-export const navbarTutorialButtonId = "navbar-tutorialButton";
-
-export enum CanvasToolbarIconId {
-  Brush = "canvasToolbarIcon-brush",
-  Erase = "canvasToolbarIcon-erase",
-  Fill = "canvasToolbarIcon-fill",
-  Palette = "canvasToolbarIcon-palette",
-  Text = "canvasToolbarIcon-text",
-  Audio = "canvasToolbarIcon-audio",
-  Undo = "canvasToolbarIcon-undo",
+/* eslint-disable import/prefer-default-export */
+export enum TutorialTargetId {
+  ControllerCanvas = "controller-canvas",
+  ControllerTopChipRow = "controller-topChipRow",
+  NavbarTutorial = "navbar-tutorialButton",
+  BrushTool = "canvasToolbarIcon-brush",
+  EraseTool = "canvasToolbarIcon-erase",
+  FillTool = "canvasToolbarIcon-fill",
+  PaletteTool = "canvasToolbarIcon-palette",
+  TextTool = "canvasToolbarIcon-text",
+  AudioTool = "canvasToolbarIcon-audio",
+  UndoTool = "canvasToolbarIcon-undo",
 }
