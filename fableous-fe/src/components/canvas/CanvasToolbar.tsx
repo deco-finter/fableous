@@ -179,7 +179,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       : "primary"
                   }
                 >
-                  <EraserIcon fontSize="medium" />
+                  <EraserIcon fontSize="large" />
                 </IconButton>
                 <IconButton
                   id={TutorialTargetId.FillTool}
