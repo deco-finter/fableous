@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { configure } from "axios-hooks";
 import { TOKEN_KEY } from "./components/AuthProvider";
-import { getLocalStorage } from "./localStorage";
+import { getLocalStorage } from "./storage";
 
 const baseAPI =
   process.env.NODE_ENV === "development"

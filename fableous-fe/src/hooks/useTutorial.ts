@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CallBackProps, STATUS } from "react-joyride";
 import { useCustomNav } from "../components/CustomNavProvider";
-import { getLocalStorage, ONE_DAY, setLocalStorage } from "../localStorage";
+import { getLocalStorage, ONE_DAY, setLocalStorage } from "../storage";
 import { navbarTutorialButtonId } from "../tutorialTargetIds";
 
 enum TutorialState {

@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useState } from "react";
-import { getLocalStorage, setLocalStorage } from "../localStorage";
+import { getLocalStorage, setLocalStorage } from "../storage";
 
 export const TOKEN_KEY = "token";
 
