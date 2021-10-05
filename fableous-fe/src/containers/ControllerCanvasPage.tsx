@@ -36,7 +36,7 @@ import AchievementButton from "../components/achievement/AchievementButton";
 import { ROLE_ICON, ToolMode } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
-import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
+import { ASPECT_RATIO } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
@@ -80,7 +80,7 @@ export default function ControllerCanvasPage() {
   >({});
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
-  const [toolWidth, setToolWidth] = useState(8 * SCALE);
+  const [toolNormWidth, setToolNormWidth] = useState(2 / 64);
   const [tutorialHelper, setTutorialHelper] = useState<StoreHelpers>();
   const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
     showTutorialButton: useMemo(
@@ -702,8 +702,8 @@ export default function ControllerCanvasPage() {
               setToolColor={setToolColor}
               toolMode={toolMode}
               setToolMode={setToolMode}
-              toolWidth={toolWidth}
-              setToolWidth={setToolWidth}
+              toolNormWidth={toolNormWidth}
+              setToolNormWidth={setToolNormWidth}
             />
           </Grid>
           <Grid item xs={10} md={11}>
@@ -755,7 +755,7 @@ export default function ControllerCanvasPage() {
                   toolColor={toolColor}
                   toolMode={toolMode}
                   setToolMode={setToolMode}
-                  toolWidth={toolWidth}
+                  toolNormWidth={toolNormWidth}
                   offsetWidth={canvasOffsetWidth}
                   offsetHeight={canvasOffsetHeight}
                 />

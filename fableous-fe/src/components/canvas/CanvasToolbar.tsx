@@ -23,8 +23,8 @@ interface CanvasToolbarProps {
   setToolMode: React.Dispatch<React.SetStateAction<ToolMode>>;
   toolColor: string;
   setToolColor: React.Dispatch<React.SetStateAction<string>>;
-  toolWidth: number;
-  setToolWidth: React.Dispatch<React.SetStateAction<number>>;
+  toolNormWidth: number;
+  setToolNormWidth: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const COLORS = [
@@ -36,8 +36,8 @@ const COLORS = [
   "#0000ffff", // blue
 ];
 const ERASE_COLOR = "#00000000";
-const BRUSH_WIDTHS = [4, 8, 12, 16, 20];
-const ICON_STROKE_WIDTH_RATIO = 1 / 4;
+const BRUSH_WIDTHS = [1 / 64, 2 / 64, 3 / 64, 4 / 64, 5 / 64];
+const ICON_STROKE_WIDTH_RATIO = 128;
 
 const useStyles = makeStyles({
   hideScrollbar: {
@@ -61,8 +61,8 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
       setToolMode,
       toolColor,
       setToolColor,
-      toolWidth,
-      setToolWidth,
+      toolNormWidth,
+      setToolNormWidth,
       offsetHeight,
     } = props;
     const imperativeCanvasRef = ref as MutableRefObject<ImperativeCanvasRef>;
@@ -125,7 +125,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       {BRUSH_WIDTHS.map((brushWidth) => (
                         <IconButton
                           onClick={() => {
-                            setToolWidth(brushWidth);
+                            setToolNormWidth(brushWidth);
                             setIsWidthPickerOpen(false);
                           }}
                           color="primary"
@@ -165,7 +165,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                           ? "secondary"
                           : "primary"
                       }
-                      strokeWidth={toolWidth * ICON_STROKE_WIDTH_RATIO}
+                      strokeWidth={toolNormWidth * ICON_STROKE_WIDTH_RATIO}
                     />
                   </IconButton>
                 </CanvasToolbarTooltip>
