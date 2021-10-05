@@ -9,6 +9,7 @@ import (
 var AppConfig Config
 
 type Config struct {
+	Version     string
 	Port        int
 	Environment string
 	Debug       bool
