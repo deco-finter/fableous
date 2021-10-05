@@ -26,6 +26,7 @@ import { restAPI } from "../../api";
 import { ToolMode } from "../../constant";
 import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
 import { proto as pb } from "../../proto/message_pb";
+import { BRUSH_WIDTHS } from "./CanvasToolbar";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -65,7 +66,7 @@ const defaultProps = {
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
   setToolMode: () => {},
-  toolNormWidth: 2 / 64,
+  toolNormWidth: BRUSH_WIDTHS[1],
   rootId: undefined,
 };
 

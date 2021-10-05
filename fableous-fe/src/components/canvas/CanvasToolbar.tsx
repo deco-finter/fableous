@@ -6,6 +6,7 @@ import PaletteIcon from "@material-ui/icons/Palette";
 import UndoIcon from "@material-ui/icons/Undo";
 import BrushIcon from "@material-ui/icons/Brush";
 import StopIcon from "@material-ui/icons/Stop";
+import StopRoundedIcon from "@material-ui/icons/StopRounded";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
 import { Button, IconButton, makeStyles, Typography } from "@material-ui/core";
 import EraserIcon from "./EraserIcon";
@@ -27,16 +28,22 @@ interface CanvasToolbarProps {
   setToolNormWidth: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const COLORS = [
-  "#000000ff", // black
-  "#ff0000ff", // red
-  "#ffff00ff", // yellow
-  "#00ff00ff", // green
-  "#00ffffff", // cyan
-  "#0000ffff", // blue
+export const COLORS = [
+  "#282828FF",
+  "#A4C421FF",
+  "#34AF2EFF",
+  "#34A59CFF",
+  "#234EB0FF",
+  "#3C2DADFF",
+  "#613494FF",
+  "#A3238FFF",
+  "#E41728FF",
+  "#EE652EFF",
+  "#F49129FF",
+  "#F9B72BFF",
 ];
 const ERASE_COLOR = "#00000000";
-const BRUSH_WIDTHS = [1 / 64, 2 / 64, 3 / 64, 4 / 64, 5 / 64];
+export const BRUSH_WIDTHS = [1 / 64, 2 / 64, 3 / 64, 4 / 64, 5 / 64];
 const ICON_STROKE_WIDTH_RATIO = 128;
 
 const useStyles = makeStyles({
@@ -214,12 +221,12 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                           }}
                           style={{
                             backgroundColor: color,
-                            width: "50px",
-                            height: "50px",
+                            width: "38px",
+                            height: "38px",
                             padding: 0,
-                            marginLeft: "0.5rem",
+                            margin: 4,
                             minWidth: "auto",
-                            borderRadius: 0,
+                            borderRadius: 4,
                           }}
                           key={color}
                         />
@@ -234,7 +241,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                     className="relative"
                   >
                     <PaletteIcon fontSize="large" />
-                    <StopIcon
+                    <StopRoundedIcon
                       style={{
                         color:
                           toolColor === ERASE_COLOR ? prevColor : toolColor,

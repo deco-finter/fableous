@@ -35,7 +35,10 @@ import {
 import AchievementButton from "../components/achievement/AchievementButton";
 import { ROLE_ICON, ToolMode } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
-import CanvasToolbar from "../components/canvas/CanvasToolbar";
+import CanvasToolbar, {
+  BRUSH_WIDTHS,
+  COLORS,
+} from "../components/canvas/CanvasToolbar";
 import { ASPECT_RATIO } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
@@ -78,9 +81,9 @@ export default function ControllerCanvasPage() {
     APIResponse<Session>,
     APIResponse<undefined>
   >({});
-  const [toolColor, setToolColor] = useState("#000000ff");
+  const [toolColor, setToolColor] = useState(COLORS[0]);
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
-  const [toolNormWidth, setToolNormWidth] = useState(2 / 64);
+  const [toolNormWidth, setToolNormWidth] = useState(BRUSH_WIDTHS[1]);
   const [tutorialHelper, setTutorialHelper] = useState<StoreHelpers>();
   const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
     showTutorialButton: useMemo(

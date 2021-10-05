@@ -5,6 +5,7 @@ import {
   AchievementType,
   EmptyAchievement,
 } from "../components/achievement/achievement";
+import { COLORS } from "../components/canvas/CanvasToolbar";
 import { proto as pb } from "../proto/message_pb";
 
 export default function useAchievement(config?: {
@@ -22,7 +23,7 @@ export default function useAchievement(config?: {
     (msg: pb.WSMessage): number => {
       const newColors = new Set(allColorColors).add(msg.paint?.color as string);
       setAllColorColors(newColors);
-      return newColors.size / 6;
+      return newColors.size / COLORS.length;
     },
     [allColorColors]
   );
