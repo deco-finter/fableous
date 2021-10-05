@@ -35,11 +35,12 @@ import {
 import AchievementButton from "../components/achievement/AchievementButton";
 import { ROLE_ICON, ToolMode } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
-import CanvasToolbar, {
+import CanvasToolbar from "../components/canvas/CanvasToolbar";
+import {
+  ASPECT_RATIO,
+  BRUSH_COLORS,
   BRUSH_WIDTHS,
-  COLORS,
-} from "../components/canvas/CanvasToolbar";
-import { ASPECT_RATIO } from "../components/canvas/constants";
+} from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
@@ -81,7 +82,7 @@ export default function ControllerCanvasPage() {
     APIResponse<Session>,
     APIResponse<undefined>
   >({});
-  const [toolColor, setToolColor] = useState(COLORS[0]);
+  const [toolColor, setToolColor] = useState(BRUSH_COLORS[0]);
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolNormWidth, setToolNormWidth] = useState(BRUSH_WIDTHS[1]);
   const [tutorialHelper, setTutorialHelper] = useState<StoreHelpers>();

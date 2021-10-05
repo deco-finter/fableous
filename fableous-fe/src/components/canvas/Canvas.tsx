@@ -20,13 +20,18 @@ import {
   scaleUpXY,
   translateXY,
 } from "./helpers";
-import { SCALE, SELECT_PADDING } from "./constants";
+import {
+  BRUSH_WIDTHS,
+  SCALE,
+  SELECT_PADDING,
+  TEXT_COLOR,
+  TEXT_FONTSIZE,
+} from "./constants";
 import { Cursor } from "./CursorScreen";
 import { restAPI } from "../../api";
 import { ToolMode } from "../../constant";
 import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
 import { proto as pb } from "../../proto/message_pb";
-import { BRUSH_WIDTHS } from "./CanvasToolbar";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -320,7 +325,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           shape.text,
           fontSize
         );
-        ctx.fillStyle = isGallery ? "#00000000" : "#000000";
+        ctx.fillStyle = isGallery ? "#00000000" : TEXT_COLOR;
         ctx.font = `${fontSize * SCALE}px Comic Sans MS`;
         ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
@@ -416,11 +421,10 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           showKeyboard(false);
         } else {
           // insert new text
-          const [normFontSize] = scaleDownXY(canvasRef, 18, 0);
           placeText(textId, {
             normX: normCursorX,
             normY: normCursorY,
-            normFontSize,
+            normFontSize: TEXT_FONTSIZE,
             text: "",
           } as TextShape);
           setEditingTextId(textId);
@@ -718,9 +722,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           break;
         case ToolMode.Text:
           if (!editingTextId || hasLifted || !allowDrawing) return;
-          const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           showKeyboard(false);
+          const shape = textShapesRef.current[editingTextId];
           placeText(editingTextId, {
             ...shape,
             normX: normX + dragOffset[0],
