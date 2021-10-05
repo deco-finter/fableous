@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import {
   Button,
   Card,
@@ -20,6 +20,7 @@ import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
+import Joyride, { Step, StoreHelpers } from "react-joyride";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import { APIResponse, ControllerJoin, Session } from "../data";
@@ -39,6 +40,9 @@ import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
+import { TutorialTargetId } from "../tutorialTargetIds";
+import useTutorial from "../hooks/useTutorial";
+import { useCustomNav } from "../components/CustomNavProvider";
 import { proto as pb } from "../proto/message_pb";
 
 enum ControllerState {
@@ -55,6 +59,8 @@ const useStyles = makeStyles({
     userSelect: "none",
   },
 });
+
+const CONTROLLER_TUTORIAL_KEY = "controllerTutorial";
 
 export default function ControllerCanvasPage() {
   const { enqueueSnackbar } = useSnackbar();
@@ -75,6 +81,21 @@ export default function ControllerCanvasPage() {
   const [toolColor, setToolColor] = useState("#000000ff");
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
   const [toolWidth, setToolWidth] = useState(8 * SCALE);
+  const [tutorialHelper, setTutorialHelper] = useState<StoreHelpers>();
+  const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
+    showTutorialButton: useMemo(
+      () => controllerState === ControllerState.DrawingSession,
+      [controllerState]
+    ),
+    localStorageKey: CONTROLLER_TUTORIAL_KEY,
+    onManualStartCallback: useCallback(() => {
+      if (tutorialHelper) {
+        // skip first step
+        tutorialHelper.next();
+      }
+    }, [tutorialHelper]),
+  });
+  const [, , , setIsNavbarLogoClickable] = useCustomNav();
   const canvasContainerRef = useRef<HTMLDivElement>(
     document.createElement("div")
   );
@@ -215,6 +236,113 @@ export default function ControllerCanvasPage() {
     setIsDone(true);
   };
 
+  const commonTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${TutorialTargetId.NavbarTutorial}`,
+        content:
+          "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
+        placement: "bottom",
+        disableBeacon: true,
+        // wierdly, close behavior is like next step, unsure on how to fix it
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.ControllerTopChipRow}`,
+        content:
+          "You will be assigned a role and collaboratively draw a story based on a theme.",
+        placement: "bottom",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.ControllerCanvas}`,
+        content:
+          "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
+        placement: "center",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+
+  const drawingTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${TutorialTargetId.BrushTool}`,
+        content: "Use brush to draw",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.EraseTool}`,
+        content: "Use eraser to erase",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.FillTool}`,
+        content: "Use bucket to fill with selected colour",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.PaletteTool}`,
+        content: "Use palette to choose a colour",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.UndoTool}`,
+        content: "Use undo to undo a recent action",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+
+  const storyTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${TutorialTargetId.TextTool}`,
+        content: "Use text to write a story using keyboard",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.AudioTool}`,
+        content: "Use microphone to record a story",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.UndoTool}`,
+        content: "Use undo to undo a recent action",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+
+  const tutorialSteps = useMemo(
+    () =>
+      role === pb.ControllerRole.STORY
+        ? commonTutorialSteps.concat(storyTutorialSteps)
+        : commonTutorialSteps.concat(drawingTutorialSteps),
+    [role, commonTutorialSteps, storyTutorialSteps, drawingTutorialSteps]
+  );
+
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
@@ -276,11 +404,43 @@ export default function ControllerCanvasPage() {
       );
   }, [controllerState, isDone, role, wsConn]);
 
+  // prevent student accidentally going to homepage when drawing
+  useEffect(() => {
+    if (controllerState === ControllerState.DrawingSession) {
+      setIsNavbarLogoClickable(false);
+
+      return () => setIsNavbarLogoClickable(true);
+    }
+
+    return () => {};
+  }, [controllerState, setIsNavbarLogoClickable]);
+
   return (
     <Grid
       container
       className={`grid flex-col flex-1 relative ${classes.disableMobileHoldInteraction}`}
     >
+      <Joyride
+        callback={handleJoyrideCallback}
+        continuous
+        run={isTutorialRunning}
+        scrollToFirstStep
+        showProgress
+        showSkipButton
+        disableOverlayClose
+        disableScrollParentFix
+        disableScrolling
+        steps={tutorialSteps}
+        getHelpers={setTutorialHelper}
+        floaterProps={{
+          disableAnimation: true,
+        }}
+        styles={{
+          options: {
+            zIndex: 10000,
+          },
+        }}
+      />
       <div
         style={{
           gridRowStart: 1,
@@ -505,6 +665,9 @@ export default function ControllerCanvasPage() {
           <Grid item xs={12}>
             <ChipRow
               primary
+              rootProps={{
+                id: TutorialTargetId.ControllerTopChipRow,
+              }}
               chips={[
                 <Chip label={storyDetails?.title} color="primary" />,
                 <div className="flex gap-4">
@@ -577,6 +740,7 @@ export default function ControllerCanvasPage() {
               >
                 <Canvas
                   ref={canvasRef}
+                  rootId={TutorialTargetId.ControllerCanvas}
                   wsConn={wsConn}
                   role={role}
                   layer={role}

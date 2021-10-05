@@ -401,8 +401,6 @@ export default function HubCanvasPage() {
   // go back to session form once all pages in story completed
   useEffect(() => {
     if (currentPageIdx && story && currentPageIdx > story.pages) {
-      // TODO send canvas result to backend here
-      // assume backend will close ws conn
       enqueueSnackbar("Story completed!", { variant: "success" });
       setHubState(HubState.SessionForm);
       achievementReset();

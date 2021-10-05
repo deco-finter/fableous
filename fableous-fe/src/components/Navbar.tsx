@@ -1,12 +1,13 @@
+import { ReactNode, useContext } from "react";
 import { Icon, makeStyles } from "@material-ui/core";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
-import { Link, useHistory } from "react-router-dom";
-import { useContext } from "react";
+import { Link, useHistory, useLocation } from "react-router-dom";
 
 import { AuthContext } from "./AuthProvider";
+import { useCustomNav } from "./CustomNavProvider";
 
 const useStyles = makeStyles(() => ({
   home: {
@@ -16,23 +17,44 @@ const useStyles = makeStyles(() => ({
 
 export default function Navbar() {
   const history = useHistory();
+  const location = useLocation();
   const [, isAuthenticated, , clearToken] = useContext(AuthContext);
   const onLogout = () => {
     clearToken();
     history.push("/");
   };
+  const [additionalNavs, , isLogoClickable] = useCustomNav();
   const classes = useStyles();
+
+  // navbar will be simplified for students
+  const isOnStudentPages = location.pathname === "/join";
+
+  const logoLinkWrapper = (children: ReactNode) => (
+    <Link to="/">{children}</Link>
+  );
+  const logoElement = (
+    <Typography variant="h1" className={classes.home}>
+      Fableous
+    </Typography>
+  );
 
   return (
     <AppBar position="static">
       <Toolbar>
-        <Link to="/">
-          <Typography variant="h1" className={classes.home}>
-            Fableous
-          </Typography>
-        </Link>
+        {isLogoClickable ? logoLinkWrapper(logoElement) : logoElement}
         <div className="flex-grow" /> {/* spacer */}
-        {isAuthenticated ? (
+        {additionalNavs.map(({ icon, label, buttonProps }) => (
+          <Button
+            variant="outlined"
+            className="text-white"
+            startIcon={<Icon fontSize="small">{icon}</Icon>}
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...buttonProps}
+          >
+            {label}
+          </Button>
+        ))}
+        {isAuthenticated && !isOnStudentPages && (
           <>
             <Button
               variant="outlined"
@@ -43,7 +65,6 @@ export default function Navbar() {
             >
               Profile
             </Button>
-
             <Button
               variant="outlined"
               className="ml-4 text-white"
@@ -53,7 +74,8 @@ export default function Navbar() {
               Logout
             </Button>
           </>
-        ) : (
+        )}
+        {!isAuthenticated && !isOnStudentPages && (
           <>
             <Button
               variant="outlined"
