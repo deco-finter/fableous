@@ -16,7 +16,7 @@ export const BRUSH_COLORS = [
   "#F49129FF",
   "#F9B72BFF",
 ];
-export const BRUSH_WIDTHS = [1 / 64, 2 / 64, 3 / 64, 4 / 64, 5 / 64];
+export const BRUSH_WIDTHS = [0.25 / 64, 0.5 / 64, 1 / 64, 2 / 64, 5 / 64];
 
 export const TEXT_FONTSIZE = 0.6 / 64;
 export const TEXT_COLOR = "#101010FF";
