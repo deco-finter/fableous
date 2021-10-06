@@ -22,6 +22,9 @@ const useStyles = makeStyles({
     backgroundAttachment: "fixed",
     minHeight: "100vh",
   },
+  snackbarChildren: {
+    borderRadius: 24,
+  },
 });
 
 export default function App() {
@@ -133,7 +136,15 @@ export default function App() {
     <div id="app" className={classes.app}>
       <div className="flex flex-col min-h-screen">
         {/* place Snackbar outside of React.StrictMode to suppress finddomnode is deprecated warning */}
-        <SnackbarProvider maxSnack={3}>
+        <SnackbarProvider
+          maxSnack={3}
+          classes={{
+            variantSuccess: classes.snackbarChildren,
+            variantInfo: classes.snackbarChildren,
+            variantWarning: classes.snackbarChildren,
+            variantError: classes.snackbarChildren,
+          }}
+        >
           <React.StrictMode>
             <AuthProvider>
               <Router>
