@@ -284,7 +284,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   {isRecordingAudio && (
                     <Typography
                       variant="subtitle2"
-                      className="font-bold absolute"
+                      className="font-bold absolute pointer-events-none"
                       style={{
                         color: colors.orange.main,
                         bottom: -4,
