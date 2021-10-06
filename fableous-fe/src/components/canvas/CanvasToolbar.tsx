@@ -17,6 +17,7 @@ import BrushWidthIcon from "./BrushWidthIcon";
 import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
 import { TutorialTargetId } from "../../tutorialTargetIds";
 import { BRUSH_COLORS, BRUSH_WIDTHS } from "./constants";
+import { colors } from "../../colors";
 
 interface CanvasToolbarProps {
   role: pb.ControllerRole;
@@ -121,7 +122,14 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                             setToolNormWidth(brushWidth);
                             setIsWidthPickerOpen(false);
                           }}
-                          color="primary"
+                          color="secondary"
+                          style={{
+                            border: `2px solid ${
+                              toolNormWidth === brushWidth
+                                ? colors.orange.main
+                                : "#0000"
+                            }`,
+                          }}
                           key={brushWidth}
                         >
                           <BrushWidthIcon
@@ -213,6 +221,9 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                             margin: 4,
                             minWidth: "auto",
                             borderRadius: 4,
+                            border: `2px solid ${
+                              toolColor === color ? colors.orange.main : "#0000"
+                            }`,
                           }}
                           key={color}
                         />
@@ -248,15 +259,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 >
                   <TextFieldsIcon fontSize="large" />
                 </IconButton>
-                <CanvasToolbarTooltip
-                  isOpen={isRecordingAudio}
-                  setIsOpen={setIsRecordingAudio}
-                  tooltipTitle={
-                    <Typography variant="body1">
-                      {showMmSsFromSeconds(recordingTimeElapsed)}
-                    </Typography>
-                  }
-                >
+                <div className="flex flex-col justify-center items-center relative">
                   <IconButton
                     id={TutorialTargetId.AudioTool}
                     onClick={() => {
@@ -278,7 +281,19 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       <MicIcon fontSize="large" />
                     )}
                   </IconButton>
-                </CanvasToolbarTooltip>
+                  {isRecordingAudio && (
+                    <Typography
+                      variant="subtitle2"
+                      className="font-bold absolute"
+                      style={{
+                        color: colors.orange.main,
+                        bottom: -4,
+                      }}
+                    >
+                      {showMmSsFromSeconds(recordingTimeElapsed)}
+                    </Typography>
+                  )}
+                </div>
               </>
             )}
             <IconButton

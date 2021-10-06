@@ -15,8 +15,11 @@ interface CanvasToolbarTooltipProps {
 }
 
 const useStyles = makeStyles({
-  unsetMaxWidth: {
+  tooltip: {
     maxWidth: "none",
+    backgroundColor: "#FFFFFFD0",
+    padding: 4,
+    borderRadius: 8,
   },
 });
 
@@ -30,11 +33,10 @@ const CanvasToolbarTooltip = (props: CanvasToolbarTooltipProps) => {
     <Tooltip
       interactive
       classes={{
-        tooltip: classes.unsetMaxWidth,
+        tooltip: classes.tooltip,
       }}
       onClose={() => setIsOpen(false)}
       open={isOpen}
-      arrow
       placement="right"
       leaveTouchDelay={undefined}
       disableFocusListener
