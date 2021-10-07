@@ -301,7 +301,7 @@ export default function ClassroomItem(props: {
           </Button>
           <Button
             onClick={handleDeleteOngoingSession}
-            color="secondary"
+            style={{ color: colors.error }}
             endIcon={<Icon fontSize="small">stop</Icon>}
           >
             Stop
