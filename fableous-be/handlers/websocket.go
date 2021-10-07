@@ -170,6 +170,10 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					}
 				}
 			}
+			if clearedController := message.Data.(*pb.WSMessage_Control).Control.Clear; clearedController != nil {
+				_ = utils.SendMessage(sess.hubConn, message)
+				_ = utils.SendMessage(sess.controllerConn[*clearedController], message)
+			}
 			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != nil {
 				_ = sess.KickController(*kickedController)
 			}
