@@ -58,6 +58,8 @@ message WSControlMessageData {
   bool next_page = 5;
   bool help = 6;
   bool done = 7;
+  bool clear = 8;
+  optional ControllerRole kick = 9;
 }
 
 message WSAchievementMessageData {

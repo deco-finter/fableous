@@ -38,6 +38,23 @@ func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 	return
 }
 
+func (sess *activeSession) KickController(role pb.ControllerRole) (err error) {
+	sess.mutex.Lock()
+	_ = sess.controllerConn[role].Close()
+	delete(sess.controllerConn, role)
+	delete(sess.controllerName, role)
+	sess.mutex.Unlock()
+	return utils.SendMessage(sess.hubConn, &pb.WSMessage{
+		Type: pb.WSMessageType_JOIN,
+		Data: &pb.WSMessage_Join{
+			Join: &pb.WSJoinMessageData{
+				Role:    role,
+				Joining: false,
+			},
+		},
+	})
+}
+
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
 	var session models.Session
@@ -153,6 +170,9 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					}
 				}
 			}
+			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != nil {
+				_ = sess.KickController(*kickedController)
+			}
 		case pb.WSMessageType_IMAGE:
 			go m.SavePayload(sess, message, true)
 		case pb.WSMessageType_MANIFEST:
@@ -204,18 +224,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[ControllerCommandWorker] failed reading message. %s\n", err)
 			}
-			sess.mutex.Lock()
-			delete(sess.controllerConn, role)
-			sess.mutex.Unlock()
-			_ = utils.SendMessage(sess.hubConn, &pb.WSMessage{
-				Type: pb.WSMessageType_JOIN,
-				Data: &pb.WSMessage_Join{
-					Join: &pb.WSJoinMessageData{
-						Role:    role,
-						Joining: false,
-					},
-				},
-			})
+			_ = sess.KickController(role)
 			break
 		}
 		switch message.Type {
