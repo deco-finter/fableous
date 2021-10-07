@@ -11,7 +11,7 @@ import {
   makeStyles,
   Typography,
 } from "@material-ui/core";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { colors } from "../../colors";
 import { ROLE_ICON, StudentRole } from "../../constant";
 import { proto as pb } from "../../proto/message_pb";
@@ -28,7 +28,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-interface LayerIconProps extends React.HTMLAttributes<HTMLDivElement> {
+interface LayerIconProps {
   studentRole: StudentRole;
   focusLayer: StudentRole | undefined;
   setFocusLayer: React.Dispatch<React.SetStateAction<StudentRole | undefined>>;
@@ -36,7 +36,8 @@ interface LayerIconProps extends React.HTMLAttributes<HTMLDivElement> {
   joinedControllers: {
     [key in pb.ControllerRole]?: string | null;
   };
-  handleKickController: (studentRole: StudentRole) => void;
+  handleClearController: (role: StudentRole) => void;
+  handleKickController: (role: StudentRole) => void;
   needsHelp: boolean;
   isDone: boolean;
 }
@@ -48,12 +49,20 @@ export default function LayerIcon(props: LayerIconProps) {
     setFocusLayer,
     onClick,
     joinedControllers,
+    handleClearController,
     handleKickController,
     needsHelp,
     isDone,
   } = props;
 
   const [kicking, setKicking] = useState(false);
+
+  const currentController = joinedControllers[studentRole];
+  useEffect(() => {
+    setKicking(false);
+    setFocusLayer(undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentController]);
 
   const classes = useStyles();
 
@@ -65,6 +74,7 @@ export default function LayerIcon(props: LayerIconProps) {
             <Button
               className={classes.clearButton}
               startIcon={<Icon>delete</Icon>}
+              onClick={() => handleClearController(studentRole)}
             >
               Clear
             </Button>
@@ -147,7 +157,10 @@ export default function LayerIcon(props: LayerIconProps) {
             Cancel
           </Button>
           <Button
-            onClick={() => handleKickController(studentRole)}
+            onClick={() => {
+              handleKickController(studentRole);
+              setKicking(false);
+            }}
             style={{
               color: colors.error,
             }}

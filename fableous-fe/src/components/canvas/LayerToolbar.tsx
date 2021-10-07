@@ -21,6 +21,8 @@ export default function LayerToolbar(props: {
   joinedControllers: {
     [key in StudentRole]?: string;
   };
+  handleClearController: (role: StudentRole) => void;
+  handleKickController: (role: StudentRole) => void;
   helpControllers: {
     [key in StudentRole]: boolean;
   };
@@ -40,6 +42,8 @@ export default function LayerToolbar(props: {
     focusLayer,
     setFocusLayer,
     joinedControllers,
+    handleClearController,
+    handleKickController,
     helpControllers,
     setHelpControllers,
     doneControllers,
@@ -74,7 +78,8 @@ export default function LayerToolbar(props: {
                 })
               }
               joinedControllers={joinedControllers}
-              handleKickController={() => {}}
+              handleClearController={handleClearController}
+              handleKickController={handleKickController}
               needsHelp={helpControllers[role as StudentRole]}
               isDone={doneControllers[role as StudentRole]}
             />
