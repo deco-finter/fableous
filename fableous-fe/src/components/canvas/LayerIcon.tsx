@@ -57,7 +57,7 @@ export default React.forwardRef(function LayerIcon(
       </IconButton>
       <Typography
         variant="subtitle2"
-        className="-mt-4 font-bold"
+        className="-mt-4 font-bold pointer-events-none"
         style={{
           color:
             focusLayer === studentRole
@@ -71,7 +71,7 @@ export default React.forwardRef(function LayerIcon(
       </Typography>
       {needsHelp && (
         <Icon
-          className="absolute top-1 left-1"
+          className="absolute top-1 left-1 pointer-events-none"
           style={{ color: colors.blue.light }}
         >
           pan_tool
@@ -79,7 +79,7 @@ export default React.forwardRef(function LayerIcon(
       )}
       {isDone && (
         <Icon
-          className="absolute top-1 right-1"
+          className="absolute top-1 right-1 pointer-events-none"
           style={{ color: colors.green }}
         >
           check_circle
