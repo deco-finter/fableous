@@ -151,6 +151,7 @@ export default function HubCanvasPage() {
 
   const handleKickController = useCallback(
     (role: StudentRole) => {
+      handleClearController(role);
       wsConn?.send(
         pb.WSMessage.encode({
           type: pb.WSMessageType.CONTROL,
