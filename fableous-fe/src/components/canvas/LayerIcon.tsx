@@ -1,11 +1,12 @@
 /* eslint-disable no-nested-ternary */
 import { Icon, IconButton, Typography } from "@material-ui/core";
+import React from "react";
 import { colors } from "../../colors";
 import { ROLE_ICON, StudentRole } from "../../constant";
 import { proto as pb } from "../../proto/message_pb";
 
-export default function LayerIcon(props: {
-  role: StudentRole;
+interface LayerIconProps extends React.HTMLAttributes<HTMLDivElement> {
+  studentRole: StudentRole;
   focusLayer: StudentRole | undefined;
   setFocusLayer: React.Dispatch<React.SetStateAction<StudentRole | undefined>>;
   onClick: () => void;
@@ -14,9 +15,14 @@ export default function LayerIcon(props: {
   };
   needsHelp: boolean;
   isDone: boolean;
-}) {
+}
+
+export default React.forwardRef(function LayerIcon(
+  props: LayerIconProps,
+  ref: React.LegacyRef<any>
+) {
   const {
-    role,
+    studentRole,
     focusLayer,
     setFocusLayer,
     onClick,
@@ -26,37 +32,42 @@ export default function LayerIcon(props: {
   } = props;
 
   return (
-    <div className="flex flex-col justify-center items-center relative">
+    <div
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      {...props}
+      ref={ref}
+      className="flex flex-col justify-center items-center relative"
+    >
       <IconButton
         style={{
           color:
-            focusLayer === role
+            focusLayer === studentRole
               ? colors.orange.main
-              : !focusLayer && joinedControllers[role]
+              : !focusLayer && joinedControllers[studentRole]
               ? colors.blue.main
               : colors.gray.main,
         }}
-        disabled={!joinedControllers[role]}
+        disabled={!joinedControllers[studentRole]}
         onClick={() => {
-          setFocusLayer(focusLayer === role ? undefined : role);
+          setFocusLayer(focusLayer === studentRole ? undefined : studentRole);
           onClick();
         }}
       >
-        <Icon fontSize="large">{ROLE_ICON[role].icon}</Icon>
+        <Icon fontSize="large">{ROLE_ICON[studentRole].icon}</Icon>
       </IconButton>
       <Typography
         variant="subtitle2"
         className="-mt-4 font-bold"
         style={{
           color:
-            focusLayer === role
+            focusLayer === studentRole
               ? colors.orange.main
-              : !focusLayer && joinedControllers[role]
+              : !focusLayer && joinedControllers[studentRole]
               ? colors.blue.main
               : colors.gray.main,
         }}
       >
-        {ROLE_ICON[role].text}
+        {ROLE_ICON[studentRole].text}
       </Typography>
       {needsHelp && (
         <Icon
@@ -76,4 +87,4 @@ export default function LayerIcon(props: {
       )}
     </div>
   );
-}
+});

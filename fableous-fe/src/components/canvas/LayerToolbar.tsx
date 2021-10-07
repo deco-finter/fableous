@@ -64,7 +64,7 @@ export default function LayerToolbar(props: {
             pb.ControllerRole.BACKGROUND,
           ].map((role) => (
             <LayerIcon
-              role={role as StudentRole}
+              studentRole={role as StudentRole}
               focusLayer={focusLayer}
               setFocusLayer={setFocusLayer}
               onClick={() =>
