@@ -40,16 +40,18 @@ func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 
 func (sess *activeSession) KickController(role pb.ControllerRole) (err error) {
 	sess.mutex.Lock()
-	_ = utils.SendMessage(sess.controllerConn[role], &pb.WSMessage{
-		Type: pb.WSMessageType_JOIN,
-		Data: &pb.WSMessage_Join{
-			Join: &pb.WSJoinMessageData{
-				Role:    pb.ControllerRole_HUB,
-				Joining: false,
+	if targetConn, ok := sess.controllerConn[role]; ok {
+		_ = utils.SendMessage(targetConn, &pb.WSMessage{
+			Type: pb.WSMessageType_JOIN,
+			Data: &pb.WSMessage_Join{
+				Join: &pb.WSJoinMessageData{
+					Role:    pb.ControllerRole_HUB,
+					Joining: false,
+				},
 			},
-		},
-	})
-	_ = sess.controllerConn[role].Close()
+		})
+		_ = targetConn.Close()
+	}
 	delete(sess.controllerConn, role)
 	delete(sess.controllerName, role)
 	sess.mutex.Unlock()
