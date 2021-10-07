@@ -227,7 +227,7 @@ export default function StoryDetailPage() {
             <div
               className="grid place-items-stretch h-full"
               style={{
-                border: "1px solid #0004",
+                border: "1px solid #0000",
               }}
               ref={canvasContainerRef}
             >

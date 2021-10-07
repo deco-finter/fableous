@@ -36,7 +36,11 @@ import AchievementButton from "../components/achievement/AchievementButton";
 import { ROLE_ICON, ToolMode } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
-import { ASPECT_RATIO, SCALE } from "../components/canvas/constants";
+import {
+  ASPECT_RATIO,
+  BRUSH_COLORS,
+  BRUSH_WIDTHS,
+} from "../components/canvas/constants";
 import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
@@ -78,9 +82,9 @@ export default function ControllerCanvasPage() {
     APIResponse<Session>,
     APIResponse<undefined>
   >({});
-  const [toolColor, setToolColor] = useState("#000000ff");
+  const [toolColor, setToolColor] = useState(BRUSH_COLORS[0]);
   const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.None);
-  const [toolWidth, setToolWidth] = useState(8 * SCALE);
+  const [toolNormWidth, setToolNormWidth] = useState(BRUSH_WIDTHS[1]);
   const [tutorialHelper, setTutorialHelper] = useState<StoreHelpers>();
   const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
     showTutorialButton: useMemo(
@@ -702,8 +706,8 @@ export default function ControllerCanvasPage() {
               setToolColor={setToolColor}
               toolMode={toolMode}
               setToolMode={setToolMode}
-              toolWidth={toolWidth}
-              setToolWidth={setToolWidth}
+              toolNormWidth={toolNormWidth}
+              setToolNormWidth={setToolNormWidth}
             />
           </Grid>
           <Grid item xs={10} md={11}>
@@ -711,7 +715,7 @@ export default function ControllerCanvasPage() {
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
               style={{
-                border: "1px solid #0004",
+                border: "1px solid #0000",
               }}
             >
               <div
@@ -755,7 +759,7 @@ export default function ControllerCanvasPage() {
                   toolColor={toolColor}
                   toolMode={toolMode}
                   setToolMode={setToolMode}
-                  toolWidth={toolWidth}
+                  toolNormWidth={toolNormWidth}
                   offsetWidth={canvasOffsetWidth}
                   offsetHeight={canvasOffsetHeight}
                 />
