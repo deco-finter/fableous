@@ -38,7 +38,7 @@ func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 	return
 }
 
-func (sess *activeSession) KickController(role pb.ControllerRole, announceHub ...bool) (err error) {
+func (sess *activeSession) KickController(role pb.ControllerRole, announceHub bool) (err error) {
 	sess.mutex.Lock()
 	if targetConn, ok := sess.controllerConn[role]; ok {
 		err = utils.SendMessage(targetConn, &pb.WSMessage{
@@ -55,7 +55,7 @@ func (sess *activeSession) KickController(role pb.ControllerRole, announceHub ..
 	delete(sess.controllerConn, role)
 	delete(sess.controllerName, role)
 	sess.mutex.Unlock()
-	if len(announceHub) > 0 && announceHub[0] {
+	if announceHub {
 		err = utils.SendMessage(sess.hubConn, &pb.WSMessage{
 			Type: pb.WSMessageType_JOIN,
 			Data: &pb.WSMessage_Join{
@@ -242,7 +242,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[ControllerCommandWorker] failed reading message. %s\n", err)
 			}
-			_ = sess.KickController(role)
+			_ = sess.KickController(role, true)
 			break
 		}
 		switch message.Type {
