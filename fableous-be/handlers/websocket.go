@@ -38,10 +38,10 @@ func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 	return
 }
 
-func (sess *activeSession) KickController(role pb.ControllerRole) (err error) {
+func (sess *activeSession) KickController(role pb.ControllerRole, announceHub ...bool) (err error) {
 	sess.mutex.Lock()
 	if targetConn, ok := sess.controllerConn[role]; ok {
-		_ = utils.SendMessage(targetConn, &pb.WSMessage{
+		err = utils.SendMessage(targetConn, &pb.WSMessage{
 			Type: pb.WSMessageType_JOIN,
 			Data: &pb.WSMessage_Join{
 				Join: &pb.WSJoinMessageData{
@@ -55,15 +55,18 @@ func (sess *activeSession) KickController(role pb.ControllerRole) (err error) {
 	delete(sess.controllerConn, role)
 	delete(sess.controllerName, role)
 	sess.mutex.Unlock()
-	return utils.SendMessage(sess.hubConn, &pb.WSMessage{
-		Type: pb.WSMessageType_JOIN,
-		Data: &pb.WSMessage_Join{
-			Join: &pb.WSJoinMessageData{
-				Role:    role,
-				Joining: false,
+	if len(announceHub) > 0 && announceHub[0] {
+		err = utils.SendMessage(sess.hubConn, &pb.WSMessage{
+			Type: pb.WSMessageType_JOIN,
+			Data: &pb.WSMessage_Join{
+				Join: &pb.WSJoinMessageData{
+					Role:    role,
+					Joining: false,
+				},
 			},
-		},
-	})
+		})
+	}
+	return
 }
 
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
@@ -186,7 +189,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 				_ = utils.SendMessage(sess.controllerConn[clearedController], message)
 			}
 			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != pb.ControllerRole_NONE {
-				_ = sess.KickController(kickedController)
+				_ = sess.KickController(kickedController, false)
 			}
 		case pb.WSMessageType_IMAGE:
 			go m.SavePayload(sess, message, true)
