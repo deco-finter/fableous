@@ -74,6 +74,7 @@ export default function LayerToolbar(props: {
                 })
               }
               joinedControllers={joinedControllers}
+              handleKickController={() => {}}
               needsHelp={helpControllers[role as StudentRole]}
               isDone={doneControllers[role as StudentRole]}
             />

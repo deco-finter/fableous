@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 import { ClickAwayListener, makeStyles, Tooltip } from "@material-ui/core";
 
-interface CanvasToolbarTooltipProps {
+interface ToolbarTooltipProps {
   children: ReactElement<any, any>;
   // cannot use tailwind classes on tooltipTitle due to mui portal DOM placement
   tooltipTitle:
@@ -9,9 +9,10 @@ interface CanvasToolbarTooltipProps {
     | React.ReactChild
     | React.ReactFragment
     | React.ReactPortal;
-  isOpen: boolean;
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isOpen?: boolean;
+  setIsOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   disableCloseOnClickAway?: boolean;
+  disabled?: boolean;
 }
 
 const useStyles = makeStyles({
@@ -23,9 +24,15 @@ const useStyles = makeStyles({
   },
 });
 
-const CanvasToolbarTooltip = (props: CanvasToolbarTooltipProps) => {
-  const { children, tooltipTitle, isOpen, setIsOpen, disableCloseOnClickAway } =
-    props;
+const ToolbarTooltip = (props: ToolbarTooltipProps) => {
+  const {
+    children,
+    tooltipTitle,
+    isOpen,
+    setIsOpen,
+    disableCloseOnClickAway,
+    disabled,
+  } = props;
 
   const classes = useStyles();
 
@@ -35,13 +42,15 @@ const CanvasToolbarTooltip = (props: CanvasToolbarTooltipProps) => {
       classes={{
         tooltip: classes.tooltip,
       }}
-      onClose={() => setIsOpen(false)}
-      open={isOpen}
+      onClose={() => setIsOpen && setIsOpen(false)}
+      open={isOpen && !disabled}
       placement="right"
       leaveTouchDelay={undefined}
-      disableFocusListener
-      disableHoverListener
-      disableTouchListener
+      disableFocusListener={!!setIsOpen || disabled}
+      disableHoverListener={!!setIsOpen || disabled}
+      disableTouchListener={!!setIsOpen || disabled}
+      enterDelay={!setIsOpen ? 500 : undefined}
+      enterTouchDelay={!setIsOpen ? 500 : undefined}
       title={tooltipTitle}
     >
       {children}
@@ -51,14 +60,17 @@ const CanvasToolbarTooltip = (props: CanvasToolbarTooltipProps) => {
   return disableCloseOnClickAway ? (
     customizedTooltip
   ) : (
-    <ClickAwayListener onClickAway={() => setIsOpen(false)}>
+    <ClickAwayListener onClickAway={() => setIsOpen && setIsOpen(false)}>
       {customizedTooltip}
     </ClickAwayListener>
   );
 };
 
-CanvasToolbarTooltip.defaultProps = {
+ToolbarTooltip.defaultProps = {
+  isOpen: undefined,
+  setIsOpen: undefined,
   disableCloseOnClickAway: false,
+  disabled: false,
 };
 
-export default CanvasToolbarTooltip;
+export default ToolbarTooltip;
