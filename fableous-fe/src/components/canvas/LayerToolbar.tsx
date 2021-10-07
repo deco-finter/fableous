@@ -58,7 +58,7 @@ export default function LayerToolbar(props: {
         style={{
           height: offsetHeight || "100%",
           maxHeight: "100%",
-          maxWidth: "100px",
+          maxWidth: "120px",
         }}
       >
         <Paper className="p-1 flex flex-col justify-evenly items-center min-h-full px-2 items-stretch">

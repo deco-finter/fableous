@@ -745,7 +745,7 @@ export default function HubCanvasPage() {
           </Grid>
         </Grid>
         <Grid container spacing={2} className="flex-1 my-4">
-          <Grid item xs={2} md={1}>
+          <Grid item xs={2}>
             <LayerToolbar
               offsetHeight={`${canvasOffsetHeight}px`}
               focusLayer={focusLayer}
@@ -758,7 +758,7 @@ export default function HubCanvasPage() {
               doneControllers={doneControllers}
             />
           </Grid>
-          <Grid item xs={10} md={11}>
+          <Grid item xs={10}>
             <div
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"

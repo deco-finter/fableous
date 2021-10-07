@@ -111,7 +111,7 @@ export default function LayerIcon(props: LayerIconProps) {
             <Icon fontSize="large">{ROLE_ICON[studentRole].icon}</Icon>
           </IconButton>
           <Typography
-            variant="subtitle2"
+            variant="subtitle1"
             className="-mt-4 font-bold pointer-events-none"
             style={{
               color:
