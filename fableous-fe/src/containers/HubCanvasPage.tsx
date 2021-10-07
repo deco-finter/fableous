@@ -215,7 +215,7 @@ export default function HubCanvasPage() {
             } else if (!joining) {
               setJoinedControllers((prev) => {
                 const prevCopy = { ...prev };
-                delete prevCopy[role];
+                delete prevCopy[role as StudentRole];
                 return prevCopy;
               });
               switch (role) {

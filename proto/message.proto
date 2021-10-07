@@ -20,10 +20,11 @@ enum WSMessageType {
 }
 
 enum ControllerRole {
-  HUB = 0;
-  STORY = 1;
-  CHARACTER = 2;
-  BACKGROUND = 3;
+  NONE = 0;
+  HUB = 1;
+  STORY = 2;
+  CHARACTER = 3;
+  BACKGROUND = 4;
 }
 
 message WSMessage {
@@ -58,8 +59,8 @@ message WSControlMessageData {
   bool next_page = 5;
   bool help = 6;
   bool done = 7;
-  optional ControllerRole clear = 8;
-  optional ControllerRole kick = 9;
+  ControllerRole clear = 8;
+  ControllerRole kick = 9;
 }
 
 message WSAchievementMessageData {

@@ -170,12 +170,12 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					}
 				}
 			}
-			if clearedController := message.Data.(*pb.WSMessage_Control).Control.Clear; clearedController != nil {
+			if clearedController := message.Data.(*pb.WSMessage_Control).Control.Clear; clearedController != pb.ControllerRole_NONE {
 				_ = utils.SendMessage(sess.hubConn, message)
-				_ = utils.SendMessage(sess.controllerConn[*clearedController], message)
+				_ = utils.SendMessage(sess.controllerConn[clearedController], message)
 			}
-			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != nil {
-				_ = sess.KickController(*kickedController)
+			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != pb.ControllerRole_NONE {
+				_ = sess.KickController(kickedController)
 			}
 		case pb.WSMessageType_IMAGE:
 			go m.SavePayload(sess, message, true)
