@@ -144,9 +144,6 @@ export default function HubCanvasPage() {
           }),
         }).finish()
       );
-      enqueueSnackbar(`${ROLE_ICON[role].text} kicked!`, {
-        variant: "warning",
-      });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [wsConn]
@@ -162,6 +159,9 @@ export default function HubCanvasPage() {
           }),
         }).finish()
       );
+      enqueueSnackbar(`${ROLE_ICON[role].text} kicked!`, {
+        variant: "warning",
+      });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [wsConn]
