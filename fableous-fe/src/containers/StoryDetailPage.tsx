@@ -47,7 +47,7 @@ export default function StoryDetailPage() {
   const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
     showTutorialButton: useMemo(() => true, []),
     localStorageKey: GALLERY_TUTORIAL_KEY,
-    onManualStartCallback: useCallback(() => true, []),
+    onManualStartCallback: useCallback(() => {}, []),
   });
   const canvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
