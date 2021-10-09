@@ -78,7 +78,7 @@ export default function LayerIcon(props: LayerIconProps) {
             >
               Clear
             </Button>
-            {joinedControllers[studentRole as StudentRole] && (
+            {joinedControllers[studentRole] && (
               <Button
                 className={classes.kickButton}
                 startIcon={<Icon>person_remove</Icon>}
