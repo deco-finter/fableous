@@ -33,7 +33,7 @@ import {
   protoToAchievement,
 } from "../components/achievement/achievement";
 import AchievementButton from "../components/achievement/AchievementButton";
-import { ROLE_ICON, ToolMode } from "../constant";
+import { ROLE_ICON, ToolMode, TUTORIAL_STYLE } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import CanvasToolbar from "../components/canvas/CanvasToolbar";
 import {
@@ -439,11 +439,7 @@ export default function ControllerCanvasPage() {
         floaterProps={{
           disableAnimation: true,
         }}
-        styles={{
-          options: {
-            zIndex: 10000,
-          },
-        }}
+        styles={TUTORIAL_STYLE}
       />
       <div
         style={{
