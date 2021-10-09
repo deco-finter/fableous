@@ -201,34 +201,72 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                   setIsOpen={setIsColorPickerOpen}
                   // cannot use tailwind classes due to using mui portal so tooltip works corrrectly eventhough overflow set in parent
                   tooltipTitle={
-                    <div
-                      style={{
-                        display: "flex",
-                      }}
-                    >
-                      {BRUSH_COLORS.map((color) => (
-                        <Button
-                          component="div"
-                          onClick={() => {
-                            setToolColorRememberPrev(color);
-                            setIsColorPickerOpen(false);
-                          }}
-                          style={{
-                            backgroundColor: color,
-                            width: "38px",
-                            height: "38px",
-                            padding: 0,
-                            margin: 4,
-                            minWidth: "auto",
-                            borderRadius: 4,
-                            border: `2px solid ${
-                              toolColor === color ? colors.orange.main : "#0000"
-                            }`,
-                          }}
-                          key={color}
-                        />
-                      ))}
-                    </div>
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                        }}
+                      >
+                        {BRUSH_COLORS.slice(0, BRUSH_COLORS.length / 2).map(
+                          (color) => (
+                            <Button
+                              component="div"
+                              onClick={() => {
+                                setToolColorRememberPrev(color);
+                                setIsColorPickerOpen(false);
+                              }}
+                              style={{
+                                backgroundColor: color,
+                                width: "38px",
+                                height: "38px",
+                                padding: 0,
+                                margin: 4,
+                                minWidth: "auto",
+                                borderRadius: 4,
+                                border: `2px solid ${
+                                  toolColor === color
+                                    ? colors.orange.main
+                                    : "#0000"
+                                }`,
+                              }}
+                              key={color}
+                            />
+                          )
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                        }}
+                      >
+                        {BRUSH_COLORS.slice(BRUSH_COLORS.length / 2).map(
+                          (color) => (
+                            <Button
+                              component="div"
+                              onClick={() => {
+                                setToolColorRememberPrev(color);
+                                setIsColorPickerOpen(false);
+                              }}
+                              style={{
+                                backgroundColor: color,
+                                width: "38px",
+                                height: "38px",
+                                padding: 0,
+                                margin: 4,
+                                minWidth: "auto",
+                                borderRadius: 4,
+                                border: `2px solid ${
+                                  toolColor === color
+                                    ? colors.orange.main
+                                    : "#0000"
+                                }`,
+                              }}
+                              key={color}
+                            />
+                          )
+                        )}
+                      </div>
+                    </>
                   }
                 >
                   <IconButton
