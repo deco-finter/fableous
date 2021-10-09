@@ -21,6 +21,7 @@ const useStyles = makeStyles({
     backgroundColor: "#FFFFFFD0",
     padding: 4,
     borderRadius: 8,
+    border: "1px solid #00000040",
   },
 });
 
