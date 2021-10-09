@@ -69,6 +69,7 @@ export default function useTutorial(config: {
               setTutorialState(TutorialState.ManuallyStarted);
             },
             disabled: isRunning,
+            classes: { root: "mr-4" },
           },
         },
       ]);
