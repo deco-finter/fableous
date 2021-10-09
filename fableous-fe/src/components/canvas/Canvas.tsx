@@ -606,6 +606,19 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       [setCursor, role, wsConn]
     );
 
+    const resetCanvas = () => {
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      setAudioPaths([]);
+      setTextShapes({});
+      setTextId(1);
+      setEditingTextId(0);
+      setCheckpointHistory([]);
+    };
+
     const readMessage = useCallback(
       async (ev: MessageEvent<ArrayBuffer>) => {
         const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
@@ -663,20 +676,25 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 msg.paint?.text as ToolMode.Paint
               );
               break;
+            case pb.WSMessageType.CONTROL:
+              if (msg.control?.clear === layer) {
+                resetCanvas();
+              }
+              break;
             default:
           }
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [
         layer,
-        canvasRef,
         placePaint,
         placeFill,
         placeText,
+        placeAudio,
         placeCheckpoint,
         placeUndo,
         placeCursor,
-        placeAudio,
       ]
     );
 
@@ -848,16 +866,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     // cleanup before moving to next page
     useEffect(() => {
-      const ctx = canvasRef.current.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-      const { width, height } = canvasRef.current;
-      ctx.clearRect(0, 0, width, height);
-      setAudioPaths([]);
-      setTextShapes({});
-      setTextId(1);
-      setEditingTextId(0);
-      setCheckpointHistory([]);
+      resetCanvas();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
 

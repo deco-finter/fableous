@@ -14,7 +14,7 @@ import { ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
 import { proto as pb } from "../../proto/message_pb";
 import BrushWidthIcon from "./BrushWidthIcon";
-import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
+import ToolbarTooltip from "./ToolbarTooltip";
 import { TutorialTargetId } from "../../tutorialTargetIds";
 import { BRUSH_COLORS, BRUSH_WIDTHS } from "./constants";
 import { colors } from "../../colors";
@@ -111,7 +111,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
               pb.ControllerRole.BACKGROUND,
             ].includes(role) && (
               <>
-                <CanvasToolbarTooltip
+                <ToolbarTooltip
                   isOpen={isWidthPickerOpen}
                   setIsOpen={setIsWidthPickerOpen}
                   tooltipTitle={
@@ -169,7 +169,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       strokeWidth={toolNormWidth * ICON_STROKE_WIDTH_RATIO}
                     />
                   </IconButton>
-                </CanvasToolbarTooltip>
+                </ToolbarTooltip>
                 <IconButton
                   id={TutorialTargetId.EraseTool}
                   onClick={() => {
@@ -196,39 +196,77 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 >
                   <FormatColorFillIcon fontSize="large" />
                 </IconButton>
-                <CanvasToolbarTooltip
+                <ToolbarTooltip
                   isOpen={isColorPickerOpen}
                   setIsOpen={setIsColorPickerOpen}
                   // cannot use tailwind classes due to using mui portal so tooltip works corrrectly eventhough overflow set in parent
                   tooltipTitle={
-                    <div
-                      style={{
-                        display: "flex",
-                      }}
-                    >
-                      {BRUSH_COLORS.map((color) => (
-                        <Button
-                          component="div"
-                          onClick={() => {
-                            setToolColorRememberPrev(color);
-                            setIsColorPickerOpen(false);
-                          }}
-                          style={{
-                            backgroundColor: color,
-                            width: "38px",
-                            height: "38px",
-                            padding: 0,
-                            margin: 4,
-                            minWidth: "auto",
-                            borderRadius: 4,
-                            border: `2px solid ${
-                              toolColor === color ? colors.orange.main : "#0000"
-                            }`,
-                          }}
-                          key={color}
-                        />
-                      ))}
-                    </div>
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                        }}
+                      >
+                        {BRUSH_COLORS.slice(0, BRUSH_COLORS.length / 2).map(
+                          (color) => (
+                            <Button
+                              component="div"
+                              onClick={() => {
+                                setToolColorRememberPrev(color);
+                                setIsColorPickerOpen(false);
+                              }}
+                              style={{
+                                backgroundColor: color,
+                                width: "38px",
+                                height: "38px",
+                                padding: 0,
+                                margin: 4,
+                                minWidth: "auto",
+                                borderRadius: 4,
+                                border: `2px solid ${
+                                  toolColor === color
+                                    ? colors.orange.main
+                                    : "#0000"
+                                }`,
+                              }}
+                              key={color}
+                            />
+                          )
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                        }}
+                      >
+                        {BRUSH_COLORS.slice(BRUSH_COLORS.length / 2).map(
+                          (color) => (
+                            <Button
+                              component="div"
+                              onClick={() => {
+                                setToolColorRememberPrev(color);
+                                setIsColorPickerOpen(false);
+                              }}
+                              style={{
+                                backgroundColor: color,
+                                width: "38px",
+                                height: "38px",
+                                padding: 0,
+                                margin: 4,
+                                minWidth: "auto",
+                                borderRadius: 4,
+                                border: `2px solid ${
+                                  toolColor === color
+                                    ? colors.orange.main
+                                    : "#0000"
+                                }`,
+                              }}
+                              key={color}
+                            />
+                          )
+                        )}
+                      </div>
+                    </>
                   }
                 >
                   <IconButton
@@ -247,7 +285,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       className="absolute bottom-1 right-1"
                     />
                   </IconButton>
-                </CanvasToolbarTooltip>
+                </ToolbarTooltip>
               </>
             )}
             {role === pb.ControllerRole.STORY && (
