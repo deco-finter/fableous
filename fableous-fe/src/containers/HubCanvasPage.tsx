@@ -134,6 +134,40 @@ export default function HubCanvasPage() {
     }
   }, [achievements, hubState, wsConn]);
 
+  const handleClearController = useCallback(
+    (role: StudentRole) => {
+      wsConn?.send(
+        pb.WSMessage.encode({
+          type: pb.WSMessageType.CONTROL,
+          control: pb.WSControlMessageData.create({
+            clear: role,
+          }),
+        }).finish()
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [wsConn]
+  );
+
+  const handleKickController = useCallback(
+    (role: StudentRole) => {
+      handleClearController(role);
+      wsConn?.send(
+        pb.WSMessage.encode({
+          type: pb.WSMessageType.CONTROL,
+          control: pb.WSControlMessageData.create({
+            kick: role,
+          }),
+        }).finish()
+      );
+      enqueueSnackbar(`${ROLE_ICON[role].text} kicked!`, {
+        variant: "warning",
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [wsConn]
+  );
+
   const wsMessageHandler = useCallback(
     async (ev: MessageEvent<ArrayBuffer>) => {
       const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
@@ -182,7 +216,7 @@ export default function HubCanvasPage() {
             } else if (!joining) {
               setJoinedControllers((prev) => {
                 const prevCopy = { ...prev };
-                delete prevCopy[role];
+                delete prevCopy[role as StudentRole];
                 return prevCopy;
               });
               switch (role) {
@@ -341,6 +375,7 @@ export default function HubCanvasPage() {
     setHelpControllers(INIT_FLAG);
     setDoneControllers(INIT_FLAG);
   };
+
   const onBeginDrawing = () => {
     onNextPage();
     setHubState(HubState.DrawingSession);
@@ -710,23 +745,25 @@ export default function HubCanvasPage() {
           </Grid>
         </Grid>
         <Grid container spacing={2} className="flex-1 my-4">
-          <Grid item xs={2} md={1}>
+          <Grid item xs={2}>
             <LayerToolbar
               offsetHeight={`${canvasOffsetHeight}px`}
               focusLayer={focusLayer}
               setFocusLayer={setFocusLayer}
               joinedControllers={joinedControllers}
+              handleClearController={handleClearController}
+              handleKickController={handleKickController}
               helpControllers={helpControllers}
               setHelpControllers={setHelpControllers}
               doneControllers={doneControllers}
             />
           </Grid>
-          <Grid item xs={10} md={11}>
+          <Grid item xs={10}>
             <div
               ref={canvasContainerRef}
               className="grid place-items-stretch h-full"
               style={{
-                border: "1px solid #0004",
+                border: "1px solid #0000",
               }}
             >
               <div

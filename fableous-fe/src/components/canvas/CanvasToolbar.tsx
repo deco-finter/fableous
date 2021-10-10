@@ -6,6 +6,7 @@ import PaletteIcon from "@material-ui/icons/Palette";
 import UndoIcon from "@material-ui/icons/Undo";
 import BrushIcon from "@material-ui/icons/Brush";
 import StopIcon from "@material-ui/icons/Stop";
+import StopRoundedIcon from "@material-ui/icons/StopRounded";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
 import { Button, IconButton, makeStyles, Typography } from "@material-ui/core";
 import EraserIcon from "./EraserIcon";
@@ -13,8 +14,10 @@ import { ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
 import { proto as pb } from "../../proto/message_pb";
 import BrushWidthIcon from "./BrushWidthIcon";
-import CanvasToolbarTooltip from "./CanvasToolbarTooltip";
+import ToolbarTooltip from "./ToolbarTooltip";
 import { TutorialTargetId } from "../../tutorialTargetIds";
+import { BRUSH_COLORS, BRUSH_WIDTHS } from "./constants";
+import { colors } from "../../colors";
 
 interface CanvasToolbarProps {
   role: pb.ControllerRole;
@@ -23,21 +26,12 @@ interface CanvasToolbarProps {
   setToolMode: React.Dispatch<React.SetStateAction<ToolMode>>;
   toolColor: string;
   setToolColor: React.Dispatch<React.SetStateAction<string>>;
-  toolWidth: number;
-  setToolWidth: React.Dispatch<React.SetStateAction<number>>;
+  toolNormWidth: number;
+  setToolNormWidth: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const COLORS = [
-  "#000000ff", // black
-  "#ff0000ff", // red
-  "#ffff00ff", // yellow
-  "#00ff00ff", // green
-  "#00ffffff", // cyan
-  "#0000ffff", // blue
-];
 const ERASE_COLOR = "#00000000";
-const BRUSH_WIDTHS = [4, 8, 12, 16, 20];
-const ICON_STROKE_WIDTH_RATIO = 1 / 4;
+const ICON_STROKE_WIDTH_RATIO = 128;
 
 const useStyles = makeStyles({
   hideScrollbar: {
@@ -61,8 +55,8 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
       setToolMode,
       toolColor,
       setToolColor,
-      toolWidth,
-      setToolWidth,
+      toolNormWidth,
+      setToolNormWidth,
       offsetHeight,
     } = props;
     const imperativeCanvasRef = ref as MutableRefObject<ImperativeCanvasRef>;
@@ -117,7 +111,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
               pb.ControllerRole.BACKGROUND,
             ].includes(role) && (
               <>
-                <CanvasToolbarTooltip
+                <ToolbarTooltip
                   isOpen={isWidthPickerOpen}
                   setIsOpen={setIsWidthPickerOpen}
                   tooltipTitle={
@@ -125,10 +119,17 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       {BRUSH_WIDTHS.map((brushWidth) => (
                         <IconButton
                           onClick={() => {
-                            setToolWidth(brushWidth);
+                            setToolNormWidth(brushWidth);
                             setIsWidthPickerOpen(false);
                           }}
-                          color="primary"
+                          color="secondary"
+                          style={{
+                            border: `2px solid ${
+                              toolNormWidth === brushWidth
+                                ? colors.orange.main
+                                : "#0000"
+                            }`,
+                          }}
                           key={brushWidth}
                         >
                           <BrushWidthIcon
@@ -165,10 +166,10 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                           ? "secondary"
                           : "primary"
                       }
-                      strokeWidth={toolWidth * ICON_STROKE_WIDTH_RATIO}
+                      strokeWidth={toolNormWidth * ICON_STROKE_WIDTH_RATIO}
                     />
                   </IconButton>
-                </CanvasToolbarTooltip>
+                </ToolbarTooltip>
                 <IconButton
                   id={TutorialTargetId.EraseTool}
                   onClick={() => {
@@ -195,36 +196,77 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 >
                   <FormatColorFillIcon fontSize="large" />
                 </IconButton>
-                <CanvasToolbarTooltip
+                <ToolbarTooltip
                   isOpen={isColorPickerOpen}
                   setIsOpen={setIsColorPickerOpen}
                   // cannot use tailwind classes due to using mui portal so tooltip works corrrectly eventhough overflow set in parent
                   tooltipTitle={
-                    <div
-                      style={{
-                        display: "flex",
-                      }}
-                    >
-                      {COLORS.map((color) => (
-                        <Button
-                          component="div"
-                          onClick={() => {
-                            setToolColorRememberPrev(color);
-                            setIsColorPickerOpen(false);
-                          }}
-                          style={{
-                            backgroundColor: color,
-                            width: "50px",
-                            height: "50px",
-                            padding: 0,
-                            marginLeft: "0.5rem",
-                            minWidth: "auto",
-                            borderRadius: 0,
-                          }}
-                          key={color}
-                        />
-                      ))}
-                    </div>
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                        }}
+                      >
+                        {BRUSH_COLORS.slice(0, BRUSH_COLORS.length / 2).map(
+                          (color) => (
+                            <Button
+                              component="div"
+                              onClick={() => {
+                                setToolColorRememberPrev(color);
+                                setIsColorPickerOpen(false);
+                              }}
+                              style={{
+                                backgroundColor: color,
+                                width: "38px",
+                                height: "38px",
+                                padding: 0,
+                                margin: 4,
+                                minWidth: "auto",
+                                borderRadius: 4,
+                                border: `2px solid ${
+                                  toolColor === color
+                                    ? colors.orange.main
+                                    : "#0000"
+                                }`,
+                              }}
+                              key={color}
+                            />
+                          )
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                        }}
+                      >
+                        {BRUSH_COLORS.slice(BRUSH_COLORS.length / 2).map(
+                          (color) => (
+                            <Button
+                              component="div"
+                              onClick={() => {
+                                setToolColorRememberPrev(color);
+                                setIsColorPickerOpen(false);
+                              }}
+                              style={{
+                                backgroundColor: color,
+                                width: "38px",
+                                height: "38px",
+                                padding: 0,
+                                margin: 4,
+                                minWidth: "auto",
+                                borderRadius: 4,
+                                border: `2px solid ${
+                                  toolColor === color
+                                    ? colors.orange.main
+                                    : "#0000"
+                                }`,
+                              }}
+                              key={color}
+                            />
+                          )
+                        )}
+                      </div>
+                    </>
                   }
                 >
                   <IconButton
@@ -234,7 +276,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                     className="relative"
                   >
                     <PaletteIcon fontSize="large" />
-                    <StopIcon
+                    <StopRoundedIcon
                       style={{
                         color:
                           toolColor === ERASE_COLOR ? prevColor : toolColor,
@@ -243,7 +285,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       className="absolute bottom-1 right-1"
                     />
                   </IconButton>
-                </CanvasToolbarTooltip>
+                </ToolbarTooltip>
               </>
             )}
             {role === pb.ControllerRole.STORY && (
@@ -255,15 +297,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                 >
                   <TextFieldsIcon fontSize="large" />
                 </IconButton>
-                <CanvasToolbarTooltip
-                  isOpen={isRecordingAudio}
-                  setIsOpen={setIsRecordingAudio}
-                  tooltipTitle={
-                    <Typography variant="body1">
-                      {showMmSsFromSeconds(recordingTimeElapsed)}
-                    </Typography>
-                  }
-                >
+                <div className="flex flex-col justify-center items-center relative">
                   <IconButton
                     id={TutorialTargetId.AudioTool}
                     onClick={() => {
@@ -285,7 +319,19 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       <MicIcon fontSize="large" />
                     )}
                   </IconButton>
-                </CanvasToolbarTooltip>
+                  {isRecordingAudio && (
+                    <Typography
+                      variant="subtitle2"
+                      className="font-bold absolute pointer-events-none"
+                      style={{
+                        color: colors.orange.main,
+                        bottom: -4,
+                      }}
+                    >
+                      {showMmSsFromSeconds(recordingTimeElapsed)}
+                    </Typography>
+                  )}
+                </div>
               </>
             )}
             <IconButton

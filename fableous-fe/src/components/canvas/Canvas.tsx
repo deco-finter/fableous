@@ -20,7 +20,13 @@ import {
   scaleUpXY,
   translateXY,
 } from "./helpers";
-import { SCALE, SELECT_PADDING } from "./constants";
+import {
+  BRUSH_WIDTHS,
+  SCALE,
+  SELECT_PADDING,
+  TEXT_COLOR,
+  TEXT_FONTSIZE,
+} from "./constants";
 import { Cursor } from "./CursorScreen";
 import { restAPI } from "../../api";
 import { ToolMode } from "../../constant";
@@ -53,7 +59,7 @@ interface CanvasProps {
   toolMode?: ToolMode;
   setToolMode?: React.Dispatch<React.SetStateAction<ToolMode>>;
   toolColor?: string;
-  toolWidth?: number;
+  toolNormWidth?: number;
   rootId?: string | undefined;
 }
 
@@ -65,7 +71,7 @@ const defaultProps = {
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
   setToolMode: () => {},
-  toolWidth: 8 * SCALE,
+  toolNormWidth: BRUSH_WIDTHS[1],
   rootId: undefined,
 };
 
@@ -96,7 +102,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       toolMode = defaultProps.toolMode,
       setToolMode = defaultProps.setToolMode,
       toolColor = defaultProps.toolColor,
-      toolWidth = defaultProps.toolWidth,
+      toolNormWidth = defaultProps.toolNormWidth,
       wsConn,
       rootId,
     } = props;
@@ -138,12 +144,13 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         x2: number,
         y2: number,
         targetColor: string,
-        targetWidth: number
+        targetNormwidth: number
       ) => {
         const ctx = canvasRef.current.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
         const isCoordEq = x1 === x2 && y1 === y2;
+        const [targetWidth] = scaleUpXY(canvasRef, targetNormwidth, 0);
         // lay down path
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -167,7 +174,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         if (role !== pb.ControllerRole.HUB) {
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
           const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
-          const [normWidth] = scaleDownXY(canvasRef, targetWidth, 0);
           wsConn?.send(
             pb.WSMessage.encode({
               role,
@@ -178,7 +184,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 x2: normX2,
                 y2: normY2,
                 color: targetColor,
-                width: normWidth,
+                width: targetNormwidth,
               },
               timestamp:
                 process.env.NODE_ENV === "development" ? Date.now() : undefined,
@@ -319,7 +325,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           shape.text,
           fontSize
         );
-        ctx.fillStyle = isGallery ? "#00000000" : "#000000";
+        ctx.fillStyle = isGallery ? "#00000000" : TEXT_COLOR;
         ctx.font = `${fontSize * SCALE}px Comic Sans MS`;
         ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
@@ -415,11 +421,10 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           showKeyboard(false);
         } else {
           // insert new text
-          const [normFontSize] = scaleDownXY(canvasRef, 18, 0);
           placeText(textId, {
             normX: normCursorX,
             normY: normCursorY,
-            normFontSize,
+            normFontSize: TEXT_FONTSIZE,
             text: "",
           } as TextShape);
           setEditingTextId(textId);
@@ -574,14 +579,14 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         normX: number,
         normY: number,
         normWidth: number,
-        targetMode: ToolMode
+        targetToolMode: ToolMode
       ) => {
         if (setCursor)
           setCursor({
             normX,
             normY,
             normWidth,
-            toolMode: targetMode,
+            toolMode: targetToolMode,
           } as Cursor);
         if (role !== pb.ControllerRole.HUB) {
           wsConn?.send(
@@ -592,7 +597,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 x1: normX,
                 y1: normY,
                 width: normWidth,
-                text: targetMode,
+                text: targetToolMode,
               },
             }).finish()
           );
@@ -600,6 +605,19 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       },
       [setCursor, role, wsConn]
     );
+
+    const resetCanvas = () => {
+      const ctx = canvasRef.current.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      const { width, height } = canvasRef.current;
+      ctx.clearRect(0, 0, width, height);
+      setAudioPaths([]);
+      setTextShapes({});
+      setTextId(1);
+      setEditingTextId(0);
+      setCheckpointHistory([]);
+    };
 
     const readMessage = useCallback(
       async (ev: MessageEvent<ArrayBuffer>) => {
@@ -615,7 +633,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             msg.paint?.x2 || 0,
             msg.paint?.y2 || 0
           );
-          const [width] = scaleUpXY(canvasRef, msg.paint?.width || 0, 0);
           switch (msg.type) {
             case pb.WSMessageType.PAINT:
               placePaint(
@@ -624,7 +641,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 x2,
                 y2,
                 msg.paint?.color || "#000000ff",
-                width || 8
+                msg.paint?.width || 0
               );
               if (process.env.NODE_ENV === "development")
                 console.log(
@@ -659,33 +676,37 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 msg.paint?.text as ToolMode.Paint
               );
               break;
+            case pb.WSMessageType.CONTROL:
+              if (msg.control?.clear === layer) {
+                resetCanvas();
+              }
+              break;
             default:
           }
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [
         layer,
-        canvasRef,
         placePaint,
         placeFill,
         placeText,
+        placeAudio,
         placeCheckpoint,
         placeUndo,
         placeCursor,
-        placeAudio,
       ]
     );
 
     const onPointerDown = (event: SimplePointerEventData) => {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
-      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-      placeCursor(normX, normY, normWidth, toolMode);
+      placeCursor(normX, normY, toolNormWidth, toolMode);
       onDraw();
       switch (toolMode) {
         case ToolMode.Paint:
           setDragging(true);
-          placePaint(x, y, x, y, toolColor, toolWidth);
+          placePaint(x, y, x, y, toolColor, toolNormWidth);
           setLastPos([x, y]);
           break;
         case ToolMode.Fill:
@@ -706,8 +727,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
-      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-      if (allowDrawing) placeCursor(normX, normY, normWidth, toolMode);
+      if (allowDrawing) placeCursor(normX, normY, toolNormWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
           if (!dragging || !allowDrawing) return;
@@ -716,13 +736,13 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             Math.round(lastY) === Math.round(y)
           )
             return;
-          placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+          placePaint(lastX, lastY, x, y, toolColor, toolNormWidth);
           break;
         case ToolMode.Text:
           if (!editingTextId || hasLifted || !allowDrawing) return;
-          const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           showKeyboard(false);
+          const shape = textShapesRef.current[editingTextId];
           placeText(editingTextId, {
             ...shape,
             normX: normX + dragOffset[0],
@@ -744,10 +764,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       switch (toolMode) {
         case ToolMode.Paint:
           if (dragging) {
-            placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+            placePaint(lastX, lastY, x, y, toolColor, toolNormWidth);
             const [normX, normY] = scaleDownXY(canvasRef, x, y);
-            const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-            placeCursor(normX, normY, normWidth, toolMode);
+            placeCursor(normX, normY, toolNormWidth, toolMode);
             placeCheckpoint(toolMode);
           }
           break;
@@ -847,16 +866,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     // cleanup before moving to next page
     useEffect(() => {
-      const ctx = canvasRef.current.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-      const { width, height } = canvasRef.current;
-      ctx.clearRect(0, 0, width, height);
-      setAudioPaths([]);
-      setTextShapes({});
-      setTextId(1);
-      setEditingTextId(0);
-      setCheckpointHistory([]);
+      resetCanvas();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNum]);
 

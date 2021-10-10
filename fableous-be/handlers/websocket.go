@@ -38,6 +38,37 @@ func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 	return
 }
 
+func (sess *activeSession) KickController(role pb.ControllerRole, announceHub bool) (err error) {
+	sess.mutex.Lock()
+	if targetConn, ok := sess.controllerConn[role]; ok {
+		err = utils.SendMessage(targetConn, &pb.WSMessage{
+			Type: pb.WSMessageType_JOIN,
+			Data: &pb.WSMessage_Join{
+				Join: &pb.WSJoinMessageData{
+					Role:    pb.ControllerRole_HUB,
+					Joining: false,
+				},
+			},
+		})
+		_ = targetConn.Close()
+	}
+	delete(sess.controllerConn, role)
+	delete(sess.controllerName, role)
+	sess.mutex.Unlock()
+	if announceHub {
+		err = utils.SendMessage(sess.hubConn, &pb.WSMessage{
+			Type: pb.WSMessageType_JOIN,
+			Data: &pb.WSMessage_Join{
+				Join: &pb.WSJoinMessageData{
+					Role:    role,
+					Joining: false,
+				},
+			},
+		})
+	}
+	return
+}
+
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
 	var session models.Session
@@ -153,6 +184,13 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					}
 				}
 			}
+			if clearedController := message.Data.(*pb.WSMessage_Control).Control.Clear; clearedController != pb.ControllerRole_NONE {
+				_ = utils.SendMessage(sess.hubConn, message)
+				_ = utils.SendMessage(sess.controllerConn[clearedController], message)
+			}
+			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != pb.ControllerRole_NONE {
+				_ = sess.KickController(kickedController, false)
+			}
 		case pb.WSMessageType_IMAGE:
 			go m.SavePayload(sess, message, true)
 		case pb.WSMessageType_MANIFEST:
@@ -204,18 +242,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[ControllerCommandWorker] failed reading message. %s\n", err)
 			}
-			sess.mutex.Lock()
-			delete(sess.controllerConn, role)
-			sess.mutex.Unlock()
-			_ = utils.SendMessage(sess.hubConn, &pb.WSMessage{
-				Type: pb.WSMessageType_JOIN,
-				Data: &pb.WSMessage_Join{
-					Join: &pb.WSJoinMessageData{
-						Role:    role,
-						Joining: false,
-					},
-				},
-			})
+			_ = sess.KickController(role, true)
 			break
 		}
 		switch message.Type {

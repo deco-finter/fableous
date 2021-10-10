@@ -8,9 +8,16 @@ export enum ToolMode {
   None = "NONE",
 }
 
-export type StudentRole = Exclude<pb.ControllerRole, pb.ControllerRole.HUB>;
+export type StudentRole = Exclude<
+  pb.ControllerRole,
+  pb.ControllerRole.NONE | pb.ControllerRole.HUB
+>;
 
 export const ROLE_ICON = {
+  [pb.ControllerRole.NONE]: {
+    icon: "",
+    text: "",
+  },
   [pb.ControllerRole.STORY]: {
     icon: "textsms",
     text: "Story",

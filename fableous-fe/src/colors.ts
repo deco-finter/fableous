@@ -1,5 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-bitwise */
+import { colors as muiColors } from "@material-ui/core";
+
 export const colors = {
   orange: {
     light: "#FF704F",
@@ -21,6 +23,8 @@ export const colors = {
   },
   black: "#000000",
   green: "#43A047",
+  warning: muiColors.amber[800],
+  error: muiColors.red[700],
 };
 
 export const generateColor = (seed: string): string => {

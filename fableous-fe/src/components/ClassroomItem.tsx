@@ -35,12 +35,12 @@ const useStyles = makeStyles(() => ({
   },
   deleteButton: {
     "&:hover": {
-      background: colors.red.main,
+      background: colors.error,
     },
     position: "absolute",
     right: -8,
     top: -8,
-    background: colors.red.main,
+    background: colors.error,
     color: colors.white,
   },
 }));
@@ -277,7 +277,11 @@ export default function ClassroomItem(props: {
           <Button onClick={() => setDeleting(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} color="secondary">
+          <Button
+            onClick={handleDelete}
+            style={{ color: colors.error }}
+            startIcon={<Icon fontSize="small">delete</Icon>}
+          >
             Delete
           </Button>
         </DialogActions>
@@ -297,7 +301,7 @@ export default function ClassroomItem(props: {
           </Button>
           <Button
             onClick={handleDeleteOngoingSession}
-            color="secondary"
+            style={{ color: colors.error }}
             endIcon={<Icon fontSize="small">stop</Icon>}
           >
             Stop
