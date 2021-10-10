@@ -55,8 +55,9 @@ export default function AchievementButton(props: {
   achievements: Achievement;
   confetti?: boolean;
   notify?: boolean;
+  rootId?: string;
 }) {
-  const { achievements, confetti, notify } = props;
+  const { achievements, confetti, notify, rootId } = props;
   const prevAchievementsRef = useRef<Achievement>(achievements);
   const { enqueueSnackbar } = useSnackbar();
   const [showing, setShowing] = useState(false);
@@ -97,7 +98,7 @@ export default function AchievementButton(props: {
   const classes = useStyles();
 
   return (
-    <>
+    <div id={rootId}>
       <Chip
         onClick={() => setShowing(true)}
         color="primary"
@@ -188,11 +189,12 @@ export default function AchievementButton(props: {
           </DialogContentText>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
 
 AchievementButton.defaultProps = {
   confetti: false,
   notify: true,
+  rootId: undefined,
 };

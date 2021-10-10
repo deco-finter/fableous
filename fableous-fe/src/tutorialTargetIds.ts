@@ -10,4 +10,7 @@ export enum TutorialTargetId {
   TextTool = "canvasToolbarIcon-text",
   AudioTool = "canvasToolbarIcon-audio",
   UndoTool = "canvasToolbarIcon-undo",
+  ImageButton = "galleryImageList",
+  Image = "imageDisplay",
+  AchievementButton = "toolbarIcon-achievement",
 }
