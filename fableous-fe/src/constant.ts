@@ -1,3 +1,5 @@
+import { Styles } from "react-joyride";
+import { colors } from "./colors";
 import { proto as pb } from "./proto/message_pb";
 
 export enum ToolMode {
@@ -33,5 +35,21 @@ export const ROLE_ICON = {
   [pb.ControllerRole.HUB]: {
     icon: "web",
     text: "Background",
+  },
+};
+
+export const TUTORIAL_STYLE: Styles = {
+  options: {
+    primaryColor: colors.orange.main,
+    zIndex: 10000,
+  },
+  buttonNext: {
+    borderRadius: 18,
+  },
+  tooltip: {
+    borderRadius: 24,
+  },
+  spotlight: {
+    borderRadius: 48,
   },
 };
