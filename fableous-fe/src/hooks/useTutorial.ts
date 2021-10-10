@@ -25,13 +25,13 @@ enum TutorialState {
 export default function useTutorial(config: {
   showTutorialButton: boolean;
   localStorageKey: string;
-  onManualStartCallback?: () => void;
+  onManualStartCallback: () => void;
   duration?: number;
 }): [boolean, (data: CallBackProps) => void] {
   const {
     showTutorialButton,
     localStorageKey,
-    onManualStartCallback = () => {},
+    onManualStartCallback,
     duration = ONE_DAY,
   } = config;
 
@@ -69,6 +69,7 @@ export default function useTutorial(config: {
               setTutorialState(TutorialState.ManuallyStarted);
             },
             disabled: isRunning,
+            classes: { root: "mr-4" },
           },
         },
       ]);

@@ -16,8 +16,10 @@ import React, {
   useCallback,
   createRef,
   RefObject,
+  useMemo,
 } from "react";
 import { useParams } from "react-router-dom";
+import Joyride, { Step } from "react-joyride";
 import { restAPI } from "../api";
 import AchievementButton from "../components/achievement/AchievementButton";
 import { EmptyAchievement } from "../components/achievement/achievement";
@@ -30,7 +32,10 @@ import { colors } from "../colors";
 import { APIResponse, Manifest, Session } from "../data";
 import useContainRatio from "../hooks/useContainRatio";
 import { proto as pb } from "../proto/message_pb";
+import { TutorialTargetId } from "../tutorialTargetIds";
+import useTutorial from "../hooks/useTutorial";
 
+const GALLERY_TUTORIAL_KEY = "galleryTutorial";
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -38,6 +43,12 @@ export default function StoryDetailPage() {
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+
+  const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
+    showTutorialButton: useMemo(() => true, []),
+    localStorageKey: GALLERY_TUTORIAL_KEY,
+    onManualStartCallback: useCallback(() => {}, []),
+  });
   const canvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
     runUndo: () => {},
@@ -96,6 +107,52 @@ export default function StoryDetailPage() {
     player.play();
   }, [audioPaths]);
 
+  const commonTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${TutorialTargetId.NavbarTutorial}`,
+        content:
+          "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
+        placement: "bottom",
+        disableBeacon: true,
+        // wierdly, close behavior is like next step, unsure on how to fix it
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.Image}`,
+        content: "You will see the result of tbe combined drawing here.",
+        placement: "center",
+        disableBeacon: true,
+        // wierdly, close behavior is like next step, unsure on how to fix it
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.ImageButton}`,
+        content:
+          "You will see the list of the pages here, click on one to show larger version.",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.AchievementButton}`,
+        content: "You can see this story achievement here.",
+        placement: "top",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.AudioTool}`,
+        content: "You can access this story audio here.",
+        placement: "top",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+  const tutorialSteps = commonTutorialSteps;
+
   useEffect(() => {
     executeGetClassroomDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +187,26 @@ export default function StoryDetailPage() {
 
   return (
     <Grid container className="relative">
+      <Joyride
+        callback={handleJoyrideCallback}
+        continuous
+        run={isTutorialRunning}
+        scrollToFirstStep
+        showProgress
+        showSkipButton
+        disableOverlayClose
+        disableScrollParentFix
+        disableScrolling
+        steps={tutorialSteps}
+        floaterProps={{
+          disableAnimation: true,
+        }}
+        styles={{
+          options: {
+            zIndex: 10000,
+          },
+        }}
+      />
       <div
         className="flex flex-col absolute w-full"
         style={{
@@ -168,6 +245,7 @@ export default function StoryDetailPage() {
             }}
           >
             <ImageList
+              id={TutorialTargetId.ImageButton}
               ref={listContainerRef}
               className="overflow-y-auto gap-y-2 flex content-between"
               style={{ alignSelf: "center", borderRadius: 16 }}
@@ -240,6 +318,7 @@ export default function StoryDetailPage() {
                 }}
               >
                 <Canvas
+                  rootId={TutorialTargetId.Image}
                   ref={canvasRef}
                   wsConn={undefined}
                   role={pb.ControllerRole.HUB}
@@ -297,10 +376,12 @@ export default function StoryDetailPage() {
               chips={[
                 `Page ${page} of ${story?.data?.pages || ""}`,
                 <AchievementButton
+                  rootId={TutorialTargetId.AchievementButton}
                   achievements={achievements?.achievements || EmptyAchievement}
                   notify={false}
                 />,
                 {
+                  id: TutorialTargetId.AudioTool,
                   icon: <Icon fontSize="medium">music_note</Icon>,
                   label: "Play Audio",
                   onClick: playAudio,
