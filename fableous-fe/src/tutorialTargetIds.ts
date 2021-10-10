@@ -13,4 +13,6 @@ export enum TutorialTargetId {
   ImageButton = "galleryImageList",
   Image = "imageDisplay",
   AchievementButton = "toolbarIcon-achievement",
+  HelpButton = "canvasToolbarIcon-help",
+  DoneButton = "canvasToolbarIcon-done",
 }

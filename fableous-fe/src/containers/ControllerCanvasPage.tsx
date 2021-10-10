@@ -240,12 +240,12 @@ export default function ControllerCanvasPage() {
     setIsDone(true);
   };
 
-  const commonTutorialSteps: Step[] = useMemo(
+  const commonPreTutorialSteps: Step[] = useMemo(
     () => [
       {
         target: `#${TutorialTargetId.NavbarTutorial}`,
         content:
-          "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
+          "Do you want to go through the tutorial? You can access it anytime by clicking this Tutorial button.",
         placement: "bottom",
         disableBeacon: true,
         // wierdly, close behavior is like next step, unsure on how to fix it
@@ -254,7 +254,7 @@ export default function ControllerCanvasPage() {
       {
         target: `#${TutorialTargetId.ControllerTopChipRow}`,
         content:
-          "You will be assigned a role and collaboratively draw a story based on a theme.",
+          "You will be assigned a drawing role and collaboratively draw a story based on the given theme.",
         placement: "bottom",
         disableBeacon: true,
         hideCloseButton: true,
@@ -262,7 +262,7 @@ export default function ControllerCanvasPage() {
       {
         target: `#${TutorialTargetId.ControllerCanvas}`,
         content:
-          "You will only see your own drawing here, see teacher's hub screen for the combined drawing.",
+          "You will only see your own drawing here, look at the teacher's hub screen to see the combined drawing with the other roles.",
         placement: "center",
         disableBeacon: true,
         hideCloseButton: true,
@@ -275,35 +275,36 @@ export default function ControllerCanvasPage() {
     () => [
       {
         target: `#${TutorialTargetId.BrushTool}`,
-        content: "Use brush to draw",
+        content: "Use the Brush to draw. You can change the brush size too.",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.EraseTool}`,
-        content: "Use eraser to erase",
+        content: "Use the Eraser to erase your drawing.",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.FillTool}`,
-        content: "Use bucket to fill with selected colour",
+        content:
+          "Use the Bucket Tool to fill an area with the selected colour.",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.PaletteTool}`,
-        content: "Use palette to choose a colour",
+        content: "Use the Palette to select a colour.",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.UndoTool}`,
-        content: "Use undo to undo a recent action",
+        content: "Use Undo to revert the last action.",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
@@ -316,22 +317,54 @@ export default function ControllerCanvasPage() {
     () => [
       {
         target: `#${TutorialTargetId.TextTool}`,
-        content: "Use text to write a story using keyboard",
+        content:
+          "Use the Text Tool to write a story. Click on placed texts to edit them. You can also move the texts around by dragging them.",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.AudioTool}`,
-        content: "Use microphone to record a story",
+        content:
+          "Use the Microphone to record a story narration. Only your last recording will be used!",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.UndoTool}`,
-        content: "Use undo to undo a recent action",
+        content: "Use Undo to revert the last action.",
         placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
+
+  const commonPostTutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${TutorialTargetId.AchievementButton}`,
+        content:
+          "You can see the story's achievement here. Try to achieve them all!",
+        placement: "top",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.HelpButton}`,
+        content:
+          "Click on the Help button if you need some help from your teacher.",
+        placement: "top",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.DoneButton}`,
+        content:
+          "Click on the Done button once you are done with your drawing.",
+        placement: "top",
         disableBeacon: true,
         hideCloseButton: true,
       },
@@ -341,10 +374,20 @@ export default function ControllerCanvasPage() {
 
   const tutorialSteps = useMemo(
     () =>
-      role === pb.ControllerRole.STORY
-        ? commonTutorialSteps.concat(storyTutorialSteps)
-        : commonTutorialSteps.concat(drawingTutorialSteps),
-    [role, commonTutorialSteps, storyTutorialSteps, drawingTutorialSteps]
+      commonPreTutorialSteps
+        .concat(
+          role === pb.ControllerRole.STORY
+            ? storyTutorialSteps
+            : drawingTutorialSteps
+        )
+        .concat(commonPostTutorialSteps),
+    [
+      role,
+      commonPreTutorialSteps,
+      commonPostTutorialSteps,
+      drawingTutorialSteps,
+      storyTutorialSteps,
+    ]
   );
 
   // setup event listeners on ws connection
@@ -788,17 +831,20 @@ export default function ControllerCanvasPage() {
               chips={[
                 `Page ${currentPageIdx} of ${storyDetails?.pages || "-"}`,
                 <AchievementButton
+                  rootId={TutorialTargetId.AchievementButton}
                   achievements={achievements}
                   confetti
                   notify
                 />,
                 {
+                  id: TutorialTargetId.HelpButton,
                   icon: <Icon fontSize="small">pan_tool</Icon>,
                   label: "Help",
                   onClick: handleHelp,
                   disabled: helpCooldown,
                 } as ChipProps,
                 {
+                  id: TutorialTargetId.DoneButton,
                   icon: (
                     <Icon
                       fontSize="medium"

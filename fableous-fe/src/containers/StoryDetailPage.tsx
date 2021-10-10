@@ -108,12 +108,12 @@ export default function StoryDetailPage() {
     player.play();
   }, [audioPaths]);
 
-  const commonTutorialSteps: Step[] = useMemo(
+  const tutorialSteps: Step[] = useMemo(
     () => [
       {
         target: `#${TutorialTargetId.NavbarTutorial}`,
         content:
-          "Do you want to go through the tutorial? You can access it anytime by clicking the help icon.",
+          "Do you want to go through the tutorial? You can access it anytime by clicking this Tutorial button.",
         placement: "bottom",
         disableBeacon: true,
         // wierdly, close behavior is like next step, unsure on how to fix it
@@ -121,30 +121,29 @@ export default function StoryDetailPage() {
       },
       {
         target: `#${TutorialTargetId.Image}`,
-        content: "You will see the result of tbe combined drawing here.",
+        content: "The combined drawing is shown here.",
         placement: "center",
         disableBeacon: true,
-        // wierdly, close behavior is like next step, unsure on how to fix it
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.ImageButton}`,
         content:
-          "You will see the list of the pages here, click on one to show larger version.",
+          "You will see the list of the pages here, click on one of them to jump to that page.",
         placement: "right",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.AchievementButton}`,
-        content: "You can see this story achievement here.",
+        content: "You can see the story's achievements here.",
         placement: "top",
         disableBeacon: true,
         hideCloseButton: true,
       },
       {
         target: `#${TutorialTargetId.AudioTool}`,
-        content: "You can access this story audio here.",
+        content: "You can play this story's narration audio here.",
         placement: "top",
         disableBeacon: true,
         hideCloseButton: true,
@@ -152,7 +151,6 @@ export default function StoryDetailPage() {
     ],
     []
   );
-  const tutorialSteps = commonTutorialSteps;
 
   useEffect(() => {
     executeGetClassroomDetail();
