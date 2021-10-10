@@ -34,6 +34,7 @@ import useContainRatio from "../hooks/useContainRatio";
 import { proto as pb } from "../proto/message_pb";
 import { TutorialTargetId } from "../tutorialTargetIds";
 import useTutorial from "../hooks/useTutorial";
+import { TUTORIAL_STYLE } from "../constant";
 
 const GALLERY_TUTORIAL_KEY = "galleryTutorial";
 export default function StoryDetailPage() {
@@ -201,11 +202,7 @@ export default function StoryDetailPage() {
         floaterProps={{
           disableAnimation: true,
         }}
-        styles={{
-          options: {
-            zIndex: 10000,
-          },
-        }}
+        styles={TUTORIAL_STYLE}
       />
       <div
         className="flex flex-col absolute w-full"
