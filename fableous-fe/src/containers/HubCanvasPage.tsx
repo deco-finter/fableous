@@ -41,6 +41,7 @@ import { ASPECT_RATIO } from "../components/canvas/constants";
 import ChipRow from "../components/ChipRow";
 import FormikTagField from "../components/FormikTagField";
 import LayerToolbar from "../components/canvas/LayerToolbar";
+// import { TimerRounded } from "@material-ui/icons";
 
 const INIT_FLAG = {
   [ControllerRole.Story]: false,
@@ -53,7 +54,6 @@ enum HubState {
   WaitingRoom = "WAITING_ROOM",
   DrawingSession = "DRAWING_SESSION",
 }
-
 
 export default function HubCanvasPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
@@ -85,19 +85,21 @@ export default function HubCanvasPage() {
 
   const storyCanvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
-    runUndo: () => { },
-    runAudio: () => { },
+    runUndo: () => {},
+    runAudio: () => {},
   });
   const characterCanvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
-    runUndo: () => { },
-    runAudio: () => { },
+    runUndo: () => {},
+    runAudio: () => {},
   });
   const backgroundCanvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
-    runUndo: () => { },
-    runAudio: () => { },
+    runUndo: () => {},
+    runAudio: () => {},
   });
+  // const timerRef = useRef();
+  const timerRef = useRef<NodeJS.Timeout>();
   const [storyTextShapes, setStoryTextShapes] = useState<TextShapeMap>({});
   const [CharacterTextShapes, setCharacterTextShapes] = useState<TextShapeMap>(
     {}
@@ -133,8 +135,7 @@ export default function HubCanvasPage() {
     }
   >(INIT_FLAG);
 
-
-  const broadcastAchievement = useCallbac1k(() => {
+  const broadcastAchievement = useCallback(() => {
     if (hubState === HubState.DrawingSession) {
       wsConn?.send(
         JSON.stringify({
@@ -222,7 +223,8 @@ export default function HubCanvasPage() {
               // show error if controller disconnects during drawing session
               if (!joining && hubState === HubState.DrawingSession) {
                 enqueueSnackbar(
-                  `${role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
+                  `${
+                    role.charAt(0).toUpperCase() + role.toLowerCase().slice(1)
                   } leaves the room!`,
                   {
                     variant: "error",
@@ -361,13 +363,14 @@ export default function HubCanvasPage() {
 
   const nextPageOnTimer = () => {
     // tutup
-
-  }
+  };
   const setTimer = () => {
-    // TODO create timer 
+    // TODO create timer
     // set timer funcion()
-    
-  }
+
+    clearTimeout(parseInt(timerRef.current));
+    timerRef.current = setTimeout(nextPageOnTimer, 5000);
+  };
 
   const onBeginDrawing = () => {
     onNextPage();
@@ -389,7 +392,7 @@ export default function HubCanvasPage() {
   // setup event listeners on ws connection
   useEffect(() => {
     if (!wsConn) {
-      return () => { };
+      return () => {};
     }
 
     wsConn.addEventListener("message", wsAchievementHandler);
@@ -710,8 +713,9 @@ export default function HubCanvasPage() {
         )}
       </div>
       <div
-        className={`flex flex-col w-full ${hubState !== HubState.DrawingSession && "invisible overflow-y-hidden"
-          }`}
+        className={`flex flex-col w-full ${
+          hubState !== HubState.DrawingSession && "invisible overflow-y-hidden"
+        }`}
         style={{
           // 64px navbar height, 20px content top padding, 48px content bot padding
           height: "calc(100vh - 132px)",
@@ -755,10 +759,11 @@ export default function HubCanvasPage() {
               }}
             >
               <div
-                className={`grid ${focusLayer &&
+                className={`grid ${
+                  focusLayer &&
                   focusLayer !== ControllerRole.Story &&
                   "invisible"
-                  }`}
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -775,10 +780,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${focusLayer &&
+                className={`grid ${
+                  focusLayer &&
                   focusLayer !== ControllerRole.Character &&
                   "invisible"
-                  }`}
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -795,10 +801,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${focusLayer &&
+                className={`grid ${
+                  focusLayer &&
                   focusLayer !== ControllerRole.Background &&
                   "invisible"
-                  }`}
+                }`}
                 style={{
                   gridRowStart: 1,
                   gridColumnStart: 1,
@@ -815,10 +822,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${focusLayer &&
+                className={`grid ${
+                  focusLayer &&
                   focusLayer !== ControllerRole.Story &&
                   "invisible"
-                  }`}
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 12 }}
               >
                 <Canvas
@@ -838,10 +846,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${focusLayer &&
+                className={`grid ${
+                  focusLayer &&
                   focusLayer !== ControllerRole.Character &&
                   "invisible"
-                  }`}
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 11 }}
               >
                 <Canvas
@@ -861,10 +870,11 @@ export default function HubCanvasPage() {
                 />
               </div>
               <div
-                className={`grid ${focusLayer &&
+                className={`grid ${
+                  focusLayer &&
                   focusLayer !== ControllerRole.Background &&
                   "invisible"
-                  }`}
+                }`}
                 style={{ gridRowStart: 1, gridColumnStart: 1, zIndex: 10 }}
               >
                 <Canvas
