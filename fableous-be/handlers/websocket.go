@@ -134,7 +134,7 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken string, ro
 			Type: pb.WSMessageType_ERROR,
 			Data: &pb.WSMessage_Error{
 				Error: &pb.WSErrorMessageData{
-					Error: fmt.Sprintf("%s role already connected!", strings.Title(strings.ToLower(role.String()))),
+					Error: fmt.Sprintf("%s role already joined! Try choosing another role!", strings.Title(strings.ToLower(role.String()))),
 				},
 			},
 		})
