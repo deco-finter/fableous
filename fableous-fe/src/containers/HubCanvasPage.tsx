@@ -557,7 +557,7 @@ export default function HubCanvasPage() {
                           <FormikTagField
                             formik={formik}
                             name="description"
-                            label="Description"
+                            label="Description Tags"
                             maxTags={3}
                             maxTagLength={10}
                             tagProps={{
