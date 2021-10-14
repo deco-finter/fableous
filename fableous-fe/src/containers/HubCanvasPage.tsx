@@ -99,7 +99,7 @@ export default function HubCanvasPage() {
     runAudio: () => {},
   });
   // const timerRef = useRef();
-  const timerRef = useRef<NodeJS.Timeout>();
+  // const timerRef = useRef<NodeJS.Timeout>();
   const [storyTextShapes, setStoryTextShapes] = useState<TextShapeMap>({});
   const [CharacterTextShapes, setCharacterTextShapes] = useState<TextShapeMap>(
     {}
@@ -348,7 +348,6 @@ export default function HubCanvasPage() {
         } as WSMessage)
       );
     }
-    setTimer();
     setHubState(HubState.DrawingSession);
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
@@ -361,16 +360,32 @@ export default function HubCanvasPage() {
     setDoneControllers(INIT_FLAG);
   };
 
-  const nextPageOnTimer = () => {
-    // tutup
-  };
-  const setTimer = () => {
-    // TODO create timer
-    // set timer funcion()
+  // const nextPageOnTimer = () => {
+  //   // tutup
+  // };
+  // const setTimer = () => {
+  //   // TODO create timer
+  //   // set timer funcion()
+  //   clearTimeout(parseInt(timerRef.current));
+  //   timerRef.current = setTimeout(nextPageOnTimer, 5000);
+  // };
+  // karena lu ga provide default value, type testRef bakal Timeout | undefined
+  // karena pas awal2 dia undefined
+  const testRef = useRef<NodeJS.Timeout>();
 
-    clearTimeout(parseInt(timerRef.current));
-    timerRef.current = setTimeout(nextPageOnTimer, 5000);
-  };
+  useEffect(() => {
+    if (testRef.current !== undefined) {
+      // di case lu tadi dia complain, clearTimeout terima type Timeout, tapi lu kasih Timeout | undefined
+      // kl dibungkus if condition, type testRef.current bakal jadi cuma Timeout
+
+      // alternative lain kl  ga mau pake if condition nya, ngeset default value di useRef
+      // gw not sure default value yg kita bisa kasih pas useRef buat dummy timeout itu apa
+      clearTimeout(testRef.current);
+    }
+    testRef.current = setTimeout(() => {
+      console.log("hoho");
+    }, 5000);
+  }, [testRef]);
 
   const onBeginDrawing = () => {
     onNextPage();
