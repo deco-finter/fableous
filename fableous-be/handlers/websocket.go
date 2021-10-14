@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -71,17 +72,25 @@ func (sess *activeSession) KickController(role pb.ControllerRole, announceHub bo
 
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	var session models.Session
-	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
-		log.Printf("no active session. %s\n", err)
-		return
-	}
 	var conn *websocket.Conn
 	if conn, err = m.upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting hub websocket. %s\n", err)
 		return
 	}
 	defer conn.Close()
+	var session models.Session
+	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
+		log.Printf("no active session. %s\n", err)
+		_ = utils.SendMessage(conn, &pb.WSMessage{
+			Type: pb.WSMessageType_ERROR,
+			Data: &pb.WSMessage_Error{
+				Error: &pb.WSErrorMessageData{
+					Error: "Classroom has no active session!",
+				},
+			},
+		})
+		return
+	}
 	classroomToken := utils.GenerateRandomString(constants.ClassroomTokenLength)
 	sess := &activeSession{
 		classroomToken: classroomToken,
@@ -100,21 +109,37 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 
 func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken string, role pb.ControllerRole, name string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	var sess *activeSession
-	if sess = m.GetClassroomActiveSession(classroomToken); sess == nil {
-		log.Println("session not activated")
-		return
-	}
-	if conn := m.GetActiveSessionController(sess, role); conn != nil {
-		log.Println("role already connected")
-		return
-	}
 	var conn *websocket.Conn
 	if conn, err = m.upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting controller websocket. %s\n", err)
 		return
 	}
 	defer conn.Close()
+	var sess *activeSession
+	if sess = m.GetClassroomActiveSession(classroomToken); sess == nil {
+		log.Println("invalid token")
+		_ = utils.SendMessage(conn, &pb.WSMessage{
+			Type: pb.WSMessageType_ERROR,
+			Data: &pb.WSMessage_Error{
+				Error: &pb.WSErrorMessageData{
+					Error: "Invalid token!",
+				},
+			},
+		})
+		return
+	}
+	if existingConn := m.GetActiveSessionController(sess, role); existingConn != nil {
+		log.Println("role already connected")
+		_ = utils.SendMessage(conn, &pb.WSMessage{
+			Type: pb.WSMessageType_ERROR,
+			Data: &pb.WSMessage_Error{
+				Error: &pb.WSErrorMessageData{
+					Error: fmt.Sprintf("%s role already connected!", strings.Title(strings.ToLower(role.String()))),
+				},
+			},
+		})
+		return
+	}
 	sess.mutex.Lock()
 	sess.controllerConn[role] = conn
 	sess.controllerName[role] = name

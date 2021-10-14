@@ -133,6 +133,11 @@ export default function ControllerCanvasPage() {
               setCurrentPageIdx((prev) => prev + 1);
               setIsDone(false);
             } else if (msgData.classroomId) {
+              // executes when the controller first successfully joins the classroom
+              enqueueSnackbar("Successfully joined room!", {
+                variant: "success",
+              });
+              setControllerState(ControllerState.WaitingRoom);
               setSessionInfo(msgData);
               setCurrentPageIdx(msgData.currentPage || 0);
               execGetOnGoingSession(
@@ -172,16 +177,19 @@ export default function ControllerCanvasPage() {
             protoToAchievement(msg.achievement as pb.WSAchievementMessageData)
           );
           break;
+        case pb.WSMessageType.ERROR:
+          {
+            const msgData = msg.error as pb.WSErrorMessageData;
+            enqueueSnackbar(msgData.error, {
+              variant: "error",
+            });
+          }
+          break;
         default:
       }
     },
     [execGetOnGoingSession, enqueueSnackbar]
   );
-
-  const wsOpenHandler = useCallback(() => {
-    enqueueSnackbar("Successfully joined room!", { variant: "success" });
-    setControllerState(ControllerState.WaitingRoom);
-  }, [enqueueSnackbar]);
 
   const wsErrorHandler = useCallback(
     (err: Event) => {
@@ -396,17 +404,15 @@ export default function ControllerCanvasPage() {
       return () => {};
     }
 
-    wsConn.addEventListener("open", wsOpenHandler);
     wsConn.addEventListener("message", wsMessageHandler);
     wsConn.addEventListener("error", wsErrorHandler);
     wsConn.addEventListener("close", wsCloseHandler);
     return () => {
-      wsConn.removeEventListener("open", wsOpenHandler);
       wsConn.removeEventListener("message", wsMessageHandler);
       wsConn.removeEventListener("error", wsErrorHandler);
       wsConn.removeEventListener("close", wsCloseHandler);
     };
-  }, [wsConn, wsOpenHandler, wsMessageHandler, wsErrorHandler, wsCloseHandler]);
+  }, [wsConn, wsMessageHandler, wsErrorHandler, wsCloseHandler]);
 
   // reset states when in join form state
   useEffect(() => {

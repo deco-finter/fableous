@@ -249,6 +249,14 @@ export default function HubCanvasPage() {
             }
           }
           break;
+        case pb.WSMessageType.ERROR:
+          {
+            const msgData = msg.error as pb.WSErrorMessageData;
+            enqueueSnackbar(msgData.error, {
+              variant: "error",
+            });
+          }
+          break;
         default:
       }
     },
