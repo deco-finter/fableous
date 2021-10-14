@@ -205,6 +205,7 @@ export default function ControllerCanvasPage() {
     (_: CloseEvent) => {
       // do not go to join form state as close occurs even when everything went well
       clearWsConn();
+      setControllerState(ControllerState.JoinForm);
     },
     [clearWsConn]
   );

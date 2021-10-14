@@ -13,10 +13,10 @@ import useAxios from "axios-hooks";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
-import { Manifest, Story } from "../data";
+import { APIResponse, Manifest, Session, Story } from "../data";
 import AchievementButton from "../components/achievement/AchievementButton";
 import Canvas from "../components/canvas/Canvas";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
@@ -46,6 +46,7 @@ enum HubState {
 }
 
 export default function HubCanvasPage() {
+  const history = useHistory();
   const { classroomId } = useParams<{ classroomId: string }>();
   const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
@@ -66,6 +67,10 @@ export default function HubCanvasPage() {
     ratio: 1 / ASPECT_RATIO,
   });
 
+  const [, executeGetOngoingSession] = useAxios<
+    APIResponse<Session>,
+    APIResponse<undefined>
+  >(restAPI.session.getOngoing(classroomId), { manual: true });
   const [{ loading: postLoading }, executePostSession] = useAxios(
     restAPI.session.create(classroomId),
     {
@@ -277,6 +282,7 @@ export default function HubCanvasPage() {
     (_: CloseEvent) => {
       // do not go to session form state as close occurs even when everything went well
       clearWsConn();
+      setHubState(HubState.SessionForm);
     },
     [clearWsConn]
   );
@@ -400,6 +406,14 @@ export default function HubCanvasPage() {
       "";
     player.play();
   }, [audioPaths]);
+
+  // redirect back if session already initialised
+  useEffect(() => {
+    executeGetOngoingSession().then(() => {
+      history.push("/");
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // setup event listeners on ws connection
   useEffect(() => {
