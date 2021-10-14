@@ -7,9 +7,8 @@ import {
   ChipProps,
   Button,
 } from "@material-ui/core";
-
 import useAxios from "axios-hooks";
-import React, {
+import {
   useEffect,
   useState,
   useRef,
@@ -21,6 +20,8 @@ import React, {
 import { useParams } from "react-router-dom";
 import Joyride, { Step } from "react-joyride";
 import { restAPI } from "../api";
+import { colors } from "../colors";
+import { TUTORIAL_STYLE } from "../constant";
 import AchievementButton from "../components/achievement/AchievementButton";
 import { EmptyAchievement } from "../components/achievement/achievement";
 import Canvas from "../components/canvas/Canvas";
@@ -28,13 +29,11 @@ import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import { ASPECT_RATIO } from "../components/canvas/constants";
 import ChipRow from "../components/ChipRow";
 import BackButton from "../components/BackButton";
-import { colors } from "../colors";
 import { APIResponse, Manifest, Session } from "../data";
 import useContainRatio from "../hooks/useContainRatio";
+import useTutorial from "../hooks/useTutorial";
 import { proto as pb } from "../proto/message_pb";
 import { TutorialTargetId } from "../tutorialTargetIds";
-import useTutorial from "../hooks/useTutorial";
-import { TUTORIAL_STYLE } from "../constant";
 
 const GALLERY_TUTORIAL_KEY = "galleryTutorial";
 export default function StoryDetailPage() {
@@ -210,7 +209,7 @@ export default function StoryDetailPage() {
       >
         <Grid container className="mb-4">
           <Grid item xs="auto">
-            <BackButton />
+            <BackButton destinationIfRoot={`/gallery/${classroomId}`} />
           </Grid>
           <Grid item xs>
             <ChipRow
