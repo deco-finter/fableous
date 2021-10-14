@@ -222,7 +222,7 @@ export default function ControllerCanvasPage() {
     actions.resetForm({
       values: {
         name: values.name,
-        token: "",
+        token: values.token,
         role: values.role,
       },
     });
