@@ -6,8 +6,8 @@ import { Alert } from "@material-ui/lab";
 import { restAPI } from "../api";
 import { APIResponse, Classroom, Session } from "../data";
 import { AuthContext } from "../components/AuthProvider";
-import StoryItem from "../components/StoryItem";
 import BackButton from "../components/BackButton";
+import StoryItem from "../components/StoryItem";
 
 export default function GalleryPage() {
   const { classroomId } = useParams<{ classroomId: string }>();

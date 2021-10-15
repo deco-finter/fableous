@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
+import { useSnackbar } from "notistack";
 import { colors } from "../../colors";
 import { ROLE_ICON, StudentRole } from "../../constant";
 import { proto as pb } from "../../proto/message_pb";
@@ -56,6 +57,16 @@ export default function LayerIcon(props: LayerIconProps) {
   } = props;
 
   const [kicking, setKicking] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const notifyLayerFocus = (role: StudentRole) => {
+    enqueueSnackbar(
+      `Focusing on ${ROLE_ICON[role].text}'s drawing. Click on layer icon again to unfocus.`,
+      {
+        variant: "info",
+      }
+    );
+  };
 
   const currentController = joinedControllers[studentRole];
   useEffect(() => {
@@ -102,9 +113,13 @@ export default function LayerIcon(props: LayerIconProps) {
             }}
             disabled={!joinedControllers[studentRole]}
             onClick={() => {
-              setFocusLayer(
-                focusLayer === studentRole ? undefined : studentRole
-              );
+              setFocusLayer(() => {
+                if (focusLayer === studentRole) {
+                  return undefined;
+                }
+                notifyLayerFocus(studentRole as StudentRole);
+                return studentRole;
+              });
               onClick();
             }}
           >
