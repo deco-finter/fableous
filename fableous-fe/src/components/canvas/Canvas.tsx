@@ -14,6 +14,7 @@ import React, {
 } from "react";
 import cloneDeep from "lodash.clonedeep";
 import {
+  clearCanvas,
   convHEXtoRGBA,
   getTextBounds,
   scaleDownXY,
@@ -252,7 +253,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 expandLeft = false;
               }
             }
-            if (x < width) {
+            if (x < width - 1) {
               if (checkPixel(pixel + 4, startColor) && !expandRight) {
                 stack.push([x + 1, y]);
                 expandRight = true;
@@ -311,8 +312,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
-      const { width, height } = canvasRef.current;
-      ctx.clearRect(0, 0, width, height);
+      clearCanvas(canvasRef);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
@@ -547,12 +547,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           "2d"
         ) as CanvasRenderingContext2D;
         if (!newCheckpoint) {
-          ctx.clearRect(
-            0,
-            0,
-            canvasRef.current.width,
-            canvasRef.current.height
-          );
+          clearCanvas(canvasRef);
           setTextShapes({});
         } else if (
           newCheckpoint.tool === ToolMode.Paint ||
@@ -607,11 +602,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     );
 
     const resetCanvas = () => {
-      const ctx = canvasRef.current.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-      const { width, height } = canvasRef.current;
-      ctx.clearRect(0, 0, width, height);
+      console.log("reset");
+      clearCanvas(canvasRef);
       setAudioPaths([]);
       setTextShapes({});
       setTextId(1);
@@ -864,17 +856,17 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, wsConn, adjustCanvasSize]);
 
-    // cleanup before moving to next page
-    useEffect(() => {
-      resetCanvas();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pageNum]);
-
     // workaround to recalculate width when canvas appears or becomes hidden
     useEffect(() => {
       adjustCanvasSize();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adjustCanvasSize, isShown]);
+
+    // cleanup before moving to next page
+    useEffect(() => {
+      resetCanvas();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageNum, isShown]);
 
     // initialize text event listener
     useEffect(() => {
