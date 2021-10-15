@@ -36,8 +36,9 @@ export default function useWsConn(): [
   }, [wsConn]);
 
   const clearWsConn = useCallback(() => {
+    wsConn?.close();
     setWsConn(undefined);
-  }, []);
+  }, [wsConn]);
 
   return [
     wsConn,
