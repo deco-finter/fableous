@@ -88,7 +88,11 @@ export default function FormikTagField(props: {
           name={name}
           label={label}
           error={formik.touched[name] && !!formik.errors[name]}
-          helperText={formik.touched[name] ? formik.errors[name] : ""}
+          helperText={
+            formik.touched[name] && formik.errors[name]
+              ? formik.errors[name]
+              : "Press space or enter to add tag"
+          }
           InputProps={{ ...params.InputProps, ...overrides?.InputProps }}
           InputLabelProps={{
             ...params.InputLabelProps,
