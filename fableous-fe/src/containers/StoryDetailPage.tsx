@@ -6,6 +6,7 @@ import {
   Icon,
   ChipProps,
   Button,
+  makeStyles,
 } from "@material-ui/core";
 import useAxios from "axios-hooks";
 import {
@@ -95,6 +96,17 @@ export default function StoryDetailPage() {
       manual: true,
     }
   );
+  const useStyles = makeStyles({
+    hideScrollbar: {
+      scrollbarWidth: "none",
+      msOverflowStyle: "none",
+      "&::-webkit-scrollbar": {
+        width: 0,
+        height: 0,
+      },
+    },
+  });
+  const classes = useStyles();
 
   const playAudio = useCallback(() => {
     if (audioPaths.length === 0) {
@@ -241,7 +253,7 @@ export default function StoryDetailPage() {
             <ImageList
               id={TutorialTargetId.ImageButton}
               ref={listContainerRef}
-              className="overflow-y-auto gap-y-2 flex content-between"
+              className={`gap-y-2 content-start ${classes.hideScrollbar}`}
               style={{ alignSelf: "center", borderRadius: 16 }}
               cols={1}
               gap={0}
