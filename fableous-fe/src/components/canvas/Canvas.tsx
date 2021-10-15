@@ -329,6 +329,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         ctx.font = `${fontSize * SCALE}px Comic Sans MS`;
         ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
+          // draw blinking cursor at end of text
           ctx.beginPath();
           ctx.lineWidth = 4;
           ctx.strokeStyle = "#00dd88";
@@ -966,6 +967,14 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           value={textShapesRef.current[editingTextId]?.text || ""}
           onChange={(e) => {
             onKeyDown(e.target.value);
+          }}
+          onKeyDown={() => {
+            // disable moving cursor and selection with arrow keys, shift and ctrl+A
+            // by forcing cursor to be at the end
+            onScreenKeyboardRef.current.setSelectionRange(
+              Number.MAX_SAFE_INTEGER,
+              Number.MAX_SAFE_INTEGER
+            );
           }}
           tabIndex={0}
           style={{

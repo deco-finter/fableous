@@ -61,7 +61,9 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
     } = props;
     const imperativeCanvasRef = ref as MutableRefObject<ImperativeCanvasRef>;
     const [prevColor, setPrevColor] = useState(toolColor);
-    const [isWidthPickerOpen, setIsWidthPickerOpen] = useState(false);
+    const [isBrushWidthPickerOpen, setIsBrushWidthPickerOpen] = useState(false);
+    const [isEraserWidthPickerOpen, setIsEraserWidthPickerOpen] =
+      useState(false);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [isRecordingAudio, setIsRecordingAudio] = useState(false);
     const [recordingTimeElapsed, setRecordingTimeElapsed] = useState(0);
@@ -112,15 +114,15 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
             ].includes(role) && (
               <>
                 <ToolbarTooltip
-                  isOpen={isWidthPickerOpen}
-                  setIsOpen={setIsWidthPickerOpen}
+                  isOpen={isBrushWidthPickerOpen}
+                  setIsOpen={setIsBrushWidthPickerOpen}
                   tooltipTitle={
                     <div className="flex">
                       {BRUSH_WIDTHS.map((brushWidth) => (
                         <IconButton
                           onClick={() => {
                             setToolNormWidth(brushWidth);
-                            setIsWidthPickerOpen(false);
+                            setIsBrushWidthPickerOpen(false);
                           }}
                           color="secondary"
                           style={{
@@ -149,7 +151,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                         setToolColor(prevColor);
                       }
                       setToolMode(ToolMode.Paint);
-                      setIsWidthPickerOpen((prev) => !prev);
+                      setIsBrushWidthPickerOpen((prev) => !prev);
                     }}
                     color={
                       toolMode === ToolMode.Paint && toolColor !== "#00000000"
@@ -170,20 +172,52 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                     />
                   </IconButton>
                 </ToolbarTooltip>
-                <IconButton
-                  id={TutorialTargetId.EraseTool}
-                  onClick={() => {
-                    setToolColorRememberPrev(ERASE_COLOR);
-                    setToolMode(ToolMode.Paint);
-                  }}
-                  color={
-                    toolMode === ToolMode.Paint && toolColor === "#00000000"
-                      ? "secondary"
-                      : "primary"
+                <ToolbarTooltip
+                  isOpen={isEraserWidthPickerOpen}
+                  setIsOpen={setIsEraserWidthPickerOpen}
+                  tooltipTitle={
+                    <div className="flex">
+                      {BRUSH_WIDTHS.map((brushWidth) => (
+                        <IconButton
+                          onClick={() => {
+                            setToolNormWidth(brushWidth);
+                            setIsEraserWidthPickerOpen(false);
+                          }}
+                          color="secondary"
+                          style={{
+                            border: `2px solid ${
+                              toolNormWidth === brushWidth
+                                ? colors.orange.main
+                                : "#0000"
+                            }`,
+                          }}
+                          key={brushWidth}
+                        >
+                          <BrushWidthIcon
+                            fontSize="medium"
+                            strokeWidth={brushWidth * ICON_STROKE_WIDTH_RATIO}
+                          />
+                        </IconButton>
+                      ))}
+                    </div>
                   }
                 >
-                  <EraserIcon fontSize="large" />
-                </IconButton>
+                  <IconButton
+                    id={TutorialTargetId.EraseTool}
+                    onClick={() => {
+                      setToolColorRememberPrev(ERASE_COLOR);
+                      setToolMode(ToolMode.Paint);
+                      setIsEraserWidthPickerOpen((prev) => !prev);
+                    }}
+                    color={
+                      toolMode === ToolMode.Paint && toolColor === "#00000000"
+                        ? "secondary"
+                        : "primary"
+                    }
+                  >
+                    <EraserIcon fontSize="large" />
+                  </IconButton>
+                </ToolbarTooltip>
                 <IconButton
                   id={TutorialTargetId.FillTool}
                   onClick={() => {
