@@ -98,8 +98,11 @@ export default function HubCanvasPage() {
     runUndo: () => {},
     runAudio: () => {},
   });
-  // const timerRef = useRef();
-  // const timerRef = useRef<NodeJS.Timeout>();
+
+  const timerRef = useRef<NodeJS.Timeout>();
+  const [countdown, setCountdown] = useState<number>(0);
+  const countdownRef = useRef<unknown>();
+
   const [storyTextShapes, setStoryTextShapes] = useState<TextShapeMap>({});
   const [CharacterTextShapes, setCharacterTextShapes] = useState<TextShapeMap>(
     {}
@@ -352,40 +355,40 @@ export default function HubCanvasPage() {
     wsConn?.send(
       JSON.stringify({ type: WSMessageType.Control, data: { nextPage: true } })
     );
+    // console.log(currentPage)
     setCurrentPageIdx((prev) => {
       if (prev > 0) achievementNextPage();
+      // setCountdown(0);
+      const COUNDOWN_MS = 5000;
+      if (countdownRef !== undefined) {
+        clearInterval(countdownRef.current as number);
+      }
+      if (timerRef.current !== undefined) {
+        clearTimeout(timerRef.current);
+      }
+      // console.log(prev, hubState, story && story.pages);
+      if (story && prev < story.pages) {
+        // funct () => setInterval
+        // setInterval()
+        setCountdown(COUNDOWN_MS / 1000);
+
+        countdownRef.current = setInterval(() => {
+          setCountdown((cdPrev) => {
+            console.log(cdPrev);
+            return cdPrev - 1;
+          });
+        }, 1000) as unknown;
+
+        timerRef.current = setTimeout(() => {
+          // console.log("nextPage timeout", prev, currentPageIdx, story.pages);
+          onNextPage();
+        }, COUNDOWN_MS);
+      }
       return prev + 1;
     });
     setHelpControllers(INIT_FLAG);
     setDoneControllers(INIT_FLAG);
   };
-
-  // const nextPageOnTimer = () => {
-  //   // tutup
-  // };
-  // const setTimer = () => {
-  //   // TODO create timer
-  //   // set timer funcion()
-  //   clearTimeout(parseInt(timerRef.current));
-  //   timerRef.current = setTimeout(nextPageOnTimer, 5000);
-  // };
-  // karena lu ga provide default value, type testRef bakal Timeout | undefined
-  // karena pas awal2 dia undefined
-  const testRef = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    if (testRef.current !== undefined) {
-      // di case lu tadi dia complain, clearTimeout terima type Timeout, tapi lu kasih Timeout | undefined
-      // kl dibungkus if condition, type testRef.current bakal jadi cuma Timeout
-
-      // alternative lain kl  ga mau pake if condition nya, ngeset default value di useRef
-      // gw not sure default value yg kita bisa kasih pas useRef buat dummy timeout itu apa
-      clearTimeout(testRef.current);
-    }
-    testRef.current = setTimeout(() => {
-      console.log("hoho");
-    }, 5000);
-  }, [testRef]);
 
   const onBeginDrawing = () => {
     onNextPage();
@@ -463,6 +466,7 @@ export default function HubCanvasPage() {
 
   return (
     <Grid container className="grid flex-col flex-1 relative">
+      <div>{countdown}</div>
       <div
         style={{
           gridRowStart: 1,
