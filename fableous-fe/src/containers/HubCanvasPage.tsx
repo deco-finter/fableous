@@ -395,17 +395,17 @@ export default function HubCanvasPage() {
     setHubState(HubState.DrawingSession);
   };
 
-  const playAudio = useCallback(() => {
-    if (audioPaths.length === 0) {
-      return;
-    }
-
-    const player = document.createElement("audio");
-    player.src =
-      restAPI.gallery.getAssetByPath(audioPaths[audioPaths.length - 1]).url ||
-      "";
-    player.play();
-  }, [audioPaths]);
+  const playAudio = () => {
+    setAudioPaths((paths) => {
+      if (paths.length !== 0) {
+        const player = document.createElement("audio");
+        player.src =
+          restAPI.gallery.getAssetByPath(paths[paths.length - 1]).url || "";
+        player.play();
+      }
+      return paths;
+    });
+  };
 
   // redirect back if session already initialised
   useEffect(() => {
