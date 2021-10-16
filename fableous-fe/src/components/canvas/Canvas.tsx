@@ -602,7 +602,6 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     );
 
     const resetCanvas = () => {
-      console.log("reset");
       clearCanvas(canvasRef);
       setAudioPaths([]);
       setTextShapes({});
