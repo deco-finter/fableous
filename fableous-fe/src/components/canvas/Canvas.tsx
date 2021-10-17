@@ -11,6 +11,7 @@ import React, {
   useState,
   useRef,
   useImperativeHandle,
+  useMemo,
 } from "react";
 import cloneDeep from "lodash.clonedeep";
 import {
@@ -121,6 +122,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     const [dragOffset, setDragOffset] = useState([0, 0]); // offset is in normalized scale
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
+    const [, setAudioChunks] = useState<Blob[]>([]);
+    const audioFileReader = useMemo(() => new FileReader(), []);
     const [audioRecording, setAudioRecording] = useState(false);
     const textShapesRef = useRef<TextShapeMap>(textShapes);
     textShapesRef.current = textShapes; // inject ref to force sync, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
@@ -441,6 +444,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     const placeAudio = useCallback(
       (path: string) => {
+        console.log("pkaying");
         const player = document.createElement("audio");
         player.src = restAPI.gallery.getAssetByPath(path).url || "";
         player.play();
@@ -449,26 +453,50 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       [setAudioPaths]
     );
 
+    const sendAudio = useCallback(() => {
+      setAudioChunks((chunks) => {
+        console.log("onstop IN");
+        audioFileReader.onloadstart = (e) => {
+          console.log("onloadstart", e);
+        };
+        audioFileReader.onloadend = (e) => {
+          console.log("onstop SEND", e);
+          wsConn?.send(
+            pb.WSMessage.encode({
+              role,
+              type: pb.WSMessageType.AUDIO,
+              paint: {
+                text: audioFileReader.result as string,
+              },
+            }).finish()
+          );
+        };
+        console.log("onstop READY");
+        console.log(chunks);
+        const blob = new Blob([chunks[0]], {
+          type: "audio/ogg;codecs=opus",
+        });
+        if (audioFileReader.readyState !== 1)
+          audioFileReader.readAsDataURL(blob);
+        return []; // reset chunks
+      });
+    }, [wsConn, role, audioFileReader]);
+
     const initAudio = () => {
       navigator.mediaDevices?.getUserMedia({ audio: true }).then(
         (stream) => {
           const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.onstart = () => {
+            console.log("start");
+            setAudioChunks([]);
+          };
           mediaRecorder.ondataavailable = ({ data }) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(
-              new Blob([data], { type: "audio/ogg;codecs=opus" })
-            );
-            reader.onloadend = () => {
-              wsConn?.send(
-                pb.WSMessage.encode({
-                  role,
-                  type: pb.WSMessageType.AUDIO,
-                  paint: {
-                    text: reader.result as string,
-                  },
-                }).finish()
-              );
-            };
+            console.log("ondataavailable");
+            setAudioChunks((chunks) => [...chunks, data]);
+          };
+          mediaRecorder.onstop = () => {
+            console.log("onstop");
+            sendAudio();
           };
           setAudioMediaRecorder(mediaRecorder);
         },
