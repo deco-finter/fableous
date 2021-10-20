@@ -13,8 +13,14 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
+var (
+	version string
+)
+
 func init() {
+	log.Printf("[INIT] starting fableous-be %s", version)
 	config.InitializeAppConfig()
+	config.AppConfig.Version = version
 	if !config.AppConfig.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}

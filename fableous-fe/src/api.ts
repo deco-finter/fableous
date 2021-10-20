@@ -1,6 +1,8 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { configure } from "axios-hooks";
 import { TOKEN_KEY } from "./components/AuthProvider";
+import { getLocalStorage } from "./storage";
+import { proto as pb } from "./proto/message_pb";
 
 const baseAPI =
   process.env.NODE_ENV === "development"
@@ -15,7 +17,7 @@ const baseWS =
 const apiClient = axios.create();
 apiClient.defaults.baseURL = baseAPI;
 apiClient.interceptors.request.use((req: AxiosRequestConfig) => {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getLocalStorage(TOKEN_KEY);
   if (token) {
     req.headers = {
       authorization: `Bearer ${token}`,
@@ -136,18 +138,17 @@ export const restAPI = {
       method: "delete",
     }),
   },
-  // @TODO: create POST for story saving
 } as ApiEndpoints;
 
 export const wsAPI = {
   hub: {
     main: (classroomId: string) => {
-      const token = localStorage.getItem(TOKEN_KEY);
+      const token = getLocalStorage(TOKEN_KEY);
       return `${baseWS}/ws/hub?token=${token}&classroom_id=${classroomId}`;
     },
   },
   controller: {
-    main: (classroomToken: string, role: string, name: string) => {
+    main: (classroomToken: string, role: pb.ControllerRole, name: string) => {
       return `${baseWS}/ws/controller?classroom_token=${classroomToken}&role=${role}&name=${name}`;
     },
   },

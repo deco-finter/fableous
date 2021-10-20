@@ -26,7 +26,7 @@ export default function BrushWidthIcon(props: BrushWidthIconProps) {
           stroke={stroke}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={strokeWidth / 2 + 1}
         />
       </svg>
     </SvgIcon>

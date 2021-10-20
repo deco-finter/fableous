@@ -1,19 +1,6 @@
-export enum WSMessageType {
-  Paint = "PAINT",
-  Fill = "FILL",
-  Text = "TEXT",
-  Audio = "AUDIO",
-  Checkpoint = "CHECKPOINT",
-  Undo = "UNDO",
-  Cursor = "CURSOR",
-  Achievement = "ACHIEVEMENT",
-  Connect = "CONNECT",
-  Join = "JOIN",
-  Control = "CONTROL",
-  Ping = "PING",
-  Image = "IMAGE",
-  Manifest = "MANIFEST",
-}
+import { Styles } from "react-joyride";
+import { colors } from "./colors";
+import { proto as pb } from "./proto/message_pb";
 
 export enum ToolMode {
   Paint = "PAINT",
@@ -23,30 +10,46 @@ export enum ToolMode {
   None = "NONE",
 }
 
-export enum ControllerRole {
-  Character = "CHARACTER",
-  Background = "BACKGROUND",
-  Story = "STORY",
-  Hub = "HUB",
-}
-
-export type StudentRole = Exclude<ControllerRole, ControllerRole.Hub>;
+export type StudentRole = Exclude<
+  pb.ControllerRole,
+  pb.ControllerRole.NONE | pb.ControllerRole.HUB
+>;
 
 export const ROLE_ICON = {
-  [ControllerRole.Story]: {
+  [pb.ControllerRole.NONE]: {
+    icon: "",
+    text: "",
+  },
+  [pb.ControllerRole.STORY]: {
     icon: "textsms",
     text: "Story",
   },
-  [ControllerRole.Character]: {
+  [pb.ControllerRole.CHARACTER]: {
     icon: "directions_run",
     text: "Character",
   },
-  [ControllerRole.Background]: {
+  [pb.ControllerRole.BACKGROUND]: {
     icon: "image",
     text: "Background",
   },
-  [ControllerRole.Hub]: {
+  [pb.ControllerRole.HUB]: {
     icon: "web",
     text: "Background",
+  },
+};
+
+export const TUTORIAL_STYLE: Styles = {
+  options: {
+    primaryColor: colors.orange.main,
+    zIndex: 10000,
+  },
+  buttonNext: {
+    borderRadius: 18,
+  },
+  tooltip: {
+    borderRadius: 24,
+  },
+  spotlight: {
+    borderRadius: 48,
   },
 };

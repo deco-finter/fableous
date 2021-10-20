@@ -1,5 +1,6 @@
 import { makeStyles, Paper } from "@material-ui/core";
-import { ControllerRole, StudentRole } from "../../constant";
+import { StudentRole } from "../../constant";
+import { proto as pb } from "../../proto/message_pb";
 import LayerIcon from "./LayerIcon";
 
 const useStyles = makeStyles(() => ({
@@ -20,6 +21,8 @@ export default function LayerToolbar(props: {
   joinedControllers: {
     [key in StudentRole]?: string;
   };
+  handleClearController: (role: StudentRole) => void;
+  handleKickController: (role: StudentRole) => void;
   helpControllers: {
     [key in StudentRole]: boolean;
   };
@@ -39,6 +42,8 @@ export default function LayerToolbar(props: {
     focusLayer,
     setFocusLayer,
     joinedControllers,
+    handleClearController,
+    handleKickController,
     helpControllers,
     setHelpControllers,
     doneControllers,
@@ -53,17 +58,17 @@ export default function LayerToolbar(props: {
         style={{
           height: offsetHeight || "100%",
           maxHeight: "100%",
-          maxWidth: "100px",
+          maxWidth: "120px",
         }}
       >
         <Paper className="p-1 flex flex-col justify-evenly items-center min-h-full px-2 items-stretch">
           {[
-            ControllerRole.Story,
-            ControllerRole.Character,
-            ControllerRole.Background,
+            pb.ControllerRole.STORY,
+            pb.ControllerRole.CHARACTER,
+            pb.ControllerRole.BACKGROUND,
           ].map((role) => (
             <LayerIcon
-              role={role as StudentRole}
+              studentRole={role as StudentRole}
               focusLayer={focusLayer}
               setFocusLayer={setFocusLayer}
               onClick={() =>
@@ -73,6 +78,8 @@ export default function LayerToolbar(props: {
                 })
               }
               joinedControllers={joinedControllers}
+              handleClearController={handleClearController}
+              handleKickController={handleKickController}
               needsHelp={helpControllers[role as StudentRole]}
               isDone={doneControllers[role as StudentRole]}
             />

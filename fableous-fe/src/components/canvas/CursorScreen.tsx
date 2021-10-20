@@ -22,6 +22,10 @@ interface CursorScreenProps {
   offsetHeight: number;
 }
 
+const CURSOR_COLOR = "gray";
+const CURSOR_WIDTH = 3;
+const CURSOR_ROLE_TEXT = "24px Arial";
+
 const CursorScreen = (props: CursorScreenProps) => {
   const { cursor, name, isShown, offsetWidth, offsetHeight } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
@@ -41,21 +45,21 @@ const CursorScreen = (props: CursorScreenProps) => {
     switch (toolMode) {
       case ToolMode.Paint:
         const radius = toolWidth / 2;
-        ctx.strokeStyle = "gray";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = CURSOR_COLOR;
+        ctx.lineWidth = CURSOR_WIDTH;
         ctx.beginPath();
         ctx.ellipse(x, y, radius, radius, 0, 0, 2 * Math.PI);
         ctx.closePath();
         ctx.stroke();
         if (name) {
-          ctx.font = "18px Arial";
-          ctx.fillStyle = "gray";
+          ctx.font = CURSOR_ROLE_TEXT;
+          ctx.fillStyle = CURSOR_COLOR;
           ctx.fillText(name, x + radius * 0.71 + 8, y + radius * 0.71 + 8);
         }
         break;
       case ToolMode.Fill:
-        ctx.strokeStyle = "gray";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = CURSOR_COLOR;
+        ctx.lineWidth = CURSOR_WIDTH;
         ctx.beginPath();
         ctx.moveTo(x - 16, y);
         ctx.lineTo(x + 16, y);
@@ -64,14 +68,14 @@ const CursorScreen = (props: CursorScreenProps) => {
         ctx.closePath();
         ctx.stroke();
         if (name) {
-          ctx.font = "18px Arial";
-          ctx.fillStyle = "gray";
+          ctx.font = CURSOR_ROLE_TEXT;
+          ctx.fillStyle = CURSOR_COLOR;
           ctx.fillText(name, x + 8, y + 18);
         }
         break;
       case ToolMode.Text:
-        ctx.strokeStyle = "gray";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = CURSOR_COLOR;
+        ctx.lineWidth = CURSOR_WIDTH;
         ctx.beginPath();
         ctx.moveTo(x, y - 16);
         ctx.lineTo(x, y + 16);
@@ -82,8 +86,8 @@ const CursorScreen = (props: CursorScreenProps) => {
         ctx.closePath();
         ctx.stroke();
         if (name) {
-          ctx.font = "18px Arial";
-          ctx.fillStyle = "gray";
+          ctx.font = CURSOR_ROLE_TEXT;
+          ctx.fillStyle = CURSOR_COLOR;
           ctx.fillText(name, x + 8, y + 8);
         }
         break;

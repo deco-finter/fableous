@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c
 	github.com/spf13/viper v1.8.1
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+	google.golang.org/protobuf v1.26.0
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.12
 )

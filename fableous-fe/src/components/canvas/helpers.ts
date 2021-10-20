@@ -68,3 +68,17 @@ export const getTextBounds = (
   }
   return [0, 0, 0, 0];
 };
+
+export const clearCanvas = (canvasRef: MutableRefObject<HTMLCanvasElement>) => {
+  const ctx = canvasRef.current.getContext("2d");
+  if (ctx) {
+    const { width, height } = canvasRef.current;
+    ctx.clearRect(0, 0, width, height);
+    ctx.beginPath();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 200;
+    ctx.rect(-100, -100, width + 200, height + 200);
+    ctx.stroke();
+    ctx.closePath();
+  }
+};

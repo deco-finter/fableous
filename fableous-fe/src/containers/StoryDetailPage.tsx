@@ -6,31 +6,37 @@ import {
   Icon,
   ChipProps,
   Button,
+  makeStyles,
 } from "@material-ui/core";
-
 import useAxios from "axios-hooks";
-import React, {
+import {
   useEffect,
   useState,
   useRef,
   useCallback,
   createRef,
   RefObject,
+  useMemo,
 } from "react";
 import { useParams } from "react-router-dom";
-import AchievementButton from "../components/achievement/AchievementButton";
+import Joyride, { Step } from "react-joyride";
 import { restAPI } from "../api";
-import { APIResponse, Manifest, Session } from "../data";
+import { colors } from "../colors";
+import { TUTORIAL_STYLE } from "../constant";
+import AchievementButton from "../components/achievement/AchievementButton";
+import { EmptyAchievement } from "../components/achievement/achievement";
 import Canvas from "../components/canvas/Canvas";
-import { ControllerRole } from "../constant";
 import { ImperativeCanvasRef, TextShapeMap } from "../components/canvas/data";
 import { ASPECT_RATIO } from "../components/canvas/constants";
-import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
-import { EmptyAchievement } from "../components/achievement/achievement";
 import BackButton from "../components/BackButton";
-import { colors } from "../colors";
+import { APIResponse, Manifest, Session } from "../data";
+import useContainRatio from "../hooks/useContainRatio";
+import useTutorial from "../hooks/useTutorial";
+import { proto as pb } from "../proto/message_pb";
+import { TutorialTargetId } from "../tutorialTargetIds";
 
+const GALLERY_TUTORIAL_KEY = "galleryTutorial";
 export default function StoryDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -38,6 +44,12 @@ export default function StoryDetailPage() {
   const [textShapes, setTextShapes] = useState<TextShapeMap>({});
   const [audioPaths, setAudioPaths] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+
+  const [isTutorialRunning, handleJoyrideCallback] = useTutorial({
+    showTutorialButton: useMemo(() => true, []),
+    localStorageKey: GALLERY_TUTORIAL_KEY,
+    onManualStartCallback: useCallback(() => {}, []),
+  });
   const canvasRef = useRef<ImperativeCanvasRef>({
     getCanvas: () => document.createElement("canvas"),
     runUndo: () => {},
@@ -84,6 +96,17 @@ export default function StoryDetailPage() {
       manual: true,
     }
   );
+  const useStyles = makeStyles({
+    hideScrollbar: {
+      scrollbarWidth: "none",
+      msOverflowStyle: "none",
+      "&::-webkit-scrollbar": {
+        width: 0,
+        height: 0,
+      },
+    },
+  });
+  const classes = useStyles();
 
   const playAudio = useCallback(() => {
     if (audioPaths.length === 0) {
@@ -95,6 +118,50 @@ export default function StoryDetailPage() {
       "";
     player.play();
   }, [audioPaths]);
+
+  const tutorialSteps: Step[] = useMemo(
+    () => [
+      {
+        target: `#${TutorialTargetId.NavbarTutorial}`,
+        content:
+          "Do you want to go through the tutorial? You can access it anytime by clicking this Tutorial button.",
+        placement: "bottom",
+        disableBeacon: true,
+        // wierdly, close behavior is like next step, unsure on how to fix it
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.Image}`,
+        content: "The combined drawing is shown here.",
+        placement: "center",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.ImageButton}`,
+        content:
+          "You will see the list of the pages here, click on one of them to jump to that page.",
+        placement: "right",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.AchievementButton}`,
+        content: "You can see the story's achievements here.",
+        placement: "top",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+      {
+        target: `#${TutorialTargetId.AudioTool}`,
+        content: "You can play this story's narration audio here.",
+        placement: "top",
+        disableBeacon: true,
+        hideCloseButton: true,
+      },
+    ],
+    []
+  );
 
   useEffect(() => {
     executeGetClassroomDetail();
@@ -130,6 +197,22 @@ export default function StoryDetailPage() {
 
   return (
     <Grid container className="relative">
+      <Joyride
+        callback={handleJoyrideCallback}
+        continuous
+        run={isTutorialRunning}
+        scrollToFirstStep
+        showProgress
+        showSkipButton
+        disableOverlayClose
+        disableScrollParentFix
+        disableScrolling
+        steps={tutorialSteps}
+        floaterProps={{
+          disableAnimation: true,
+        }}
+        styles={TUTORIAL_STYLE}
+      />
       <div
         className="flex flex-col absolute w-full"
         style={{
@@ -138,7 +221,7 @@ export default function StoryDetailPage() {
       >
         <Grid container className="mb-4">
           <Grid item xs="auto">
-            <BackButton />
+            <BackButton destinationIfRoot={`/gallery/${classroomId}`} />
           </Grid>
           <Grid item xs>
             <ChipRow
@@ -168,8 +251,9 @@ export default function StoryDetailPage() {
             }}
           >
             <ImageList
+              id={TutorialTargetId.ImageButton}
               ref={listContainerRef}
-              className="overflow-y-auto gap-y-2 flex content-between"
+              className={`gap-y-2 content-start ${classes.hideScrollbar}`}
               style={{ alignSelf: "center", borderRadius: 16 }}
               cols={1}
               gap={0}
@@ -227,7 +311,7 @@ export default function StoryDetailPage() {
             <div
               className="grid place-items-stretch h-full"
               style={{
-                border: "1px solid #0004",
+                border: "1px solid #0000",
               }}
               ref={canvasContainerRef}
             >
@@ -240,10 +324,11 @@ export default function StoryDetailPage() {
                 }}
               >
                 <Canvas
+                  rootId={TutorialTargetId.Image}
                   ref={canvasRef}
                   wsConn={undefined}
-                  role={ControllerRole.Hub}
-                  layer={ControllerRole.Story}
+                  role={pb.ControllerRole.HUB}
+                  layer={pb.ControllerRole.STORY}
                   pageNum={page}
                   // isShown
                   isShown={
@@ -297,10 +382,12 @@ export default function StoryDetailPage() {
               chips={[
                 `Page ${page} of ${story?.data?.pages || ""}`,
                 <AchievementButton
+                  rootId={TutorialTargetId.AchievementButton}
                   achievements={achievements?.achievements || EmptyAchievement}
                   notify={false}
                 />,
                 {
+                  id: TutorialTargetId.AudioTool,
                   icon: <Icon fontSize="medium">music_note</Icon>,
                   label: "Play Audio",
                   onClick: playAudio,

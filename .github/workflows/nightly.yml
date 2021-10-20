@@ -26,16 +26,22 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - name: Set Development Version
-        run: echo "RELEASE_VERSION=v0.0.0-development" >> $GITHUB_ENV
+        run: |
+          export RELEASE_VERSION="v0.0.0-development"
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+          echo "RELEASE_VERSION_LONG=${RELEASE_VERSION}:${GITHUB_REF#refs/heads/}@${GITHUB_SHA:0:7}" >> $GITHUB_ENV
       - name: Provide Env File
         run: |
           echo "${{ secrets.FE_ENV_FILE }}" > ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
-          echo "REACT_APP_VERSION=${{ env.RELEASE_VERSION }}:${GITHUB_REF#refs/heads/}@${GITHUB_SHA:0:7}" >> ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
+          echo "REACT_APP_VERSION=${{ env.RELEASE_VERSION_LONG }}" >> ${{ env.APPLICATION }}-${{ matrix.service }}/.env.production
       - name: Build and Push Image
         uses: docker/build-push-action@v2
         with:
-          context: ${{ env.APPLICATION }}-${{ matrix.service }}
+          context: .
+          file: ${{ env.APPLICATION }}-${{ matrix.service }}/Dockerfile
           platforms: linux/amd64
+          build-args: |
+            VERSION=${{ env.RELEASE_VERSION_LONG }}
           tags: daystram/${{ env.APPLICATION }}:${{ matrix.service }}-dev
           push: true
   chart:

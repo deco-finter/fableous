@@ -6,9 +6,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/deco-finter/fableous/fableous-be/constants"
 	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/models"
+	pb "github.com/deco-finter/fableous/fableous-be/protos"
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
 
@@ -125,22 +125,22 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 }
 
 func (m *module) SessionCleanUp(sess *activeSession) {
-	_ = sess.BroadcastJSON(datatransfers.WSMessage{
-		Type: constants.WSMessageTypeJoin,
-		Data: datatransfers.WSMessageData{
-			WSJoinMessageData: datatransfers.WSJoinMessageData{
-				Role:    constants.ControllerRoleHub,
-				Joining: utils.BoolAddr(false),
+	_ = sess.BroadcastMessage(&pb.WSMessage{
+		Type: pb.WSMessageType_JOIN,
+		Data: &pb.WSMessage_Join{
+			Join: &pb.WSJoinMessageData{
+				Role:    pb.ControllerRole_HUB,
+				Joining: false,
 			},
 		},
 	})
-	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleStory); conn != nil {
+	if conn := m.GetActiveSessionController(sess, pb.ControllerRole_STORY); conn != nil {
 		_ = conn.Close()
 	}
-	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleCharacter); conn != nil {
+	if conn := m.GetActiveSessionController(sess, pb.ControllerRole_CHARACTER); conn != nil {
 		_ = conn.Close()
 	}
-	if conn := m.GetActiveSessionController(sess, constants.ControllerRoleBackground); conn != nil {
+	if conn := m.GetActiveSessionController(sess, pb.ControllerRole_BACKGROUND); conn != nil {
 		_ = conn.Close()
 	}
 	if conn := sess.hubConn; conn != nil {

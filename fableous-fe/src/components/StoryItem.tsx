@@ -68,12 +68,12 @@ export default function StoryItem(props: {
     },
     deleteButton: {
       "&:hover": {
-        background: colors.red.main,
+        background: colors.error,
       },
       position: "absolute",
       right: -8,
       top: -8,
-      background: colors.red.main,
+      background: colors.error,
       color: colors.white,
     },
     title: {
@@ -238,7 +238,7 @@ export default function StoryItem(props: {
                   <FormikTagField
                     formik={formik}
                     name="description"
-                    label="Description"
+                    label="Description Tags"
                     maxTags={3}
                     maxTagLength={10}
                     tagProps={{
@@ -370,7 +370,11 @@ export default function StoryItem(props: {
           <Button onClick={() => setDeleting(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} color="secondary">
+          <Button
+            onClick={handleDelete}
+            style={{ color: colors.error }}
+            startIcon={<Icon fontSize="small">delete</Icon>}
+          >
             Delete
           </Button>
         </DialogActions>

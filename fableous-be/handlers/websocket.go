@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,8 +12,8 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/deco-finter/fableous/fableous-be/constants"
-	"github.com/deco-finter/fableous/fableous-be/datatransfers"
 	"github.com/deco-finter/fableous/fableous-be/models"
+	pb "github.com/deco-finter/fableous/fableous-be/protos"
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
 
@@ -22,35 +23,74 @@ type activeSession struct {
 	sessionID      string
 	currentPage    int
 	hubConn        *websocket.Conn
-	controllerConn map[string]*websocket.Conn // key: role, value: ws.Conn
-	controllerName map[string]string          // key: role, value: user name
+	controllerConn map[pb.ControllerRole]*websocket.Conn // key: role, value: ws.Conn
+	controllerName map[pb.ControllerRole]string          // key: role, value: user name
 	mutex          sync.RWMutex
 }
 
-func (sess *activeSession) BroadcastJSON(message datatransfers.WSMessage) (err error) {
+func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 	sess.mutex.RLock()
 	defer sess.mutex.RUnlock()
 	for _, conn := range sess.controllerConn {
 		if conn != nil {
-			err = conn.WriteJSON(message)
+			err = utils.SendMessage(conn, message)
 		}
+	}
+	return
+}
+
+func (sess *activeSession) KickController(role pb.ControllerRole, announceHub bool) (err error) {
+	sess.mutex.Lock()
+	if targetConn, ok := sess.controllerConn[role]; ok {
+		err = utils.SendMessage(targetConn, &pb.WSMessage{
+			Type: pb.WSMessageType_JOIN,
+			Data: &pb.WSMessage_Join{
+				Join: &pb.WSJoinMessageData{
+					Role:    pb.ControllerRole_HUB,
+					Joining: false,
+				},
+			},
+		})
+		_ = targetConn.Close()
+	}
+	delete(sess.controllerConn, role)
+	delete(sess.controllerName, role)
+	sess.mutex.Unlock()
+	if announceHub {
+		err = utils.SendMessage(sess.hubConn, &pb.WSMessage{
+			Type: pb.WSMessageType_JOIN,
+			Data: &pb.WSMessage_Join{
+				Join: &pb.WSJoinMessageData{
+					Role:    role,
+					Joining: false,
+				},
+			},
+		})
 	}
 	return
 }
 
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	var session models.Session
-	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
-		log.Printf("no active session. %s\n", err)
-		return
-	}
 	var conn *websocket.Conn
 	if conn, err = m.upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting hub websocket. %s\n", err)
 		return
 	}
 	defer conn.Close()
+	var session models.Session
+	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
+		log.Printf("no active session. %s\n", err)
+		_ = utils.SendMessage(conn, &pb.WSMessage{
+			Type: pb.WSMessageType_ERROR,
+			Data: &pb.WSMessage_Error{
+				Error: &pb.WSErrorMessageData{
+					Error: "Classroom has no active session!",
+				},
+			},
+		})
+		return
+	}
 	classroomToken := utils.GenerateRandomString(constants.ClassroomTokenLength)
 	sess := &activeSession{
 		classroomToken: classroomToken,
@@ -58,8 +98,8 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 		sessionID:      session.ID,
 		currentPage:    0,
 		hubConn:        conn,
-		controllerConn: make(map[string]*websocket.Conn),
-		controllerName: make(map[string]string),
+		controllerConn: make(map[pb.ControllerRole]*websocket.Conn),
+		controllerName: make(map[pb.ControllerRole]string),
 	}
 	m.sessions.mutex.Lock()
 	m.sessions.keys[classroomToken] = sess
@@ -67,23 +107,39 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 	return m.HubCommandWorker(conn, sess)
 }
 
-func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken, role, name string) (err error) {
+func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken string, role pb.ControllerRole, name string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
-	var sess *activeSession
-	if sess = m.GetClassroomActiveSession(classroomToken); sess == nil {
-		log.Println("session not activated")
-		return
-	}
-	if conn := m.GetActiveSessionController(sess, role); conn != nil {
-		log.Println("role already connected")
-		return
-	}
 	var conn *websocket.Conn
 	if conn, err = m.upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		log.Printf("failed connecting controller websocket. %s\n", err)
 		return
 	}
 	defer conn.Close()
+	var sess *activeSession
+	if sess = m.GetClassroomActiveSession(classroomToken); sess == nil {
+		log.Println("invalid token")
+		_ = utils.SendMessage(conn, &pb.WSMessage{
+			Type: pb.WSMessageType_ERROR,
+			Data: &pb.WSMessage_Error{
+				Error: &pb.WSErrorMessageData{
+					Error: "Invalid token!",
+				},
+			},
+		})
+		return
+	}
+	if existingConn := m.GetActiveSessionController(sess, role); existingConn != nil {
+		log.Println("role already connected")
+		_ = utils.SendMessage(conn, &pb.WSMessage{
+			Type: pb.WSMessageType_ERROR,
+			Data: &pb.WSMessage_Error{
+				Error: &pb.WSErrorMessageData{
+					Error: fmt.Sprintf("%s role already joined! Try choosing another role!", strings.Title(strings.ToLower(role.String()))),
+				},
+			},
+		})
+		return
+	}
 	sess.mutex.Lock()
 	sess.controllerConn[role] = conn
 	sess.controllerName[role] = name
@@ -97,21 +153,21 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 		delete(m.sessions.keys, sess.classroomToken)
 		m.sessions.mutex.Unlock()
 	}()
-	_ = conn.WriteJSON(datatransfers.WSMessage{
-		Type: constants.WSMessageTypeControl,
-		Data: datatransfers.WSMessageData{
-			WSControlMessageData: datatransfers.WSControlMessageData{
+	_ = utils.SendMessage(conn, &pb.WSMessage{
+		Type: pb.WSMessageType_CONTROL,
+		Data: &pb.WSMessage_Control{
+			Control: &pb.WSControlMessageData{
 				ClassroomToken: sess.classroomToken,
-				ClassroomID:    sess.classroomID,
-				SessionID:      sess.sessionID,
-				CurrentPage:    &sess.currentPage,
-				NextPage:       utils.BoolAddr(false),
+				ClassroomId:    sess.classroomID,
+				SessionId:      sess.sessionID,
+				CurrentPage:    int32(sess.currentPage),
+				NextPage:       false,
 			},
 		},
 	})
 	for {
-		var message datatransfers.WSMessage
-		if err = conn.ReadJSON(&message); err != nil {
+		var message *pb.WSMessage
+		if message, err = utils.RecieveMessage(conn); err != nil {
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[HubCommandWorker] failed reading message. %s\n", err)
 			}
@@ -123,29 +179,29 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypeAchievement:
-			_ = sess.BroadcastJSON(message)
-		case constants.WSMessageTypeControl:
-			if message.Data.WSControlMessageData.NextPage != nil && *message.Data.WSControlMessageData.NextPage {
+		case pb.WSMessageType_ACHIEVEMENT:
+			_ = sess.BroadcastMessage(message)
+		case pb.WSMessageType_CONTROL:
+			if message.Data.(*pb.WSMessage_Control).Control.NextPage {
 				sess.currentPage++
-				_ = sess.BroadcastJSON(datatransfers.WSMessage{
-					Type: constants.WSMessageTypeControl,
-					Data: datatransfers.WSMessageData{
-						WSControlMessageData: datatransfers.WSControlMessageData{
-							NextPage: utils.BoolAddr(true),
+				_ = sess.BroadcastMessage(&pb.WSMessage{
+					Type: pb.WSMessageType_CONTROL,
+					Data: &pb.WSMessage_Control{
+						Control: &pb.WSControlMessageData{
+							NextPage: true,
 						},
 					},
 				})
 				var session models.Session
 				if session, err = m.db.sessionOrmer.GetOneByIDByClassroomID(sess.sessionID, sess.classroomID); err == nil && sess.currentPage > session.Pages {
 					session.Completed = true
-					if name, ok := sess.controllerName[constants.ControllerRoleStory]; ok {
+					if name, ok := sess.controllerName[pb.ControllerRole_STORY]; ok {
 						session.NameStory = name
 					}
-					if name, ok := sess.controllerName[constants.ControllerRoleCharacter]; ok {
+					if name, ok := sess.controllerName[pb.ControllerRole_CHARACTER]; ok {
 						session.NameCharacter = name
 					}
-					if name, ok := sess.controllerName[constants.ControllerRoleBackground]; ok {
+					if name, ok := sess.controllerName[pb.ControllerRole_BACKGROUND]; ok {
 						session.NameBackground = name
 					}
 					if err = m.db.sessionOrmer.Update(session); err != nil {
@@ -153,19 +209,26 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					}
 				}
 			}
-		case constants.WSMessageTypeImage:
+			if clearedController := message.Data.(*pb.WSMessage_Control).Control.Clear; clearedController != pb.ControllerRole_NONE {
+				_ = utils.SendMessage(sess.hubConn, message)
+				_ = utils.SendMessage(sess.controllerConn[clearedController], message)
+			}
+			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != pb.ControllerRole_NONE {
+				_ = sess.KickController(kickedController, false)
+			}
+		case pb.WSMessageType_IMAGE:
 			go m.SavePayload(sess, message, true)
-		case constants.WSMessageTypeManifest:
+		case pb.WSMessageType_MANIFEST:
 			go m.SavePayload(sess, message, false)
-		case constants.WSMessageTypePing:
-			_ = conn.WriteJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypePing,
+		case pb.WSMessageType_PING:
+			_ = utils.SendMessage(conn, &pb.WSMessage{
+				Type: pb.WSMessageType_PING,
 			})
 		default:
-			_ = conn.WriteJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypeError,
-				Data: datatransfers.WSMessageData{
-					WSErrorMessageData: datatransfers.WSErrorMessageData{
+			_ = utils.SendMessage(conn, &pb.WSMessage{
+				Type: pb.WSMessageType_ERROR,
+				Data: &pb.WSMessage_Error{
+					Error: &pb.WSErrorMessageData{
 						Error: "unsupported message type",
 					},
 				},
@@ -175,77 +238,66 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 	return
 }
 
-func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role, name string) (err error) {
-	_ = conn.WriteJSON(datatransfers.WSMessage{
-		Type: constants.WSMessageTypeControl,
-		Data: datatransfers.WSMessageData{
-			WSControlMessageData: datatransfers.WSControlMessageData{
+func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role pb.ControllerRole, name string) (err error) {
+	_ = utils.SendMessage(conn, &pb.WSMessage{
+		Type: pb.WSMessageType_CONTROL,
+		Data: &pb.WSMessage_Control{
+			Control: &pb.WSControlMessageData{
 				ClassroomToken: sess.classroomToken,
-				ClassroomID:    sess.classroomID,
-				SessionID:      sess.sessionID,
-				CurrentPage:    &sess.currentPage,
-				NextPage:       utils.BoolAddr(false),
+				ClassroomId:    sess.classroomID,
+				SessionId:      sess.sessionID,
+				CurrentPage:    int32(sess.currentPage),
+				NextPage:       false,
 			},
 		},
 	})
-	_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
-		Type: constants.WSMessageTypeJoin,
-		Data: datatransfers.WSMessageData{
-			WSJoinMessageData: datatransfers.WSJoinMessageData{
+	_ = utils.SendMessage(sess.hubConn, &pb.WSMessage{
+		Type: pb.WSMessageType_JOIN,
+		Data: &pb.WSMessage_Join{
+			Join: &pb.WSJoinMessageData{
 				Role:    role,
 				Name:    name,
-				Joining: utils.BoolAddr(true),
+				Joining: true,
 			},
 		},
 	})
 	for {
-		var message datatransfers.WSMessage
-		if err = conn.ReadJSON(&message); err != nil {
+		var message *pb.WSMessage
+		if message, err = utils.RecieveMessage(conn); err != nil {
 			if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("[ControllerCommandWorker] failed reading message. %s\n", err)
 			}
-			sess.mutex.Lock()
-			delete(sess.controllerConn, role)
-			sess.mutex.Unlock()
-			_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypeJoin,
-				Data: datatransfers.WSMessageData{
-					WSJoinMessageData: datatransfers.WSJoinMessageData{
-						Role:    role,
-						Joining: utils.BoolAddr(false),
-					},
-				},
-			})
+			_ = sess.KickController(role, true)
 			break
 		}
 		switch message.Type {
-		case constants.WSMessageTypePaint, constants.WSMessageTypeFill, constants.WSMessageTypeText, constants.WSMessageTypeCheckpoint,
-			constants.WSMessageTypeUndo, constants.WSMessageTypeCursor, constants.WSMessageTypeControl:
-			_ = sess.hubConn.WriteJSON(message)
-		case constants.WSMessageTypeAudio:
+		case pb.WSMessageType_PAINT, pb.WSMessageType_FILL, pb.WSMessageType_TEXT, pb.WSMessageType_CHECKPOINT,
+			pb.WSMessageType_UNDO, pb.WSMessageType_CURSOR, pb.WSMessageType_CONTROL:
+			_ = utils.SendMessage(sess.hubConn, message)
+		case pb.WSMessageType_AUDIO:
 			go func() {
-				message.Data.ID = sess.currentPage // override page numbber
+				message.Data.(*pb.WSMessage_Paint).Paint.Id = int32(sess.currentPage) // override page numbber
 				if filename, page := m.SavePayload(sess, message, true); filename != "" {
-					_ = sess.hubConn.WriteJSON(datatransfers.WSMessage{
-						Type: constants.WSMessageTypeAudio,
+					_ = utils.SendMessage(sess.hubConn, &pb.WSMessage{
+						Type: pb.WSMessageType_AUDIO,
 						Role: role,
-						Data: datatransfers.WSMessageData{
-							WSPaintMessageData: datatransfers.WSPaintMessageData{
+						Data: &pb.WSMessage_Paint{
+							Paint: &pb.WSPaintMessageData{
 								Text: fmt.Sprintf("%s/%s/%d/%s", sess.classroomID, sess.sessionID, page, filename),
 							},
 						},
 					})
 				}
 			}()
-		case constants.WSMessageTypePing:
-			_ = conn.WriteJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypePing,
+		case pb.WSMessageType_PING:
+			_ = utils.SendMessage(conn, &pb.WSMessage{
+				Type: pb.WSMessageType_PING,
 			})
 		default:
-			_ = conn.WriteJSON(datatransfers.WSMessage{
-				Type: constants.WSMessageTypeError,
-				Data: datatransfers.WSMessageData{
-					WSErrorMessageData: datatransfers.WSErrorMessageData{
+			_ = utils.SendMessage(conn, &pb.WSMessage{
+				Type: pb.WSMessageType_ERROR,
+				Data: &pb.WSMessage_Error{
+					Error: &pb.WSErrorMessageData{
 						Error: "unsupported message type",
 					},
 				},
@@ -255,7 +307,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 	return
 }
 
-func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessage, isBase64 bool) (filename string, page int) {
+func (m *module) SavePayload(sess *activeSession, message *pb.WSMessage, isBase64 bool) (filename string, page int) {
 	var err error
 	var data []byte
 	if data, page, err = utils.ExtractPayload(message, isBase64); err != nil {
@@ -271,11 +323,11 @@ func (m *module) SavePayload(sess *activeSession, message datatransfers.WSMessag
 	}
 	log.Println(message.Type, page)
 	switch message.Type {
-	case constants.WSMessageTypeAudio:
+	case pb.WSMessageType_AUDIO:
 		filename = fmt.Sprintf("%d.ogg", time.Now().Unix())
-	case constants.WSMessageTypeImage:
+	case pb.WSMessageType_IMAGE:
 		filename = "image.png"
-	case constants.WSMessageTypeManifest:
+	case pb.WSMessageType_MANIFEST:
 		filename = "manifest.json"
 	default:
 		return
@@ -302,7 +354,7 @@ func (m *module) GetClassroomActiveSession(classroomToken string) (sess *activeS
 	return
 }
 
-func (m *module) GetActiveSessionController(sess *activeSession, role string) (conn *websocket.Conn) {
+func (m *module) GetActiveSessionController(sess *activeSession, role pb.ControllerRole) (conn *websocket.Conn) {
 	sess.mutex.RLock()
 	defer sess.mutex.RUnlock()
 	if selected, ok := sess.controllerConn[role]; ok {

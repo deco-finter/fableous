@@ -11,22 +11,29 @@ import React, {
   useState,
   useRef,
   useImperativeHandle,
+  useMemo,
 } from "react";
 import cloneDeep from "lodash.clonedeep";
-import { WSMessage } from "../../data";
-
 import {
+  clearCanvas,
   convHEXtoRGBA,
   getTextBounds,
   scaleDownXY,
   scaleUpXY,
   translateXY,
 } from "./helpers";
-import { SCALE, SELECT_PADDING } from "./constants";
+import {
+  BRUSH_WIDTHS,
+  SCALE,
+  SELECT_PADDING,
+  TEXT_COLOR,
+  TEXT_FONTSIZE,
+} from "./constants";
 import { Cursor } from "./CursorScreen";
-import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
-import { ControllerRole, ToolMode, WSMessageType } from "../../constant";
 import { restAPI } from "../../api";
+import { ToolMode } from "../../constant";
+import { ImperativeCanvasRef, TextShape, TextShapeMap } from "./data";
+import { proto as pb } from "../../proto/message_pb";
 
 interface Checkpoint {
   tool: ToolMode;
@@ -36,8 +43,8 @@ interface Checkpoint {
 
 interface CanvasProps {
   wsConn: WebSocket | undefined;
-  role: ControllerRole;
-  layer: ControllerRole;
+  role: pb.ControllerRole;
+  layer: pb.ControllerRole;
   pageNum: number;
   isGallery?: boolean;
   isShown?: boolean;
@@ -54,7 +61,8 @@ interface CanvasProps {
   toolMode?: ToolMode;
   setToolMode?: React.Dispatch<React.SetStateAction<ToolMode>>;
   toolColor?: string;
-  toolWidth?: number;
+  toolNormWidth?: number;
+  rootId?: string | undefined;
 }
 
 const defaultProps = {
@@ -65,7 +73,8 @@ const defaultProps = {
   toolColor: "#000000ff",
   toolMode: ToolMode.None,
   setToolMode: () => {},
-  toolWidth: 8 * SCALE,
+  toolNormWidth: BRUSH_WIDTHS[1],
+  rootId: undefined,
 };
 
 interface SimplePointerEventData {
@@ -75,8 +84,6 @@ interface SimplePointerEventData {
   onLeave: boolean;
 }
 
-// TODO after width of canvas DOM element is dynamic, attempt to make canvas drawing scaling dynamic
-// that is, resizing screen allows drawing without issue (no translation error)
 const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
   (props: CanvasProps, ref) => {
     let FRAME_COUNTER = 0;
@@ -97,8 +104,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       toolMode = defaultProps.toolMode,
       setToolMode = defaultProps.setToolMode,
       toolColor = defaultProps.toolColor,
-      toolWidth = defaultProps.toolWidth,
+      toolNormWidth = defaultProps.toolNormWidth,
       wsConn,
+      rootId,
     } = props;
     // useImperativeHandle of type ImperativeCanvasRef defined at bottom
     const canvasRef = useRef<HTMLCanvasElement>(
@@ -114,6 +122,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     const [dragOffset, setDragOffset] = useState([0, 0]); // offset is in normalized scale
     const [audioMediaRecorder, setAudioMediaRecorder] =
       useState<MediaRecorder>();
+    const [, setAudioChunks] = useState<Blob[]>([]);
+    const audioFileReader = useMemo(() => new FileReader(), []);
     const [audioRecording, setAudioRecording] = useState(false);
     const textShapesRef = useRef<TextShapeMap>(textShapes);
     textShapesRef.current = textShapes; // inject ref to force sync, see: https://stackoverflow.com/questions/57847594/react-hooks-accessing-up-to-date-state-from-within-a-callback
@@ -138,12 +148,13 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         x2: number,
         y2: number,
         targetColor: string,
-        targetWidth: number
+        targetNormwidth: number
       ) => {
         const ctx = canvasRef.current.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
         const isCoordEq = x1 === x2 && y1 === y2;
+        const [targetWidth] = scaleUpXY(canvasRef, targetNormwidth, 0);
         // lay down path
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -164,23 +175,24 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         ctx.lineTo(isCoordEq ? x1 + 0.1 : x2, isCoordEq ? y1 + 0.1 : y2);
         ctx.closePath();
         ctx.stroke();
-        if (role !== ControllerRole.Hub) {
+        if (role !== pb.ControllerRole.HUB) {
           const [normX1, normY1] = scaleDownXY(canvasRef, x1, y1);
           const [normX2, normY2] = scaleDownXY(canvasRef, x2, y2);
-          const [normWidth] = scaleDownXY(canvasRef, targetWidth, 0);
           wsConn?.send(
-            JSON.stringify({
+            pb.WSMessage.encode({
               role,
-              type: WSMessageType.Paint,
-              data: {
+              type: pb.WSMessageType.PAINT,
+              paint: {
                 x1: normX1,
                 y1: normY1,
                 x2: normX2,
                 y2: normY2,
                 color: targetColor,
-                width: normWidth,
+                width: targetNormwidth,
               },
-            } as WSMessage)
+              timestamp:
+                process.env.NODE_ENV === "development" ? Date.now() : undefined,
+            }).finish()
           );
         }
       },
@@ -244,7 +256,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
                 expandLeft = false;
               }
             }
-            if (x < width) {
+            if (x < width - 1) {
               if (checkPixel(pixel + 4, startColor) && !expandRight) {
                 stack.push([x + 1, y]);
                 expandRight = true;
@@ -257,14 +269,14 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           }
         }
         ctx.putImageData(image, 0, 0);
-        if (role !== ControllerRole.Hub) {
+        if (role !== pb.ControllerRole.HUB) {
           const [normX, normY] = scaleDownXY(canvasRef, startX, startY);
           wsConn?.send(
-            JSON.stringify({
+            pb.WSMessage.encode({
               role,
-              type: WSMessageType.Fill,
-              data: { x1: normX, y1: normY, color: targetColor },
-            } as WSMessage)
+              type: pb.WSMessageType.FILL,
+              paint: { x1: normX, y1: normY, color: targetColor },
+            }).finish()
           );
         }
       },
@@ -277,19 +289,19 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           ...textShapesRef.current,
           [id]: textShape,
         }));
-        if (role !== ControllerRole.Hub) {
+        if (role !== pb.ControllerRole.HUB) {
           wsConn?.send(
-            JSON.stringify({
+            pb.WSMessage.encode({
               role,
-              type: WSMessageType.Text,
-              data: {
+              type: pb.WSMessageType.TEXT,
+              paint: {
                 id,
                 x1: textShape.normX,
                 y1: textShape.normY,
                 text: textShape.text,
                 width: textShape.normFontSize,
               },
-            } as WSMessage)
+            }).finish()
           );
         }
       },
@@ -303,8 +315,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       const ctx = canvasRef.current.getContext(
         "2d"
       ) as CanvasRenderingContext2D;
-      const { width, height } = canvasRef.current;
-      ctx.clearRect(0, 0, width, height);
+      clearCanvas(canvasRef);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       Object.entries(textShapesRef.current).forEach(([id, shape]) => {
@@ -317,10 +328,11 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           shape.text,
           fontSize
         );
-        ctx.fillStyle = isGallery ? "#00000000" : "#000000";
+        ctx.fillStyle = isGallery ? "#00000000" : TEXT_COLOR;
         ctx.font = `${fontSize * SCALE}px Comic Sans MS`;
         ctx.fillText(shape.text, x, y);
         if (parseInt(id, 10) === editingTextIdRef.current) {
+          // draw blinking cursor at end of text
           ctx.beginPath();
           ctx.lineWidth = 4;
           ctx.strokeStyle = "#00dd88";
@@ -330,18 +342,18 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             x2 -
               x1 +
               2 * SELECT_PADDING +
-              (role !== ControllerRole.Hub ? 6 : 0),
+              (role !== pb.ControllerRole.HUB ? 6 : 0),
             y2 - y1 + 2 * SELECT_PADDING
           );
           ctx.stroke();
           ctx.closePath();
-          if (role !== ControllerRole.Hub && FRAME_COUNTER > 30) {
+          if (role !== pb.ControllerRole.HUB && FRAME_COUNTER > 30) {
             ctx.beginPath();
             ctx.rect(x2 + 2, y1 - 2, 2, y2 - y1 + 2);
             ctx.fill();
             ctx.closePath();
           }
-        } else if (role !== ControllerRole.Hub) {
+        } else if (role !== pb.ControllerRole.HUB) {
           ctx.beginPath();
           ctx.lineWidth = 1;
           ctx.strokeStyle = "#00aaaa";
@@ -413,11 +425,10 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           showKeyboard(false);
         } else {
           // insert new text
-          const [normFontSize] = scaleDownXY(canvasRef, 18, 0);
           placeText(textId, {
             normX: normCursorX,
             normY: normCursorY,
-            normFontSize,
+            normFontSize: TEXT_FONTSIZE,
             text: "",
           } as TextShape);
           setEditingTextId(textId);
@@ -433,6 +444,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     const placeAudio = useCallback(
       (path: string) => {
+        console.log("pkaying");
         const player = document.createElement("audio");
         player.src = restAPI.gallery.getAssetByPath(path).url || "";
         player.play();
@@ -441,26 +453,50 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       [setAudioPaths]
     );
 
+    const sendAudio = useCallback(() => {
+      setAudioChunks((chunks) => {
+        console.log("onstop IN");
+        audioFileReader.onloadstart = (e) => {
+          console.log("onloadstart", e);
+        };
+        audioFileReader.onloadend = (e) => {
+          console.log("onstop SEND", e);
+          wsConn?.send(
+            pb.WSMessage.encode({
+              role,
+              type: pb.WSMessageType.AUDIO,
+              paint: {
+                text: audioFileReader.result as string,
+              },
+            }).finish()
+          );
+        };
+        console.log("onstop READY");
+        console.log(chunks);
+        const blob = new Blob([chunks[0]], {
+          type: "audio/ogg;codecs=opus",
+        });
+        if (audioFileReader.readyState !== 1)
+          audioFileReader.readAsDataURL(blob);
+        return []; // reset chunks
+      });
+    }, [wsConn, role, audioFileReader]);
+
     const initAudio = () => {
       navigator.mediaDevices?.getUserMedia({ audio: true }).then(
         (stream) => {
           const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.onstart = () => {
+            console.log("start");
+            setAudioChunks([]);
+          };
           mediaRecorder.ondataavailable = ({ data }) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(
-              new Blob([data], { type: "audio/ogg;codecs=opus" })
-            );
-            reader.onloadend = () => {
-              wsConn?.send(
-                JSON.stringify({
-                  role,
-                  type: WSMessageType.Audio,
-                  data: {
-                    text: reader.result,
-                  },
-                } as WSMessage)
-              );
-            };
+            console.log("ondataavailable");
+            setAudioChunks((chunks) => [...chunks, data]);
+          };
+          mediaRecorder.onstop = () => {
+            console.log("onstop");
+            sendAudio();
           };
           setAudioMediaRecorder(mediaRecorder);
         },
@@ -518,15 +554,15 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             return [...prev, cloneDeep(checkpoint)];
           });
         }
-        if (role !== ControllerRole.Hub) {
+        if (role !== pb.ControllerRole.HUB) {
           wsConn?.send(
-            JSON.stringify({
+            pb.WSMessage.encode({
               role,
-              type: WSMessageType.Checkpoint,
-              data: {
+              type: pb.WSMessageType.CHECKPOINT,
+              paint: {
                 text: tool,
               },
-            } as WSMessage)
+            }).finish()
           );
         }
       },
@@ -540,12 +576,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           "2d"
         ) as CanvasRenderingContext2D;
         if (!newCheckpoint) {
-          ctx.clearRect(
-            0,
-            0,
-            canvasRef.current.width,
-            canvasRef.current.height
-          );
+          clearCanvas(canvasRef);
           setTextShapes({});
         } else if (
           newCheckpoint.tool === ToolMode.Paint ||
@@ -557,13 +588,12 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         }
         return prev.slice(0, -1);
       });
-      if (role !== ControllerRole.Hub) {
+      if (role !== pb.ControllerRole.HUB) {
         wsConn?.send(
-          JSON.stringify({
+          pb.WSMessage.encode({
             role,
-            type: WSMessageType.Undo,
-            data: {},
-          } as WSMessage)
+            type: pb.WSMessageType.UNDO,
+          }).finish()
         );
       }
     }, [canvasRef, role, setTextShapes, wsConn]);
@@ -573,118 +603,130 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
         normX: number,
         normY: number,
         normWidth: number,
-        targetMode: ToolMode
+        targetToolMode: ToolMode
       ) => {
         if (setCursor)
           setCursor({
             normX,
             normY,
             normWidth,
-            toolMode: targetMode,
+            toolMode: targetToolMode,
           } as Cursor);
-        if (role !== ControllerRole.Hub) {
+        if (role !== pb.ControllerRole.HUB) {
           wsConn?.send(
-            JSON.stringify({
+            pb.WSMessage.encode({
               role,
-              type: WSMessageType.Cursor,
-              data: {
+              type: pb.WSMessageType.CURSOR,
+              paint: {
                 x1: normX,
                 y1: normY,
                 width: normWidth,
-                text: targetMode,
+                text: targetToolMode,
               },
-            } as WSMessage)
+            }).finish()
           );
         }
       },
       [setCursor, role, wsConn]
     );
 
+    const resetCanvas = () => {
+      clearCanvas(canvasRef);
+      setAudioPaths([]);
+      setTextShapes({});
+      setTextId(1);
+      setEditingTextId(0);
+      setCheckpointHistory([]);
+    };
+
     const readMessage = useCallback(
-      (ev: MessageEvent) => {
-        try {
-          const msg: WSMessage = JSON.parse(ev.data);
-          if (msg.role === layer || msg.type === WSMessageType.Control) {
-            const [x1, y1] = scaleUpXY(
-              canvasRef,
-              msg.data.x1 || 0,
-              msg.data.y1 || 0
-            );
-            const [x2, y2] = scaleUpXY(
-              canvasRef,
-              msg.data.x2 || 0,
-              msg.data.y2 || 0
-            );
-            const [width] = scaleUpXY(canvasRef, msg.data.width || 0, 0);
-            switch (msg.type) {
-              case WSMessageType.Paint:
-                placePaint(
-                  x1,
-                  y1,
-                  x2,
-                  y2,
-                  msg.data.color || "#000000ff",
-                  width || 8
+      async (ev: MessageEvent<ArrayBuffer>) => {
+        const msg = pb.WSMessage.decode(new Uint8Array(ev.data));
+        if (msg.role === layer || msg.type === pb.WSMessageType.CONTROL) {
+          const [x1, y1] = scaleUpXY(
+            canvasRef,
+            msg.paint?.x1 || 0,
+            msg.paint?.y1 || 0
+          );
+          const [x2, y2] = scaleUpXY(
+            canvasRef,
+            msg.paint?.x2 || 0,
+            msg.paint?.y2 || 0
+          );
+          switch (msg.type) {
+            case pb.WSMessageType.PAINT:
+              placePaint(
+                x1,
+                y1,
+                x2,
+                y2,
+                msg.paint?.color || "#000000ff",
+                msg.paint?.width || 0
+              );
+              if (process.env.NODE_ENV === "development")
+                console.log(
+                  `latency: ${Date.now() - (msg.timestamp as number)}`
                 );
-                break;
-              case WSMessageType.Fill:
-                placeFill(x1, y1, msg.data.color || "#000000ff");
-                break;
-              case WSMessageType.Text:
-                placeText(msg.data.id || 1, {
-                  normX: msg.data.x1 || 0, // use normalized coords
-                  normY: msg.data.y1 || 0,
-                  normFontSize: msg.data.width || 0,
-                  text: msg.data.text || "",
-                } as TextShape);
-                break;
-              case WSMessageType.Audio:
-                placeAudio(msg.data.text || "");
-                break;
-              case WSMessageType.Checkpoint:
-                placeCheckpoint(msg.data.text as ToolMode);
-                break;
-              case WSMessageType.Undo:
-                placeUndo();
-                break;
-              case WSMessageType.Cursor:
-                placeCursor(
-                  msg.data.x1 || 0, // no need to denormalize
-                  msg.data.y1 || 0,
-                  msg.data.width || 0,
-                  msg.data.text as ToolMode.Paint
-                );
-                break;
-              default:
-            }
+              break;
+            case pb.WSMessageType.FILL:
+              placeFill(x1, y1, msg.paint?.color || "#000000ff");
+              break;
+            case pb.WSMessageType.TEXT:
+              placeText(msg.paint?.id || 1, {
+                normX: msg.paint?.x1 || 0, // use normalized coords
+                normY: msg.paint?.y1 || 0,
+                normFontSize: msg.paint?.width || 0,
+                text: msg.paint?.text || "",
+              } as TextShape);
+              break;
+            case pb.WSMessageType.AUDIO:
+              placeAudio(msg.paint?.text || "");
+              break;
+            case pb.WSMessageType.CHECKPOINT:
+              placeCheckpoint(msg.paint?.text as ToolMode);
+              break;
+            case pb.WSMessageType.UNDO:
+              placeUndo();
+              break;
+            case pb.WSMessageType.CURSOR:
+              placeCursor(
+                msg.paint?.x1 || 0, // no need to denormalize
+                msg.paint?.y1 || 0,
+                msg.paint?.width || 0,
+                msg.paint?.text as ToolMode.Paint
+              );
+              break;
+            case pb.WSMessageType.CONTROL:
+              if (msg.control?.clear === layer) {
+                resetCanvas();
+              }
+              break;
+            default:
           }
-        } catch (e) {
-          console.error(e);
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [
         layer,
-        canvasRef,
         placePaint,
         placeFill,
         placeText,
+        placeAudio,
         placeCheckpoint,
         placeUndo,
         placeCursor,
-        placeAudio,
       ]
     );
 
     const onPointerDown = (event: SimplePointerEventData) => {
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
-      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-      placeCursor(normX, normY, normWidth, toolMode);
+      placeCursor(normX, normY, toolNormWidth, toolMode);
       onDraw();
       switch (toolMode) {
         case ToolMode.Paint:
           setDragging(true);
-          placePaint(x, y, x, y, toolColor, toolWidth);
+          placePaint(x, y, x, y, toolColor, toolNormWidth);
           setLastPos([x, y]);
           break;
         case ToolMode.Fill:
@@ -705,8 +747,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       const [lastX, lastY] = lastPos;
       const [x, y] = translateXY(canvasRef, event.clientX, event.clientY);
       const [normX, normY] = scaleDownXY(canvasRef, x, y);
-      const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-      if (allowDrawing) placeCursor(normX, normY, normWidth, toolMode);
+      if (allowDrawing) placeCursor(normX, normY, toolNormWidth, toolMode);
       switch (toolMode) {
         case ToolMode.Paint:
           if (!dragging || !allowDrawing) return;
@@ -715,13 +756,13 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             Math.round(lastY) === Math.round(y)
           )
             return;
-          placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+          placePaint(lastX, lastY, x, y, toolColor, toolNormWidth);
           break;
         case ToolMode.Text:
           if (!editingTextId || hasLifted || !allowDrawing) return;
-          const shape = textShapesRef.current[editingTextId];
           setDragging(true);
           showKeyboard(false);
+          const shape = textShapesRef.current[editingTextId];
           placeText(editingTextId, {
             ...shape,
             normX: normX + dragOffset[0],
@@ -743,10 +784,9 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       switch (toolMode) {
         case ToolMode.Paint:
           if (dragging) {
-            placePaint(lastX, lastY, x, y, toolColor, toolWidth);
+            placePaint(lastX, lastY, x, y, toolColor, toolNormWidth);
             const [normX, normY] = scaleDownXY(canvasRef, x, y);
-            const [normWidth] = scaleDownXY(canvasRef, toolWidth, 0);
-            placeCursor(normX, normY, normWidth, toolMode);
+            placeCursor(normX, normY, toolNormWidth, toolMode);
             placeCheckpoint(toolMode);
           }
           break;
@@ -821,16 +861,16 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
     // setup on component mount
     useEffect(() => {
       adjustCanvasSize();
-      setAllowDrawing(role !== ControllerRole.Hub);
+      setAllowDrawing(role !== pb.ControllerRole.HUB);
       switch (role) {
-        case ControllerRole.Story:
+        case pb.ControllerRole.STORY:
           initAudio();
           setToolMode(ToolMode.Text);
           break;
-        case ControllerRole.Character:
+        case pb.ControllerRole.CHARACTER:
           setToolMode(ToolMode.Paint);
           break;
-        case ControllerRole.Background:
+        case pb.ControllerRole.BACKGROUND:
           setToolMode(ToolMode.Paint);
           break;
         default:
@@ -844,30 +884,21 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, wsConn, adjustCanvasSize]);
 
-    // cleanup before moving to next page
-    useEffect(() => {
-      const ctx = canvasRef.current.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-      const { width, height } = canvasRef.current;
-      ctx.clearRect(0, 0, width, height);
-      setAudioPaths([]);
-      setTextShapes({});
-      setTextId(1);
-      setEditingTextId(0);
-      setCheckpointHistory([]);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pageNum]);
-
     // workaround to recalculate width when canvas appears or becomes hidden
     useEffect(() => {
       adjustCanvasSize();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adjustCanvasSize, isShown]);
 
+    // cleanup before moving to next page
+    useEffect(() => {
+      resetCanvas();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageNum, isShown]);
+
     // initialize text event listener
     useEffect(() => {
-      if (isShown && role !== ControllerRole.Hub) {
+      if (isShown && role !== pb.ControllerRole.HUB) {
         const textEventHandler = (event: KeyboardEvent) => {
           if (event.key === "z" && (event.ctrlKey || event.metaKey)) {
             placeUndo();
@@ -887,7 +918,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     // start text layer animation
     useEffect(() => {
-      if (isShown && layer === ControllerRole.Story) {
+      if (isShown && layer === pb.ControllerRole.STORY) {
         const anim = window.requestAnimationFrame(refreshText);
         return () => {
           window.cancelAnimationFrame(anim);
@@ -911,6 +942,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
 
     return (
       <div
+        id={rootId}
         className="relative place-self-center"
         style={{
           width: offsetWidth,
@@ -933,7 +965,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             e.preventDefault();
           }}
           onClick={() => {
-            if (editingTextId && role !== ControllerRole.Hub)
+            if (editingTextId && role !== pb.ControllerRole.HUB)
               showKeyboard(true);
           }}
           style={{
@@ -952,7 +984,7 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             msUserSelect: "none",
             userSelect: "none",
             cursor:
-              role === ControllerRole.Hub || toolMode === ToolMode.Audio
+              role === pb.ControllerRole.HUB || toolMode === ToolMode.Audio
                 ? "auto"
                 : "none",
           }}
@@ -962,6 +994,14 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
           value={textShapesRef.current[editingTextId]?.text || ""}
           onChange={(e) => {
             onKeyDown(e.target.value);
+          }}
+          onKeyDown={() => {
+            // disable moving cursor and selection with arrow keys, shift and ctrl+A
+            // by forcing cursor to be at the end
+            onScreenKeyboardRef.current.setSelectionRange(
+              Number.MAX_SAFE_INTEGER,
+              Number.MAX_SAFE_INTEGER
+            );
           }}
           tabIndex={0}
           style={{
