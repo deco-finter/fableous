@@ -999,8 +999,8 @@ const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
             // disable moving cursor and selection with arrow keys, shift and ctrl+A
             // by forcing cursor to be at the end
             onScreenKeyboardRef.current.setSelectionRange(
-              Number.MAX_SAFE_INTEGER,
-              Number.MAX_SAFE_INTEGER
+              onScreenKeyboardRef.current.value.length,
+              onScreenKeyboardRef.current.value.length
             );
           }}
           tabIndex={0}
