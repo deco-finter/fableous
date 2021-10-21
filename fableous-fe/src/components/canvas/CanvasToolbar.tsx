@@ -28,6 +28,7 @@ interface CanvasToolbarProps {
   setToolColor: React.Dispatch<React.SetStateAction<string>>;
   toolNormWidth: number;
   setToolNormWidth: React.Dispatch<React.SetStateAction<number>>;
+  isShown?: boolean;
 }
 
 const ERASE_COLOR = "#00000000";
@@ -58,6 +59,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
       toolNormWidth,
       setToolNormWidth,
       offsetHeight,
+      isShown = true,
     } = props;
     const imperativeCanvasRef = ref as MutableRefObject<ImperativeCanvasRef>;
     const [prevColor, setPrevColor] = useState(toolColor);
@@ -94,6 +96,13 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
         clearInterval(interval);
       };
     }, [isRecordingAudio]);
+
+    useEffect(() => {
+      if (!isShown) {
+        setIsBrushWidthPickerOpen(false);
+        setIsEraserWidthPickerOpen(false);
+      }
+    }, [isShown]);
 
     const classes = useStyles();
 
@@ -388,6 +397,7 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
 
 CanvasToolbar.defaultProps = {
   offsetHeight: "100%",
+  isShown: true,
 };
 
 export default CanvasToolbar;
