@@ -8,12 +8,13 @@ import BrushIcon from "@material-ui/icons/Brush";
 import StopIcon from "@material-ui/icons/Stop";
 import StopRoundedIcon from "@material-ui/icons/StopRounded";
 import FormatColorFillIcon from "@material-ui/icons/FormatColorFill";
-import { Button, IconButton, makeStyles, Typography } from "@material-ui/core";
+import { IconButton, makeStyles, Typography } from "@material-ui/core";
 import EraserIcon from "./EraserIcon";
 import { ToolMode } from "../../constant";
 import { ImperativeCanvasRef } from "./data";
 import { proto as pb } from "../../proto/message_pb";
 import BrushWidthIcon from "./BrushWidthIcon";
+import ColorPaletteIcon from "./ColorPaletteIcon";
 import ToolbarTooltip from "./ToolbarTooltip";
 import { TutorialTargetId } from "../../tutorialTargetIds";
 import { BRUSH_COLORS, BRUSH_WIDTHS } from "./constants";
@@ -252,29 +253,14 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       >
                         {BRUSH_COLORS.slice(0, BRUSH_COLORS.length / 2).map(
                           (color) => (
-                            <Button
-                              component="div"
+                            <ColorPaletteIcon
+                              key={color}
+                              color={color}
+                              toolColor={toolColor}
                               onClick={() => {
                                 setToolColorRememberPrev(color);
                                 setIsColorPickerOpen(false);
                               }}
-                              style={{
-                                backgroundColor: color,
-                                width: "38px",
-                                height: "38px",
-                                padding: 0,
-                                margin: 4,
-                                minWidth: "auto",
-                                borderRadius: 4,
-                                border: `${
-                                  toolColor === color ? 2 : 1
-                                }px solid ${
-                                  toolColor === color
-                                    ? colors.orange.main
-                                    : "#AAA8"
-                                }`,
-                              }}
-                              key={color}
                             />
                           )
                         )}
@@ -286,29 +272,14 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                       >
                         {BRUSH_COLORS.slice(BRUSH_COLORS.length / 2).map(
                           (color) => (
-                            <Button
-                              component="div"
+                            <ColorPaletteIcon
+                              key={color}
+                              color={color}
+                              toolColor={toolColor}
                               onClick={() => {
                                 setToolColorRememberPrev(color);
                                 setIsColorPickerOpen(false);
                               }}
-                              style={{
-                                backgroundColor: color,
-                                width: "38px",
-                                height: "38px",
-                                padding: 0,
-                                margin: 4,
-                                minWidth: "auto",
-                                borderRadius: 4,
-                                border: `${
-                                  toolColor === color ? 2 : 1
-                                }px solid ${
-                                  toolColor === color
-                                    ? colors.orange.main
-                                    : "#AAA8"
-                                }`,
-                              }}
-                              key={color}
                             />
                           )
                         )}
