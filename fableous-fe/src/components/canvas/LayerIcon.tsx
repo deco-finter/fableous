@@ -117,7 +117,7 @@ export default function LayerIcon(props: LayerIconProps) {
                 if (focusLayer === studentRole) {
                   return undefined;
                 }
-                notifyLayerFocus(studentRole as StudentRole);
+                notifyLayerFocus(studentRole);
                 return studentRole;
               });
               onClick();
