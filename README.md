@@ -143,8 +143,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ## Contributors
 
 - Danny August Ramaputra
+- Jiarui Li
 - Michael Sudirman
 - Nicolaus Christian Gozali
-- Wahyu Ananda Duli Tokan
 - Tianyu Ma
-- Jiarui Li
+- Wahyu Ananda Duli Tokan
