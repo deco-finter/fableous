@@ -18,7 +18,7 @@ export default function StoryCompletionPrompt(props: {
           className="mb-2"
           onClick={() => restartSession()}
         >
-          Create another session
+          Create another story
         </Button>
       </Grid>
       <Grid item xs={12}>
