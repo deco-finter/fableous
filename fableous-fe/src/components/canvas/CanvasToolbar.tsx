@@ -257,10 +257,12 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                                 margin: 4,
                                 minWidth: "auto",
                                 borderRadius: 4,
-                                border: `2px solid ${
+                                border: `${
+                                  toolColor === color ? 2 : 1
+                                }px solid ${
                                   toolColor === color
                                     ? colors.orange.main
-                                    : "#0000"
+                                    : "#AAA8"
                                 }`,
                               }}
                               key={color}
@@ -289,10 +291,12 @@ const CanvasToolbar = forwardRef<ImperativeCanvasRef, CanvasToolbarProps>(
                                 margin: 4,
                                 minWidth: "auto",
                                 borderRadius: 4,
-                                border: `2px solid ${
+                                border: `${
+                                  toolColor === color ? 2 : 1
+                                }px solid ${
                                   toolColor === color
                                     ? colors.orange.main
-                                    : "#0000"
+                                    : "#AAA8"
                                 }`,
                               }}
                               key={color}
