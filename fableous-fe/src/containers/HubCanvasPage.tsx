@@ -13,7 +13,7 @@ import useAxios from "axios-hooks";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { Link, useHistory, useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
 import { APIResponse, Manifest, Session, Story } from "../data";
@@ -43,6 +43,7 @@ enum HubState {
   SessionForm = "SESSION_FORM",
   WaitingRoom = "WAITING_ROOM",
   DrawingSession = "DRAWING_SESSION",
+  StoryFinished = "STORY_FINISHED",
 }
 
 export default function HubCanvasPage() {
@@ -51,7 +52,9 @@ export default function HubCanvasPage() {
   const { enqueueSnackbar } = useSnackbar();
   const [hubState, setHubState] = useState<HubState>(HubState.SessionForm);
   const [wsConn, setNewWsConn, clearWsConn] = useWsConn();
-  const [classroomToken, setClassroomToken] = useState("");
+  const [sessionInfo, setSessionInfo] = useState<
+    pb.WSControlMessageData | undefined
+  >();
   const [joinedControllers, setJoinedControllers] = useState<
     {
       [key in StudentRole]?: string;
@@ -185,7 +188,7 @@ export default function HubCanvasPage() {
               done,
             } = msg.control as pb.WSControlMessageData;
             if (classroomTokenFromWs) {
-              setClassroomToken(classroomTokenFromWs);
+              setSessionInfo(msg.control as pb.WSControlMessageData);
             }
             if (help) {
               enqueueSnackbar(`${ROLE_ICON[msg.role].text} needs a hand!`, {
@@ -410,6 +413,7 @@ export default function HubCanvasPage() {
   // redirect back if session already initialised
   useEffect(() => {
     executeGetOngoingSession().then(() => {
+      // executeGetOngoingSession will return 404 if there are no ongoing session
       history.push("/");
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -447,7 +451,7 @@ export default function HubCanvasPage() {
     if (hubState === HubState.SessionForm) {
       setCurrentPageIdx(0);
       setStory(undefined);
-      setClassroomToken("");
+      setSessionInfo(undefined);
       setJoinedControllers({});
       setFocusLayer(undefined);
       setHelpControllers(INIT_FLAG);
@@ -459,7 +463,7 @@ export default function HubCanvasPage() {
   useEffect(() => {
     if (currentPageIdx && story && currentPageIdx > story.pages) {
       enqueueSnackbar("Story completed!", { variant: "success" });
-      setHubState(HubState.SessionForm);
+      setHubState(HubState.StoryFinished);
       achievementReset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -487,6 +491,7 @@ export default function HubCanvasPage() {
                   [HubState.SessionForm]: "New Story",
                   [HubState.WaitingRoom]: "Lobby",
                   [HubState.DrawingSession]: "",
+                  [HubState.StoryFinished]: "Finished!",
                 }[hubState]
               }
             </Typography>
@@ -722,7 +727,10 @@ export default function HubCanvasPage() {
                     </Grid>
                   </Grid>
                   <Grid item xs={12} className="flex mt-2">
-                    <Chip color="primary" label={classroomToken} />
+                    <Chip
+                      color="primary"
+                      label={sessionInfo?.classroomToken || ""}
+                    />
                     <div className="flex flex-grow" />
                     <Button
                       color="secondary"
@@ -738,6 +746,46 @@ export default function HubCanvasPage() {
               </CardContent>
             </Card>
           </Grid>
+        )}
+        {hubState === HubState.StoryFinished && (
+          <>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="primary"
+                endIcon={<Icon fontSize="small">brush</Icon>}
+                className="mb-2"
+                onClick={() => {
+                  setHubState(HubState.SessionForm);
+                }}
+              >
+                Create another session
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="secondary"
+                component={Link}
+                endIcon={<Icon fontSize="small">photo</Icon>}
+                to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
+                className="mb-2"
+              >
+                View completed story in gallery
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="secondary"
+                component={Link}
+                endIcon={<Icon fontSize="small">book</Icon>}
+                to={`/gallery/${sessionInfo?.classroomId}`}
+              >
+                View classroom gallery
+              </Button>
+            </Grid>
+          </>
         )}
       </div>
       <div
