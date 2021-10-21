@@ -695,7 +695,7 @@ export default function ControllerCanvasPage() {
                 to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
                 className="mb-2"
               >
-                View completed story in gallery
+                View completed story
               </Button>
             </Grid>
             <Grid item xs={12}>
