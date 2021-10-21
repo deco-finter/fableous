@@ -767,6 +767,7 @@ export default function ControllerCanvasPage() {
               setToolMode={setToolMode}
               toolNormWidth={toolNormWidth}
               setToolNormWidth={setToolNormWidth}
+              isShown={controllerState === ControllerState.DrawingSession}
             />
           </Grid>
           <Grid item xs={10} md={11}>
