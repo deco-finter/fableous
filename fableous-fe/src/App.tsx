@@ -1,12 +1,13 @@
-import React from "react";
-import { Container } from "@material-ui/core";
+import React, { useRef } from "react";
+import { Container, IconButton } from "@material-ui/core";
 import {
   createTheme,
   makeStyles,
   ThemeProvider,
 } from "@material-ui/core/styles";
+import CloseIcon from "@material-ui/icons/Close";
 import { BrowserRouter as Router } from "react-router-dom";
-import { SnackbarProvider } from "notistack";
+import { SnackbarKey, SnackbarProvider } from "notistack";
 import AuthProvider from "./components/AuthProvider";
 import Navbar from "./components/Navbar";
 import Routes from "./Routes";
@@ -28,6 +29,11 @@ const useStyles = makeStyles({
 });
 
 export default function App() {
+  const notistackRef = useRef<SnackbarProvider>(null);
+  const onSnackbarClose = (key: SnackbarKey) => () => {
+    notistackRef.current?.closeSnackbar(key);
+  };
+
   const theme = createTheme({
     palette: {
       primary: {
@@ -137,6 +143,7 @@ export default function App() {
       <div className="flex flex-col min-h-screen">
         {/* place Snackbar outside of React.StrictMode to suppress finddomnode is deprecated warning */}
         <SnackbarProvider
+          ref={notistackRef}
           maxSnack={3}
           classes={{
             variantSuccess: classes.snackbarChildren,
@@ -144,6 +151,17 @@ export default function App() {
             variantWarning: classes.snackbarChildren,
             variantError: classes.snackbarChildren,
           }}
+          action={(key) => (
+            <IconButton
+              onClick={onSnackbarClose(key)}
+              size="small"
+              style={{
+                marginRight: "4px",
+              }}
+            >
+              <CloseIcon fontSize="small" className="text-white" />
+            </IconButton>
+          )}
         >
           <React.StrictMode>
             <AuthProvider>
