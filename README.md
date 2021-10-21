@@ -147,3 +147,4 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 - Nicolaus Christian Gozali
 - Wahyu Ananda Duli Tokan
 - Tianyu Ma
+- Jiarui Li
