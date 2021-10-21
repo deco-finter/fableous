@@ -691,9 +691,22 @@ export default function ControllerCanvasPage() {
                 variant="contained"
                 color="secondary"
                 component={Link}
+                endIcon={<Icon fontSize="small">photo</Icon>}
                 to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
+                className="mb-2"
               >
-                View story in gallery
+                View completed story
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="secondary"
+                component={Link}
+                endIcon={<Icon fontSize="small">book</Icon>}
+                to={`/gallery/${sessionInfo?.classroomId}`}
+              >
+                View classroom gallery
               </Button>
             </Grid>
           </>
@@ -754,6 +767,7 @@ export default function ControllerCanvasPage() {
               setToolMode={setToolMode}
               toolNormWidth={toolNormWidth}
               setToolNormWidth={setToolNormWidth}
+              isShown={controllerState === ControllerState.DrawingSession}
             />
           </Grid>
           <Grid item xs={10} md={11}>
