@@ -25,12 +25,12 @@ export const useCustomNav = () => useContext(CustomNavContext);
 
 /**
  * Allows pages to have customized buttons in navbar.
- * 
+ *
  * @example
- * 
+ *
  * useEffect(() => {
  *  setAdditionalNavs(navItemsUniqueToThisPage)
- * 
+ *
  *  return () => {
  *    setAdditionalNavs([])
  *  }

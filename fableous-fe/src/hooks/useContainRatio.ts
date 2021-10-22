@@ -6,7 +6,7 @@ import { useResizeDetector } from "react-resize-detector";
  *
  * @param {React.MutableRefObject<T>} containerRef Ref to container
  * @param {number} ratio Width to height ratio
- * 
+ *
  * @return {[number, number]} width and height
  */
 export default function useContainRatio<T>(config: {

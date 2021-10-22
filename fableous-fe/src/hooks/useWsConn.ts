@@ -6,7 +6,7 @@ import { proto as pb } from "../proto/message_pb";
  *
  * @return {[WebSocket | undefined, Dispatch<SetStateAction<WebSocket>>, () => void]}
  * websocket state,
- * setstate and 
+ * setstate and
  * function to clear websocket
  */
 export default function useWsConn(): [

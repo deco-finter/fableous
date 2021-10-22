@@ -2,7 +2,7 @@
 import { TextField, TextFieldProps } from "@material-ui/core";
 import { FormikProps } from "formik";
 
-/** 
+/**
  * Convenience formik wrapper around Mui's TextField
  */
 export default function FormikTextField(props: {

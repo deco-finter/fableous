@@ -21,7 +21,7 @@ enum TutorialState {
  * @param {number} duration duration in milliseconds to not automatically start tutorial from most recent use
  *
  * @return {[boolean, (data: CallBackProps) => void]}
- * tutorial running state and 
+ * tutorial running state and
  * callback function to pass to Joyride component
  */
 export default function useTutorial(config: {

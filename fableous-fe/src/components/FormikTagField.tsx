@@ -5,7 +5,7 @@ import { Autocomplete } from "@material-ui/lab";
 import { FormikProps } from "formik";
 import { useState } from "react";
 
-/** 
+/**
  * Convenience formik wrapper for custom tag input
  */
 export default function FormikTagField(props: {
