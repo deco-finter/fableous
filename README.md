@@ -139,3 +139,12 @@ UUID support is also required in PostgreSQL. For modern PostgreSQL versions (9.1
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
+
+## Contributors
+
+- Danny August Ramaputra
+- Jiarui Li
+- Michael Sudirman
+- Nicolaus Christian Gozali
+- Tianyu Ma
+- Wahyu Ananda Duli Tokan
