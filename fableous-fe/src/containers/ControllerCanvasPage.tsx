@@ -15,7 +15,6 @@ import {
   Chip,
   ChipProps,
 } from "@material-ui/core";
-import { Link } from "react-router-dom";
 import useAxios from "axios-hooks";
 import * as yup from "yup";
 import { Formik, FormikHelpers } from "formik";
@@ -47,6 +46,7 @@ import { colors } from "../colors";
 import { TutorialTargetId } from "../tutorialTargetIds";
 import useTutorial from "../hooks/useTutorial";
 import { useCustomNav } from "../components/CustomNavProvider";
+import StoryCompletionPrompt from "../components/StoryCompletionPrompt";
 import { proto as pb } from "../proto/message_pb";
 
 enum ControllerState {
@@ -672,44 +672,12 @@ export default function ControllerCanvasPage() {
           </div>
         )}
         {controllerState === ControllerState.StoryFinished && (
-          <>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="primary"
-                endIcon={<Icon fontSize="small">brush</Icon>}
-                className="mb-2"
-                onClick={() => {
-                  setControllerState(ControllerState.JoinForm);
-                }}
-              >
-                Join another session
-              </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="secondary"
-                component={Link}
-                endIcon={<Icon fontSize="small">photo</Icon>}
-                to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
-                className="mb-2"
-              >
-                View completed story
-              </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="secondary"
-                component={Link}
-                endIcon={<Icon fontSize="small">book</Icon>}
-                to={`/gallery/${sessionInfo?.classroomId}`}
-              >
-                View classroom gallery
-              </Button>
-            </Grid>
-          </>
+          <StoryCompletionPrompt
+            restartSession={() => {
+              setControllerState(ControllerState.JoinForm);
+            }}
+            sessionInfo={sessionInfo}
+          />
         )}
       </div>
       <div

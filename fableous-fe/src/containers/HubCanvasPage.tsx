@@ -13,7 +13,7 @@ import useAxios from "axios-hooks";
 import { Formik, FormikHelpers } from "formik";
 import { useSnackbar } from "notistack";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import * as yup from "yup";
 import { restAPI, wsAPI } from "../api";
 import { APIResponse, Manifest, Session, Story } from "../data";
@@ -31,6 +31,7 @@ import ChipRow from "../components/ChipRow";
 import FormikTagField from "../components/FormikTagField";
 import LayerToolbar from "../components/canvas/LayerToolbar";
 import { achievementToProto } from "../components/achievement/achievement";
+import StoryCompletionPrompt from "../components/StoryCompletionPrompt";
 import { proto as pb } from "../proto/message_pb";
 
 const INIT_FLAG = {
@@ -748,44 +749,12 @@ export default function HubCanvasPage() {
           </Grid>
         )}
         {hubState === HubState.StoryFinished && (
-          <>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="primary"
-                endIcon={<Icon fontSize="small">brush</Icon>}
-                className="mb-2"
-                onClick={() => {
-                  setHubState(HubState.SessionForm);
-                }}
-              >
-                Create another session
-              </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="secondary"
-                component={Link}
-                endIcon={<Icon fontSize="small">photo</Icon>}
-                to={`/gallery/${sessionInfo?.classroomId}/${sessionInfo?.sessionId}`}
-                className="mb-2"
-              >
-                View completed story
-              </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="secondary"
-                component={Link}
-                endIcon={<Icon fontSize="small">book</Icon>}
-                to={`/gallery/${sessionInfo?.classroomId}`}
-              >
-                View classroom gallery
-              </Button>
-            </Grid>
-          </>
+          <StoryCompletionPrompt
+            restartSession={() => {
+              setHubState(HubState.SessionForm);
+            }}
+            sessionInfo={sessionInfo}
+          />
         )}
       </div>
       <div
