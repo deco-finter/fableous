@@ -8,6 +8,17 @@ import {
 import { BRUSH_COLORS } from "../components/canvas/constants";
 import { proto as pb } from "../proto/message_pb";
 
+/**
+ * Manages state of each achievements and exposes handlers to update them.
+ *
+ * @param {boolean} debug true to log achievement state to console
+ *
+ * @return {[Achievement, (ev: MessageEvent) => void, () => void, () => void]}
+ * achievement state,
+ * handler to attach as websocket message event listener,
+ * handler to run on story page change and
+ * function to reset state
+ */
 export default function useAchievement(config?: {
   debug?: boolean;
 }): [Achievement, (ev: MessageEvent) => void, () => void, () => void] {

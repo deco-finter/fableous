@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { proto as pb } from "../proto/message_pb";
 
+/**
+ * Manages websocket state by handling pings to keep connection alive.
+ *
+ * @return {[WebSocket | undefined, Dispatch<SetStateAction<WebSocket>>, () => void]}
+ * websocket state,
+ * setstate and 
+ * function to clear websocket
+ */
 export default function useWsConn(): [
   WebSocket | undefined,
   React.Dispatch<React.SetStateAction<WebSocket>>,

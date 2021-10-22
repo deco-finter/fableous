@@ -20,7 +20,9 @@ enum TutorialState {
  * @param {() => {}} onManualStartCallback custom logic to run on navbar tutorial button click
  * @param {number} duration duration in milliseconds to not automatically start tutorial from most recent use
  *
- * @return {[boolean, (data: CallBackProps) => void]} tutorial running state and callback function to pass to Joyride component
+ * @return {[boolean, (data: CallBackProps) => void]}
+ * tutorial running state and 
+ * callback function to pass to Joyride component
  */
 export default function useTutorial(config: {
   showTutorialButton: boolean;
