@@ -1,6 +1,7 @@
 syntax = "proto3";
 package proto;
 
+// WSMessageType defines the type of the message.
 enum WSMessageType {
   UNKNOWN = 0;
   ERROR = 1;
@@ -19,6 +20,7 @@ enum WSMessageType {
   MANIFEST = 14;
 }
 
+// ControllerRole defines the type of controller roles.
 enum ControllerRole {
   NONE = 0;
   HUB = 1;
@@ -27,9 +29,10 @@ enum ControllerRole {
   BACKGROUND = 4;
 }
 
+// WSMessage wraps all WebSocket messages sent between the client and server.
 message WSMessage {
-  WSMessageType type = 1;
-  ControllerRole role = 2;
+  WSMessageType type = 1; // type of message
+  ControllerRole role = 2; // origin of message
   oneof data {
     WSPaintMessageData paint = 3;
     WSControlMessageData control = 4;
@@ -37,32 +40,37 @@ message WSMessage {
     WSAchievementMessageData achievement = 6;
     WSErrorMessageData error = 7;
   }
-  int64 timestamp = 8;
+  int64 timestamp = 8; // used during benchmarking
 }
 
+// WSPaintMessageData contains the data for a paint message.
+// All coordinates (x1, y1, x2, y2) and width are normalized to the range [0, 1].
 message WSPaintMessageData {
   float x1 = 1;
   float y1 = 2;
   float x2 = 3;
   float y2 = 4;
   int32 id = 5;
-  string text = 6;
+  string text = 6; // can contain plaintext or base64 payload depending on WSMessageType
   string color = 7;
   float width = 8;
 }
 
+// WSControlMessageData contains the data for a control message.
 message WSControlMessageData {
   string classroom_token = 1;
   string classroom_id = 2;
   string session_id = 3;
   int32 current_page = 4;
-  bool next_page = 5;
-  bool help = 6;
-  bool done = 7;
-  ControllerRole clear = 8;
-  ControllerRole kick = 9;
+  bool next_page = 5; // true if hub pushes next page
+  bool help = 6; // true if controller requests help
+  bool done = 7; // true if controller marks done
+  ControllerRole clear = 8; // role to clear
+  ControllerRole kick = 9; // role to kick
 }
 
+// WSAchievementMessageData contains the data for an achievement message.
+// Must be in sync with Achievements in fableous-fe.
 message WSAchievementMessageData {
   float all_color = 1;
   float five_text = 2;
@@ -72,12 +80,14 @@ message WSAchievementMessageData {
   float five_page = 6;
 }
 
+// WSJoinMessageData contains the data for a join message.
 message WSJoinMessageData {
   ControllerRole role = 1;
   string name = 2;
-  bool joining = 3;
+  bool joining = 3; // true if joining, false if leaving
 }
 
+// WSErrorMessageData contains the data for an error message.
 message WSErrorMessageData {
   string error = 1;
 }
