@@ -14,6 +14,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
+// AuthMiddleware is a middleware that checks for a valid JWT token.
 func AuthMiddleware(c *gin.Context) {
 	var token string
 	if token = strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer "); token == "" {
@@ -38,6 +39,7 @@ func AuthMiddleware(c *gin.Context) {
 	c.Next()
 }
 
+// parseToken parses a JWT token and returns the claims.
 func parseToken(tokenString, secret string) (claims datatransfers.JWTClaims, err error) {
 	if token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil

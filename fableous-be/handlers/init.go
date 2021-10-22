@@ -17,25 +17,27 @@ import (
 	pb "github.com/deco-finter/fableous/fableous-be/protos"
 )
 
+// Handler is a global reference to the application handlers.
 var Handler HandlerFunc
 
+// HandlerFunc is the handler interface.
 type HandlerFunc interface {
-	// Auth
+	// Auth handlers
 	Authenticate(userInfo datatransfers.UserLogin) (token string, err error)
 
-	// User
+	// User handlers
 	UserRegister(userInfo datatransfers.UserSignup) (err error)
 	UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error)
 	UserUpdate(userInfo datatransfers.UserInfo) (err error)
 
-	// Classroom
+	// Classroom handlers
 	ClassroomGetOneByID(id string) (classroomInfo datatransfers.ClassroomInfo, err error)
 	ClassroomGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error)
 	ClassroomInsert(classroomInfo datatransfers.ClassroomInfo) (classroomID string, err error)
 	ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err error)
 	ClassroomDeleteByID(classroomID string) (err error)
 
-	// Session
+	// Session handlers
 	SessionGetAllByClassroomID(classroomID string) (sessionInfos []datatransfers.SessionInfo, err error)
 	SessionGetOneByIDByClassroomID(id, classroomID string) (sessionInfo datatransfers.SessionInfo, err error)
 	SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error)
@@ -44,19 +46,21 @@ type HandlerFunc interface {
 	SessionDeleteByIDByClassroomID(id, classroomID string) (err error)
 	SessionCleanUp(sess *activeSession)
 
-	// WebSocket
+	// WebSocket handlers
 	ConnectHubWS(ctx *gin.Context, classroomID string) (err error)
 	ConnectControllerWS(ctx *gin.Context, classroomToken string, role pb.ControllerRole, name string) (err error)
 	HubCommandWorker(conn *websocket.Conn, sess *activeSession) (err error)
 	ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role pb.ControllerRole, name string) (err error)
 }
 
+// module holds all shared references for the handlers.
 type module struct {
 	db       *dbEntity
 	upgrader websocket.Upgrader
 	sessions activeSessionsEntity
 }
 
+// dbEntity contains all databse ormers.
 type dbEntity struct {
 	conn           *gorm.DB
 	userOrmer      models.UserOrmer
@@ -64,13 +68,17 @@ type dbEntity struct {
 	sessionOrmer   models.SessionOrmer
 }
 
+// activeSessionsEntity is a collection of all active sessions.
 type activeSessionsEntity struct {
-	keys  map[string]*activeSession // key: classroomToken, value: activeSession
+	keys map[string]*activeSession // key: classroomToken, value: activeSession
+
+	// Mutex for keys
 	mutex sync.RWMutex
 }
 
+// InitalizeHandler initializes the handler module.
 func InitializeHandler() (err error) {
-	// Initialize DB
+	// initialize database
 	var db *gorm.DB
 	db, err = gorm.Open(postgres.Open(
 		fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable TimeZone=Etc/UTC",
@@ -82,7 +90,7 @@ func InitializeHandler() (err error) {
 	}
 	log.Println("[INIT] successfully connected to PostgreSQL")
 
-	// Compose handler modules
+	// compose handler modules
 	Handler = &module{
 		db: &dbEntity{
 			conn:           db,

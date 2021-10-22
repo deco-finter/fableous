@@ -10,6 +10,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
 
+// UserCreate creates a new user.
 func (m *module) UserRegister(credentials datatransfers.UserSignup) (err error) {
 	var hashedPassword []byte
 	if hashedPassword, err = bcrypt.GenerateFromPassword([]byte(credentials.Password), bcrypt.DefaultCost); err != nil {
@@ -25,6 +26,7 @@ func (m *module) UserRegister(credentials datatransfers.UserSignup) (err error) 
 	return
 }
 
+// UserGetOneByID returns a user by its ID.
 func (m *module) UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err error) {
 	var user models.User
 	if user, err = m.db.userOrmer.GetOneByID(id); err != nil {
@@ -39,6 +41,7 @@ func (m *module) UserGetOneByID(id string) (userInfo datatransfers.UserInfo, err
 	return
 }
 
+// UserUpdate updates a user.
 func (m *module) UserUpdate(userInfo datatransfers.UserInfo) (err error) {
 	if err = m.db.userOrmer.Update(models.User{
 		ID:    userInfo.ID,

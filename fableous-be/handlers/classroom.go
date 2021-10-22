@@ -11,6 +11,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
 
+// ClassroomGetByID returns a classroom by its ID.
 func (m *module) ClassroomGetOneByID(id string) (classroomInfo datatransfers.ClassroomInfo, err error) {
 	var classroom models.Classroom
 	if classroom, err = m.db.classroomOrmer.GetOneByID(id); err != nil {
@@ -25,6 +26,7 @@ func (m *module) ClassroomGetOneByID(id string) (classroomInfo datatransfers.Cla
 	return
 }
 
+// ClassroomGetAllByUserID returns all classrooms owned by a user.
 func (m *module) ClassroomGetAllByUserID(userID string) (classroomInfos []datatransfers.ClassroomInfo, err error) {
 	var classrooms []models.Classroom
 	classroomInfos = make([]datatransfers.ClassroomInfo, 0)
@@ -44,6 +46,7 @@ func (m *module) ClassroomGetAllByUserID(userID string) (classroomInfos []datatr
 	return
 }
 
+// ClassroomInsert inserts a new classroom.
 func (m *module) ClassroomInsert(classroomInfo datatransfers.ClassroomInfo) (classroomID string, err error) {
 	if classroomID, err = m.db.classroomOrmer.Insert(models.Classroom{
 		UserID: classroomInfo.UserID,
@@ -54,6 +57,7 @@ func (m *module) ClassroomInsert(classroomInfo datatransfers.ClassroomInfo) (cla
 	return
 }
 
+// ClassroomUpdate updates a classroom.
 func (m *module) ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err error) {
 	if err = m.db.classroomOrmer.Update(models.Classroom{
 		ID:   classroomInfo.ID,
@@ -64,6 +68,8 @@ func (m *module) ClassroomUpdate(classroomInfo datatransfers.ClassroomInfo) (err
 	return
 }
 
+// ClassroomDeleteByID deletes a classroom by its ID.
+// It also stops any ongoing session and removes all its sessions' static files.
 func (m *module) ClassroomDeleteByID(classroomID string) (err error) {
 	m.sessions.mutex.Lock()
 	for classroomToken, sess := range m.sessions.keys {

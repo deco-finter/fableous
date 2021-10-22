@@ -6,16 +6,20 @@ import (
 	"github.com/spf13/viper"
 )
 
+// AppConfig is a global reference to the application config.
 var AppConfig Config
 
+// Config is the base application configuration struct.
 type Config struct {
 	Version     string
 	Port        int
 	Environment string
 	Debug       bool
 
+	// Directory to store static gallery files
 	StaticDir string
 
+	// PostgreSQL database configuration
 	DBHost     string
 	DBPort     int
 	DBDatabase string
@@ -25,6 +29,7 @@ type Config struct {
 	JWTSecret string
 }
 
+// InitializeAppConfig loads AppConfig from environment variables.
 func InitializeAppConfig() {
 	viper.SetConfigName(".env") // allow directly reading from .env file
 	viper.SetConfigType("env")

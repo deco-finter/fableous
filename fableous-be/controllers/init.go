@@ -10,6 +10,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
 
+// InitializeRouter initialize the gin router.
 func InitializeRouter() (router *gin.Engine) {
 	router = gin.Default()
 	router.Use(

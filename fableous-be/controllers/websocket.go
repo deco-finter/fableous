@@ -12,6 +12,7 @@ import (
 	pb "github.com/deco-finter/fableous/fableous-be/protos"
 )
 
+// GETConnectHubWS handles WebSocket connection from the hub.
 func GETConnectHubWS(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
@@ -30,6 +31,7 @@ func GETConnectHubWS(c *gin.Context) {
 	_ = handlers.Handler.ConnectHubWS(c, classroomInfo.ID)
 }
 
+// GETConnectControllerWS handles WebSocket connection from the controller.
 func GETConnectControllerWS(c *gin.Context) {
 	var err error
 	var classroomToken string

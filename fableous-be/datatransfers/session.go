@@ -2,6 +2,7 @@ package datatransfers
 
 import "time"
 
+// SessionUpdate is the data transfer object used for updating the Session entity.
 type SessionUpdate struct {
 	ID          string `json:"id" binding:"-"`
 	ClassroomID string `json:"-" binding:"-"`
@@ -9,6 +10,7 @@ type SessionUpdate struct {
 	Description string `json:"description" binding:"required"`
 }
 
+// SessionInfo is the data transfer object for the Session entity.
 type SessionInfo struct {
 	ID             string    `json:"id" binding:"-"`
 	ClassroomID    string    `json:"-" binding:"-"`

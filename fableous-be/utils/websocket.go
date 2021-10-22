@@ -10,6 +10,7 @@ import (
 	pb "github.com/deco-finter/fableous/fableous-be/protos"
 )
 
+// SendMessage sends a message to the WebSocket client.
 func SendMessage(conn *websocket.Conn, message *pb.WSMessage) (err error) {
 	var bytes []byte
 	if bytes, err = proto.Marshal(message); err != nil {
@@ -19,6 +20,8 @@ func SendMessage(conn *websocket.Conn, message *pb.WSMessage) (err error) {
 	return
 }
 
+// RecieveMessage recieves a message from the WebSocket client.
+// This is a blocking call.
 func RecieveMessage(conn *websocket.Conn) (message *pb.WSMessage, err error) {
 	var bytes []byte
 	if _, bytes, err = conn.ReadMessage(); err != nil {
@@ -29,6 +32,8 @@ func RecieveMessage(conn *websocket.Conn) (message *pb.WSMessage, err error) {
 	return
 }
 
+// ExtractPayload extracts the payload from a WebSocket message.
+// The payload could be in plaintext or encoded in base64.
 func ExtractPayload(message *pb.WSMessage, isBase64 bool) (payload []byte, page int, err error) {
 	data := message.Data.(*pb.WSMessage_Paint).Paint
 	stringPayload := data.Text

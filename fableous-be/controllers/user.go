@@ -10,6 +10,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
+// GETUser handles user detail request.
 func GETUser(c *gin.Context) {
 	var err error
 	var userInfo datatransfers.UserInfo
@@ -20,6 +21,7 @@ func GETUser(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: userInfo})
 }
 
+// PUTUser handles user update request.
 func PUTUser(c *gin.Context) {
 	var err error
 	var user datatransfers.UserUpdate

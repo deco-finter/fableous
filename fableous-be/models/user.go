@@ -10,6 +10,7 @@ type userOrm struct {
 	db *gorm.DB
 }
 
+// User represents a user entity.
 type User struct {
 	ID        string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
 	Name      string    `gorm:"column:name;type:varchar(32);not null" json:"-"`
@@ -19,6 +20,7 @@ type User struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"-"`
 }
 
+// UserOrmer is the interface for all database operations for User.
 type UserOrmer interface {
 	GetOneByID(id string) (user User, err error)
 	GetOneByEmail(email string) (user User, err error)
@@ -26,6 +28,7 @@ type UserOrmer interface {
 	Update(user User) (err error)
 }
 
+// NewUserOrmer initializes a new UserOrmer.
 func NewUserOrmer(db *gorm.DB) UserOrmer {
 	_ = db.AutoMigrate(&User{}) // builds table when enabled
 	return &userOrm{db}
@@ -47,7 +50,8 @@ func (o *userOrm) Insert(user User) (id string, err error) {
 }
 
 func (o *userOrm) Update(user User) (err error) {
-	// By default, only non-empty fields are updated. See https://gorm.io/docs/update.html#Updates-multiple-columns
+	// By default, only non-empty fields are updated
+	// See https://gorm.io/docs/update.html#Updates-multiple-columns
 	result := o.db.Model(&User{}).Model(&user).Updates(&user)
 	return result.Error
 }
