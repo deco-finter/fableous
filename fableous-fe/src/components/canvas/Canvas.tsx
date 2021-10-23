@@ -85,7 +85,7 @@ interface SimplePointerEventData {
 }
 
 /**
- * Shows text and drawing from students and handles processing of incoming messages
+ * Shows text and drawing from students and handles processing of incoming messages.
  */
 const Canvas = forwardRef<ImperativeCanvasRef, CanvasProps>(
   (props: CanvasProps, ref) => {

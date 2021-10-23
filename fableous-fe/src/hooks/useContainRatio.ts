@@ -1,7 +1,7 @@
 import { useResizeDetector } from "react-resize-detector";
 
 /**
- * returns dimension of child dom that maintains aspect ratio
+ * Returns dimension of child DOM that maintains aspect ratio
  * and is contained within container
  *
  * @param {React.MutableRefObject<T>} containerRef Ref to container

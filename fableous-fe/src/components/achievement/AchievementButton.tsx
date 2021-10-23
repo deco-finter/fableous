@@ -51,6 +51,10 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+/**
+ * Button that shows a popup modal containing progress of achievements.
+ * Fires a confetti effect on the button when completing an achievement.
+ */
 export default function AchievementButton(props: {
   achievements: Achievement;
   confetti?: boolean;
