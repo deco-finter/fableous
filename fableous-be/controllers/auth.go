@@ -10,6 +10,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
+// POSTLogin handles login request.
 func POSTLogin(c *gin.Context) {
 	var err error
 	var user datatransfers.UserLogin
@@ -26,6 +27,7 @@ func POSTLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{})
 }
 
+// POSTRegister handles register request.
 func POSTRegister(c *gin.Context) {
 	var err error
 	var user datatransfers.UserSignup

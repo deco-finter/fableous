@@ -23,6 +23,19 @@ export const CustomNavContext = createContext<CustomNavContextType>([
 
 export const useCustomNav = () => useContext(CustomNavContext);
 
+/**
+ * Allows pages to have customized buttons in navbar.
+ *
+ * @example
+ *
+ * useEffect(() => {
+ *  setAdditionalNavs(navItemsUniqueToThisPage)
+ *
+ *  return () => {
+ *    setAdditionalNavs([])
+ *  }
+ * }, [])
+ */
 export default function CustomNavProvider(props: { children: ReactNode }) {
   const [additionalNavs, setAdditionalNavs] = useState<Nav[]>([]);
   const [isLogoClickable, setIsLogoClickable] = useState(true);

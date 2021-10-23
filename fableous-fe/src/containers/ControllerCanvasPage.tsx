@@ -23,7 +23,7 @@ import Joyride, { Step, StoreHelpers } from "react-joyride";
 import Canvas from "../components/canvas/Canvas";
 import { restAPI, wsAPI } from "../api";
 import { APIResponse, ControllerJoin, Session } from "../data";
-import useWsConn from "../hooks/useWsConn";
+import { useWsConn, useContainRatio, useTutorial } from "../hooks";
 import CursorScreen, { Cursor } from "../components/canvas/CursorScreen";
 import FormikTextField from "../components/FormikTextField";
 import {
@@ -40,11 +40,9 @@ import {
   BRUSH_COLORS,
   BRUSH_WIDTHS,
 } from "../components/canvas/constants";
-import useContainRatio from "../hooks/useContainRatio";
 import ChipRow from "../components/ChipRow";
 import { colors } from "../colors";
 import { TutorialTargetId } from "../tutorialTargetIds";
-import useTutorial from "../hooks/useTutorial";
 import { useCustomNav } from "../components/CustomNavProvider";
 import StoryCompletionPrompt from "../components/StoryCompletionPrompt";
 import { proto as pb } from "../proto/message_pb";

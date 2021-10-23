@@ -17,6 +17,10 @@ export const AuthContext = createContext<AuthContextType>([
   () => {},
 ]);
 
+/**
+ * Provides centralised auth info and helper functions to manage it.
+ * Centralisation allows different components to stay up-to-date with auth status.
+ */
 export default function AuthProvider(props: { children: ReactNode }) {
   const [token, setToken] = useState(getLocalStorage(TOKEN_KEY) || "");
   const { children } = props;

@@ -10,6 +10,7 @@ type sessionOrm struct {
 	db *gorm.DB
 }
 
+// Session represents a drawing session entity.
 type Session struct {
 	ID             string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
 	Classroom      Classroom `gorm:"foreignKey:ClassroomID;references:id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
@@ -25,6 +26,7 @@ type Session struct {
 	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"-"`
 }
 
+// SessionOrmer is the interface for all database operations for Session.
 type SessionOrmer interface {
 	GetOneByIDByClassroomID(id, classroomID string) (session Session, err error)
 	GetOneOngoingByClassroomID(classroomID string) (session Session, err error)
@@ -35,6 +37,7 @@ type SessionOrmer interface {
 	DeleteByIDByClassroomID(id, classroomID string) (err error)
 }
 
+// NewSessionOrmer initializes a new SessionOrmer.
 func NewSessionOrmer(db *gorm.DB) SessionOrmer {
 	_ = db.AutoMigrate(&Session{})
 	return &sessionOrm{db}

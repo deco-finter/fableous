@@ -10,17 +10,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
-func GETClassroom(c *gin.Context) {
-	var err error
-	var classroomInfo datatransfers.ClassroomInfo
-	classroomInfo.ID = c.Param("classroom_id")
-	if classroomInfo, err = handlers.Handler.ClassroomGetOneByID(classroomInfo.ID); err != nil {
-		c.JSON(http.StatusNotFound, datatransfers.Response{Error: "cannot find classroom"})
-		return
-	}
-	c.JSON(http.StatusOK, datatransfers.Response{Data: classroomInfo})
-}
-
+// GETClassroomList handles classroom list request.
 func GETClassroomList(c *gin.Context) {
 	var err error
 	var classroomInfos []datatransfers.ClassroomInfo
@@ -32,6 +22,19 @@ func GETClassroomList(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: classroomInfos})
 }
 
+// GETClassroom handles classroom detail request.
+func GETClassroom(c *gin.Context) {
+	var err error
+	var classroomInfo datatransfers.ClassroomInfo
+	classroomInfo.ID = c.Param("classroom_id")
+	if classroomInfo, err = handlers.Handler.ClassroomGetOneByID(classroomInfo.ID); err != nil {
+		c.JSON(http.StatusNotFound, datatransfers.Response{Error: "cannot find classroom"})
+		return
+	}
+	c.JSON(http.StatusOK, datatransfers.Response{Data: classroomInfo})
+}
+
+// POSTClassroom handles classroom creation request.
 func POSTClassroom(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
@@ -47,6 +50,7 @@ func POSTClassroom(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: classroomInfo.ID})
 }
 
+// PUTClassroom handles classroom update request.
 func PUTClassroom(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
@@ -69,6 +73,7 @@ func PUTClassroom(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{})
 }
 
+// DELETEClassroom handles classroom deletion request.
 func DELETEClassroom(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo

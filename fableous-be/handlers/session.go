@@ -12,6 +12,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
 
+// SessionGetAllByClassroomID returns all sessions by its classroomID.
 func (m *module) SessionGetAllByClassroomID(classroomID string) (sessionInfos []datatransfers.SessionInfo, err error) {
 	var sessions []models.Session
 	sessionInfos = make([]datatransfers.SessionInfo, 0)
@@ -36,6 +37,7 @@ func (m *module) SessionGetAllByClassroomID(classroomID string) (sessionInfos []
 	return
 }
 
+// SessionGetOneByIDByClassroomID returns one session by its ID and ClassroomID.
 func (m *module) SessionGetOneByIDByClassroomID(id, classroomID string) (sessionInfo datatransfers.SessionInfo, err error) {
 	var session models.Session
 	if session, err = m.db.sessionOrmer.GetOneByIDByClassroomID(id, classroomID); err != nil {
@@ -55,6 +57,7 @@ func (m *module) SessionGetOneByIDByClassroomID(id, classroomID string) (session
 	return
 }
 
+// SessionGetOneOngoingByClassroomID returns a classroom's ongoing session by its classroomID.
 func (m *module) SessionGetOneOngoingByClassroomID(classroomID string) (sessionInfo datatransfers.SessionInfo, err error) {
 	var session models.Session
 	if session, err = m.db.sessionOrmer.GetOneOngoingByClassroomID(classroomID); err != nil {
@@ -74,6 +77,7 @@ func (m *module) SessionGetOneOngoingByClassroomID(classroomID string) (sessionI
 	return
 }
 
+// SessionInsert inserts a new session.
 func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (id string, err error) {
 	if id, err = m.db.sessionOrmer.Insert(models.Session{
 		ClassroomID:    sessionInfo.ClassroomID,
@@ -90,6 +94,7 @@ func (m *module) SessionInsert(sessionInfo datatransfers.SessionInfo) (id string
 	return
 }
 
+// SessionUpdate updates a session.
 func (m *module) SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err error) {
 	if err = m.db.sessionOrmer.Update(models.Session{
 		ID:          sessionUpdate.ID,
@@ -102,6 +107,8 @@ func (m *module) SessionUpdate(sessionUpdate datatransfers.SessionUpdate) (err e
 	return
 }
 
+// SessionDeleteByIDByClassroomID deletes a session by its ID and ClassroomID.
+// It stops the session if it is still ongoing and deletes its static files.
 func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err error) {
 	if err = m.db.sessionOrmer.DeleteByIDByClassroomID(id, classroomID); err != nil {
 		return err
@@ -124,6 +131,7 @@ func (m *module) SessionDeleteByIDByClassroomID(id, classroomID string) (err err
 	return
 }
 
+// SessionCleanUp kicks all controllers and hub from the session and deletes its static files.
 func (m *module) SessionCleanUp(sess *activeSession) {
 	_ = sess.BroadcastMessage(&pb.WSMessage{
 		Type: pb.WSMessageType_JOIN,
@@ -149,6 +157,7 @@ func (m *module) SessionCleanUp(sess *activeSession) {
 	go m.sessionClearStaticByIDByClassroomID(sess.sessionID, sess.classroomID)
 }
 
+// sessionClearStaticByIDByClassroomID deletes a session's static files.
 func (m *module) sessionClearStaticByIDByClassroomID(id, classroomID string) {
 	_ = os.RemoveAll(utils.GetSessionStaticDir(id, classroomID))
 }

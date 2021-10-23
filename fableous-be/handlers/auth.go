@@ -13,6 +13,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
 
+// Authenticate issues a token for the given user credentials
 func (m *module) Authenticate(credentials datatransfers.UserLogin) (token string, err error) {
 	var user models.User
 	if user, err = m.db.userOrmer.GetOneByEmail(credentials.Email); err != nil {
@@ -24,6 +25,7 @@ func (m *module) Authenticate(credentials datatransfers.UserLogin) (token string
 	return generateToken(user)
 }
 
+// generateToken generates a JWT token for the given user
 func generateToken(user models.User) (string, error) {
 	now := time.Now()
 	expiry := time.Now().Add(constants.AuthenticationTimeout)

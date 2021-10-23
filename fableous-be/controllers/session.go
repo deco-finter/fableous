@@ -11,6 +11,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/handlers"
 )
 
+// GETSessionList handles session list for a classroom request.
 func GETSessionList(c *gin.Context) {
 	var err error
 	var sessionInfos []datatransfers.SessionInfo
@@ -24,6 +25,7 @@ func GETSessionList(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfos})
 }
 
+// GETSession handles session detail request.
 func GETSession(c *gin.Context) {
 	var err error
 	var sessionInfo datatransfers.SessionInfo
@@ -37,6 +39,8 @@ func GETSession(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo})
 }
 
+// GETOngoinSession handles ongoing session request.
+// 404 if no ongoing session is found.
 func GETOngoingSession(c *gin.Context) {
 	var err error
 	var sessionInfo datatransfers.SessionInfo
@@ -50,6 +54,7 @@ func GETOngoingSession(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo})
 }
 
+// POSTSession handles session creation request.
 func POSTSession(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
@@ -84,6 +89,7 @@ func POSTSession(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{Data: sessionInfo.ID})
 }
 
+// PUTSession handles session update request.
 func PUTSession(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo
@@ -112,6 +118,7 @@ func PUTSession(c *gin.Context) {
 	c.JSON(http.StatusOK, datatransfers.Response{})
 }
 
+// DELETESession handles session deletion request.
 func DELETESession(c *gin.Context) {
 	var err error
 	var classroomInfo datatransfers.ClassroomInfo

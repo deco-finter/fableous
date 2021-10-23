@@ -10,6 +10,7 @@ type classroomOrm struct {
 	db *gorm.DB
 }
 
+// Classroom represents a classroom entity.
 type Classroom struct {
 	ID        string    `gorm:"column:id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
 	User      User      `gorm:"foreignKey:UserID;references:id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
@@ -19,6 +20,7 @@ type Classroom struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"-"`
 }
 
+// ClassroomOrmer is the interface for all database operations for Classroom.
 type ClassroomOrmer interface {
 	GetOneByID(id string) (classroom Classroom, err error)
 	GetAllByUserID(userID string) (classrooms []Classroom, err error)
@@ -27,6 +29,7 @@ type ClassroomOrmer interface {
 	DeleteByID(classroomID string) (err error)
 }
 
+// NewClassroomOrmer initializes a new ClassroomOrmer.
 func NewClassroomOrmer(db *gorm.DB) ClassroomOrmer {
 	_ = db.AutoMigrate(&Classroom{}) // builds table when enabled
 	return &classroomOrm{db}
@@ -48,7 +51,8 @@ func (o *classroomOrm) Insert(classroom Classroom) (id string, err error) {
 }
 
 func (o *classroomOrm) Update(classroom Classroom) (err error) {
-	// By default, only non-empty fields are updated. See https://gorm.io/docs/update.html#Updates-multiple-columns
+	// By default, only non-empty fields are updated
+	// See https://gorm.io/docs/update.html#Updates-multiple-columns
 	result := o.db.Model(&Classroom{}).Model(&classroom).Updates(&classroom)
 	return result.Error
 }

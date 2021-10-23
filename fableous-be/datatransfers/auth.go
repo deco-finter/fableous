@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// JWTClaims is the JWT claims struct.
 type JWTClaims struct {
 	ID        string `json:"sub,omitempty"`
 	ExpiresAt int64  `json:"exp,omitempty"`

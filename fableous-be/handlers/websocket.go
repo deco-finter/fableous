@@ -17,17 +17,24 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/utils"
 )
 
+// activeSession contains all the active session data and reference to all the websocket connections.
 type activeSession struct {
+	// Session metadata
 	classroomToken string
 	classroomID    string
 	sessionID      string
 	currentPage    int
+
+	// WebSocket connections
 	hubConn        *websocket.Conn
 	controllerConn map[pb.ControllerRole]*websocket.Conn // key: role, value: ws.Conn
 	controllerName map[pb.ControllerRole]string          // key: role, value: user name
-	mutex          sync.RWMutex
+
+	// Mutex for controllerConn and controllerName
+	mutex sync.RWMutex
 }
 
+//  BroadcastMessage sends a message to all the connected controllers.
 func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 	sess.mutex.RLock()
 	defer sess.mutex.RUnlock()
@@ -39,6 +46,7 @@ func (sess *activeSession) BroadcastMessage(message *pb.WSMessage) (err error) {
 	return
 }
 
+//  KickController disconnects a controller from the session.
 func (sess *activeSession) KickController(role pb.ControllerRole, announceHub bool) (err error) {
 	sess.mutex.Lock()
 	if targetConn, ok := sess.controllerConn[role]; ok {
@@ -70,6 +78,7 @@ func (sess *activeSession) KickController(role pb.ControllerRole, announceHub bo
 	return
 }
 
+// ConnectHubWS handles the hub's initial WebSocket connnection.
 func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
 	var conn *websocket.Conn
@@ -107,6 +116,7 @@ func (m *module) ConnectHubWS(ctx *gin.Context, classroomID string) (err error) 
 	return m.HubCommandWorker(conn, sess)
 }
 
+// ConnectHubWS handles the controllers's initial WebSocket connnection.
 func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken string, role pb.ControllerRole, name string) (err error) {
 	ctx.Request.Header.Del("Sec-Websocket-Extensions")
 	var conn *websocket.Conn
@@ -147,12 +157,16 @@ func (m *module) ConnectControllerWS(ctx *gin.Context, classroomToken string, ro
 	return m.ControllerCommandWorker(conn, sess, role, name)
 }
 
+// HubCommandWorker handles all messages from the hub.
+// It keeps the WebSocket connection alive by blocking the goroutine.
 func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (err error) {
+	// cleanup session when hub disconnects
 	defer func() {
 		m.sessions.mutex.Lock()
 		delete(m.sessions.keys, sess.classroomToken)
 		m.sessions.mutex.Unlock()
 	}()
+	// send session metadata
 	_ = utils.SendMessage(conn, &pb.WSMessage{
 		Type: pb.WSMessageType_CONTROL,
 		Data: &pb.WSMessage_Control{
@@ -165,6 +179,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			},
 		},
 	})
+	// listen for messages
 	for {
 		var message *pb.WSMessage
 		if message, err = utils.RecieveMessage(conn); err != nil {
@@ -180,8 +195,10 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 		}
 		switch message.Type {
 		case pb.WSMessageType_ACHIEVEMENT:
+			// relay ACHIEVEMENT message to all controllers
 			_ = sess.BroadcastMessage(message)
 		case pb.WSMessageType_CONTROL:
+			// check if CONTROL message pushes next page
 			if message.Data.(*pb.WSMessage_Control).Control.NextPage {
 				sess.currentPage++
 				_ = sess.BroadcastMessage(&pb.WSMessage{
@@ -192,6 +209,7 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 						},
 					},
 				})
+				// check if story has finished
 				var session models.Session
 				if session, err = m.db.sessionOrmer.GetOneByIDByClassroomID(sess.sessionID, sess.classroomID); err == nil && sess.currentPage > session.Pages {
 					session.Completed = true
@@ -209,10 +227,12 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 					}
 				}
 			}
+			// check if CONTROL message clears a controller's canvas
 			if clearedController := message.Data.(*pb.WSMessage_Control).Control.Clear; clearedController != pb.ControllerRole_NONE {
 				_ = utils.SendMessage(sess.hubConn, message)
 				_ = utils.SendMessage(sess.controllerConn[clearedController], message)
 			}
+			// check if CONTROL message kicks a controller
 			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != pb.ControllerRole_NONE {
 				_ = sess.KickController(kickedController, false)
 			}
@@ -238,7 +258,10 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 	return
 }
 
+// ControllerCommandWorker handles all messages from the controller.
+// It keeps the WebSocket connection alive by blocking the goroutine.
 func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSession, role pb.ControllerRole, name string) (err error) {
+	// send session metadata
 	_ = utils.SendMessage(conn, &pb.WSMessage{
 		Type: pb.WSMessageType_CONTROL,
 		Data: &pb.WSMessage_Control{
@@ -251,6 +274,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			},
 		},
 	})
+	// notify hub of controller connection
 	_ = utils.SendMessage(sess.hubConn, &pb.WSMessage{
 		Type: pb.WSMessageType_JOIN,
 		Data: &pb.WSMessage_Join{
@@ -261,6 +285,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 			},
 		},
 	})
+	// listen for messages
 	for {
 		var message *pb.WSMessage
 		if message, err = utils.RecieveMessage(conn); err != nil {
@@ -273,8 +298,10 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 		switch message.Type {
 		case pb.WSMessageType_PAINT, pb.WSMessageType_FILL, pb.WSMessageType_TEXT, pb.WSMessageType_CHECKPOINT,
 			pb.WSMessageType_UNDO, pb.WSMessageType_CURSOR, pb.WSMessageType_CONTROL:
+			// relay message to hub
 			_ = utils.SendMessage(sess.hubConn, message)
 		case pb.WSMessageType_AUDIO:
+			// concurrently save payload then send filename to hub
 			go func() {
 				message.Data.(*pb.WSMessage_Paint).Paint.Id = int32(sess.currentPage) // override page numbber
 				if filename, page := m.SavePayload(sess, message, true); filename != "" {
@@ -307,6 +334,7 @@ func (m *module) ControllerCommandWorker(conn *websocket.Conn, sess *activeSessi
 	return
 }
 
+// SavePayload saves the payload to disk and returns the filename.
 func (m *module) SavePayload(sess *activeSession, message *pb.WSMessage, isBase64 bool) (filename string, page int) {
 	var err error
 	var data []byte
@@ -345,6 +373,7 @@ func (m *module) SavePayload(sess *activeSession, message *pb.WSMessage, isBase6
 	return
 }
 
+// GetClassroomActiveSession returns the active session bound to a classroomToken.
 func (m *module) GetClassroomActiveSession(classroomToken string) (sess *activeSession) {
 	m.sessions.mutex.RLock()
 	defer m.sessions.mutex.RUnlock()
@@ -354,6 +383,7 @@ func (m *module) GetClassroomActiveSession(classroomToken string) (sess *activeS
 	return
 }
 
+// GetActiveSessionController returns the WebSocket connetion of the controller with the given role of a session.
 func (m *module) GetActiveSessionController(sess *activeSession, role pb.ControllerRole) (conn *websocket.Conn) {
 	sess.mutex.RLock()
 	defer sess.mutex.RUnlock()

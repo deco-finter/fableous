@@ -14,6 +14,13 @@
 - Guided walkthrough
 - Audio annotations and TTS (Text-to-Speech)
 
+## External Links
+This project is hosted on a VPS, deployed and running via Docker containers. Source code is hosted on GitHub, and static code analysis is run by SonarCloud to ensure code maintainability.
+- [Fableous](https://fableous.daystram.com)
+- [GitHub](https://github.com/deco-finter/fableous)
+- [DockerHub](https://hub.docker.com/r/daystram/fableous)
+- [SonarCloud](https://sonarcloud.io/project/overview?id=deco-finter_fableous)
+
 ## Service
 
 The application is divided into two parts:

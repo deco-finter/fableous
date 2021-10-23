@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	// Injected at build time
 	version string
 )
 

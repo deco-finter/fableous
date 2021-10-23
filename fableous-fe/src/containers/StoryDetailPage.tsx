@@ -31,8 +31,7 @@ import { ASPECT_RATIO } from "../components/canvas/constants";
 import ChipRow from "../components/ChipRow";
 import BackButton from "../components/BackButton";
 import { APIResponse, Manifest, Session } from "../data";
-import useContainRatio from "../hooks/useContainRatio";
-import useTutorial from "../hooks/useTutorial";
+import { useContainRatio, useTutorial } from "../hooks";
 import { proto as pb } from "../proto/message_pb";
 import { TutorialTargetId } from "../tutorialTargetIds";
 

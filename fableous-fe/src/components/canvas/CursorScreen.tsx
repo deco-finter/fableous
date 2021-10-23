@@ -26,6 +26,9 @@ const CURSOR_COLOR = "gray";
 const CURSOR_WIDTH = 3;
 const CURSOR_ROLE_TEXT = "24px Arial";
 
+/**
+ * Shows cursor position of students
+ */
 const CursorScreen = (props: CursorScreenProps) => {
   const { cursor, name, isShown, offsetWidth, offsetHeight } = props;
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
