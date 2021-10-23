@@ -10,7 +10,7 @@ import (
 	"github.com/deco-finter/fableous/fableous-be/models"
 )
 
-// UserCreate creates a new user.
+// UserRegister creates a new user.
 func (m *module) UserRegister(credentials datatransfers.UserSignup) (err error) {
 	var hashedPassword []byte
 	if hashedPassword, err = bcrypt.GenerateFromPassword([]byte(credentials.Password), bcrypt.DefaultCost); err != nil {
