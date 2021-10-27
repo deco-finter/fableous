@@ -16,7 +16,7 @@ import (
 func (m *module) SessionGetAllByClassroomID(classroomID string) (sessionInfos []datatransfers.SessionInfo, err error) {
 	var sessions []models.Session
 	sessionInfos = make([]datatransfers.SessionInfo, 0)
-	if sessions, err = m.db.sessionOrmer.GetAllByClassroomID(classroomID); err == gorm.ErrRecordNotFound {
+	if sessions, err = m.db.sessionOrmer.GetAllCompletedByClassroomID(classroomID); err == gorm.ErrRecordNotFound {
 		return sessionInfos, nil
 	} else if err != nil {
 		return sessionInfos, err
