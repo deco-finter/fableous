@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/base64"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
@@ -10,12 +11,16 @@ import (
 	pb "github.com/deco-finter/fableous/fableous-be/protos"
 )
 
+var sendMutex sync.Mutex
+
 // SendMessage sends a message to the WebSocket client.
 func SendMessage(conn *websocket.Conn, message *pb.WSMessage) (err error) {
 	var bytes []byte
 	if bytes, err = proto.Marshal(message); err != nil {
 		return
 	}
+	sendMutex.Lock()
+	defer sendMutex.Unlock()
 	err = conn.WriteMessage(websocket.BinaryMessage, bytes)
 	return
 }
