@@ -15,6 +15,9 @@ var sendMutex sync.Mutex
 
 // SendMessage sends a message to the WebSocket client.
 func SendMessage(conn *websocket.Conn, message *pb.WSMessage) (err error) {
+	if conn == nil {
+		return
+	}
 	var bytes []byte
 	if bytes, err = proto.Marshal(message); err != nil {
 		return

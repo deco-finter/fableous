@@ -230,7 +230,9 @@ func (m *module) HubCommandWorker(conn *websocket.Conn, sess *activeSession) (er
 			// check if CONTROL message clears a controller's canvas
 			if clearedController := message.Data.(*pb.WSMessage_Control).Control.Clear; clearedController != pb.ControllerRole_NONE {
 				_ = utils.SendMessage(sess.hubConn, message)
-				_ = utils.SendMessage(sess.controllerConn[clearedController], message)
+				if targetConn, ok := sess.controllerConn[clearedController]; ok {
+					_ = utils.SendMessage(targetConn, message)
+				}
 			}
 			// check if CONTROL message kicks a controller
 			if kickedController := message.Data.(*pb.WSMessage_Control).Control.Kick; kickedController != pb.ControllerRole_NONE {
